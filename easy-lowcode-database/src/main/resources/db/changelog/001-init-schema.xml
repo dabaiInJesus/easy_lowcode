@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <!-- 用户表 -->
+    <changeSet id="001-create-sys-user" author="dabai">
+        <createTable tableName="sys_user" remarks="用户表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="username" type="VARCHAR(50)" remarks="用户名">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="password" type="VARCHAR(100)" remarks="密码">
+                <constraints nullable="false"/>
+            </column>
+            <column name="nickname" type="VARCHAR(50)" remarks="昵称"/>
+            <column name="phone" type="VARCHAR(20)" remarks="手机号"/>
+            <column name="email" type="VARCHAR(100)" remarks="邮箱"/>
+            <column name="avatar" type="VARCHAR(255)" remarks="头像"/>
+            <column name="gender" type="INTEGER" defaultValueNumeric="0" remarks="性别(0-未知 1-男 2-女)"/>
+            <column name="status" type="INTEGER" defaultValueNumeric="1" remarks="状态(0-禁用 1-正常)"/>
+            <column name="dept_id" type="BIGINT" remarks="部门ID"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间"/>
+            <column name="create_by" type="BIGINT" remarks="创建人"/>
+            <column name="update_by" type="BIGINT" remarks="更新人"/>
+            <column name="deleted" type="INTEGER" defaultValueNumeric="0" remarks="删除标志(0-未删除 1-已删除)"/>
+        </createTable>
+        
+        <createIndex indexName="idx_user_username" tableName="sys_user">
+            <column name="username"/>
+        </createIndex>
+        <createIndex indexName="idx_user_dept" tableName="sys_user">
+            <column name="dept_id"/>
+        </createIndex>
+        
+        <addUniqueConstraint tableName="sys_user" columnNames="username" constraintName="uk_user_username"/>
+    </changeSet>
+
+    <!-- 角色表 -->
+    <changeSet id="002-create-sys-role" author="dabai">
+        <createTable tableName="sys_role" remarks="角色表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="role_name" type="VARCHAR(50)" remarks="角色名称">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role_code" type="VARCHAR(50)" remarks="角色编码">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="description" type="VARCHAR(255)" remarks="角色描述"/>
+            <column name="status" type="INTEGER" defaultValueNumeric="1" remarks="状态(0-禁用 1-正常)"/>
+            <column name="sort" type="INTEGER" defaultValueNumeric="0" remarks="排序"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间"/>
+            <column name="create_by" type="BIGINT" remarks="创建人"/>
+            <column name="update_by" type="BIGINT" remarks="更新人"/>
+            <column name="deleted" type="INTEGER" defaultValueNumeric="0" remarks="删除标志"/>
+        </createTable>
+        
+        <createIndex indexName="idx_role_code" tableName="sys_role">
+            <column name="role_code"/>
+        </createIndex>
+        
+        <addUniqueConstraint tableName="sys_role" columnNames="role_code" constraintName="uk_role_code"/>
+    </changeSet>
+
+    <!-- 菜单表 -->
+    <changeSet id="003-create-sys-menu" author="dabai">
+        <createTable tableName="sys_menu" remarks="菜单表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="parent_id" type="BIGINT" defaultValueNumeric="0" remarks="父菜单ID"/>
+            <column name="menu_name" type="VARCHAR(50)" remarks="菜单名称">
+                <constraints nullable="false"/>
+            </column>
+            <column name="menu_type" type="INTEGER" remarks="菜单类型(1-目录 2-菜单 3-按钮)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="path" type="VARCHAR(200)" remarks="路由地址"/>
+            <column name="component" type="VARCHAR(200)" remarks="组件路径"/>
+            <column name="perms" type="VARCHAR(100)" remarks="权限标识"/>
+            <column name="icon" type="VARCHAR(100)" remarks="菜单图标"/>
+            <column name="sort" type="INTEGER" defaultValueNumeric="0" remarks="排序"/>
+            <column name="visible" type="INTEGER" defaultValueNumeric="1" remarks="状态(0-隐藏 1-显示)"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间"/>
+            <column name="create_by" type="BIGINT" remarks="创建人"/>
+            <column name="update_by" type="BIGINT" remarks="更新人"/>
+            <column name="deleted" type="INTEGER" defaultValueNumeric="0" remarks="删除标志"/>
+        </createTable>
+        
+        <createIndex indexName="idx_menu_parent" tableName="sys_menu">
+            <column name="parent_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 部门表 -->
+    <changeSet id="004-create-sys-dept" author="dabai">
+        <createTable tableName="sys_dept" remarks="部门表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="parent_id" type="BIGINT" defaultValueNumeric="0" remarks="父部门ID"/>
+            <column name="dept_name" type="VARCHAR(50)" remarks="部门名称">
+                <constraints nullable="false"/>
+            </column>
+            <column name="dept_code" type="VARCHAR(50)" remarks="部门编码">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="sort" type="INTEGER" defaultValueNumeric="0" remarks="排序"/>
+            <column name="leader" type="VARCHAR(50)" remarks="负责人"/>
+            <column name="phone" type="VARCHAR(20)" remarks="联系电话"/>
+            <column name="email" type="VARCHAR(100)" remarks="邮箱"/>
+            <column name="status" type="INTEGER" defaultValueNumeric="1" remarks="状态(0-禁用 1-正常)"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间"/>
+            <column name="create_by" type="BIGINT" remarks="创建人"/>
+            <column name="update_by" type="BIGINT" remarks="更新人"/>
+            <column name="deleted" type="INTEGER" defaultValueNumeric="0" remarks="删除标志"/>
+        </createTable>
+        
+        <createIndex indexName="idx_dept_parent" tableName="sys_dept">
+            <column name="parent_id"/>
+        </createIndex>
+        
+        <addUniqueConstraint tableName="sys_dept" columnNames="dept_code" constraintName="uk_dept_code"/>
+    </changeSet>
+
+    <!-- 第三方应用表 -->
+    <changeSet id="005-create-sys-app" author="dabai">
+        <createTable tableName="sys_app" remarks="第三方应用表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="app_name" type="VARCHAR(50)" remarks="应用名称">
+                <constraints nullable="false"/>
+            </column>
+            <column name="app_code" type="VARCHAR(50)" remarks="应用编码">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="app_icon" type="VARCHAR(255)" remarks="应用图标"/>
+            <column name="app_url" type="VARCHAR(255)" remarks="应用地址"/>
+            <column name="client_id" type="VARCHAR(100)" remarks="Client ID"/>
+            <column name="client_secret" type="VARCHAR(255)" remarks="Client Secret"/>
+            <column name="redirect_uri" type="VARCHAR(255)" remarks="回调地址"/>
+            <column name="status" type="INTEGER" defaultValueNumeric="1" remarks="状态(0-禁用 1-正常)"/>
+            <column name="sort" type="INTEGER" defaultValueNumeric="0" remarks="排序"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间"/>
+            <column name="create_by" type="BIGINT" remarks="创建人"/>
+            <column name="update_by" type="BIGINT" remarks="更新人"/>
+            <column name="deleted" type="INTEGER" defaultValueNumeric="0" remarks="删除标志"/>
+        </createTable>
+        
+        <addUniqueConstraint tableName="sys_app" columnNames="app_code" constraintName="uk_app_code"/>
+    </changeSet>
+
+    <!-- 用户角色关联表 -->
+    <changeSet id="006-create-sys-user-role" author="dabai">
+        <createTable tableName="sys_user_role" remarks="用户角色关联表">
+            <column name="user_id" type="BIGINT" remarks="用户ID">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="role_id" type="BIGINT" remarks="角色ID">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- 角色菜单关联表 -->
+    <changeSet id="007-create-sys-role-menu" author="dabai">
+        <createTable tableName="sys_role_menu" remarks="角色菜单关联表">
+            <column name="role_id" type="BIGINT" remarks="角色ID">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="menu_id" type="BIGINT" remarks="菜单ID">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

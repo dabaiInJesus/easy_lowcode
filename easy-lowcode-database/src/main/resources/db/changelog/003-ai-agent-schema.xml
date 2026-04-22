@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <!-- AI 智能体表 -->
+    <changeSet id="001-create-ai-agent" author="dabai">
+        <createTable tableName="ai_agent" remarks="AI智能体表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="agent_name" type="VARCHAR(100)" remarks="智能体名称">
+                <constraints nullable="false"/>
+            </column>
+            <column name="agent_code" type="VARCHAR(50)" remarks="智能体编码">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="description" type="TEXT" remarks="智能体描述"/>
+            <column name="avatar" type="VARCHAR(255)" remarks="智能体头像"/>
+            <column name="provider" type="VARCHAR(50)" remarks="AI提供商"/>
+            <column name="model" type="VARCHAR(100)" remarks="模型名称"/>
+            <column name="prompt_template_id" type="BIGINT" remarks="提示词模板ID"/>
+            <column name="temperature" type="DECIMAL(3,2)" defaultValueNumeric="0.7" remarks="温度参数"/>
+            <column name="max_tokens" type="INTEGER" defaultValueNumeric="2000" remarks="最大token数"/>
+            <column name="enable_workflow" type="INTEGER" defaultValueNumeric="0" remarks="是否启用工作流"/>
+            <column name="workflow_config" type="TEXT" remarks="工作流配置JSON"/>
+            <column name="variables_config" type="TEXT" remarks="变量配置JSON"/>
+            <column name="opening_statement" type="TEXT" remarks="开场白"/>
+            <column name="suggested_questions" type="TEXT" remarks="建议问题列表JSON"/>
+            <column name="status" type="INTEGER" defaultValueNumeric="1" remarks="状态"/>
+            <column name="publish_status" type="INTEGER" defaultValueNumeric="0" remarks="发布状态"/>
+            <column name="usage_count" type="INTEGER" defaultValueNumeric="0" remarks="使用次数"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="create_by" type="BIGINT"/>
+            <column name="update_by" type="BIGINT"/>
+            <column name="deleted" type="INTEGER" defaultValueNumeric="0"/>
+        </createTable>
+        
+        <createIndex indexName="idx_agent_code" tableName="ai_agent">
+            <column name="agent_code"/>
+        </createIndex>
+        <addUniqueConstraint tableName="ai_agent" columnNames="agent_code" constraintName="uk_agent_code"/>
+    </changeSet>
+
+    <!-- 提示词模板表 -->
+    <changeSet id="002-create-prompt-template" author="dabai">
+        <createTable tableName="ai_prompt_template" remarks="提示词模板表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="template_name" type="VARCHAR(100)" remarks="模板名称">
+                <constraints nullable="false"/>
+            </column>
+            <column name="template_code" type="VARCHAR(50)" remarks="模板编码">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="description" type="TEXT" remarks="模板描述"/>
+            <column name="content" type="TEXT" remarks="模板内容">
+                <constraints nullable="false"/>
+            </column>
+            <column name="template_type" type="VARCHAR(20)" defaultValue="system" remarks="模板类型"/>
+            <column name="category" type="VARCHAR(50)" remarks="分类标签"/>
+            <column name="version" type="VARCHAR(20)" defaultValue="1.0.0" remarks="版本"/>
+            <column name="is_default" type="INTEGER" defaultValueNumeric="0" remarks="是否默认"/>
+            <column name="status" type="INTEGER" defaultValueNumeric="1" remarks="状态"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="create_by" type="BIGINT"/>
+            <column name="update_by" type="BIGINT"/>
+            <column name="deleted" type="INTEGER" defaultValueNumeric="0"/>
+        </createTable>
+        
+        <addUniqueConstraint tableName="ai_prompt_template" columnNames="template_code" constraintName="uk_template_code"/>
+    </changeSet>
+
+    <!-- 工作流节点表 -->
+    <changeSet id="003-create-workflow-node" author="dabai">
+        <createTable tableName="ai_workflow_node" remarks="工作流节点表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="agent_id" type="BIGINT" remarks="智能体ID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="node_id" type="VARCHAR(100)" remarks="节点ID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="node_type" type="VARCHAR(50)" remarks="节点类型">
+                <constraints nullable="false"/>
+            </column>
+            <column name="node_name" type="VARCHAR(100)" remarks="节点名称"/>
+            <column name="description" type="TEXT" remarks="节点描述"/>
+            <column name="node_config" type="TEXT" remarks="节点配置JSON"/>
+            <column name="position_x" type="INTEGER" remarks="位置X"/>
+            <column name="position_y" type="INTEGER" remarks="位置Y"/>
+            <column name="sort_order" type="INTEGER" defaultValueNumeric="0" remarks="排序"/>
+            <column name="status" type="INTEGER" defaultValueNumeric="1" remarks="状态"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="create_by" type="BIGINT"/>
+            <column name="update_by" type="BIGINT"/>
+            <column name="deleted" type="INTEGER" defaultValueNumeric="0"/>
+        </createTable>
+        
+        <createIndex indexName="idx_workflow_node_agent" tableName="ai_workflow_node">
+            <column name="agent_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 工作流边表 -->
+    <changeSet id="004-create-workflow-edge" author="dabai">
+        <createTable tableName="ai_workflow_edge" remarks="工作流边表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="agent_id" type="BIGINT" remarks="智能体ID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="edge_id" type="VARCHAR(100)" remarks="边ID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_node_id" type="VARCHAR(100)" remarks="源节点ID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_node_id" type="VARCHAR(100)" remarks="目标节点ID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_handle" type="VARCHAR(50)" remarks="源节点输出端口"/>
+            <column name="target_handle" type="VARCHAR(50)" remarks="目标节点输入端口"/>
+            <column name="label" type="VARCHAR(100)" remarks="边的标签"/>
+            <column name="status" type="INTEGER" defaultValueNumeric="1" remarks="状态"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="create_by" type="BIGINT"/>
+            <column name="update_by" type="BIGINT"/>
+            <column name="deleted" type="INTEGER" defaultValueNumeric="0"/>
+        </createTable>
+        
+        <createIndex indexName="idx_workflow_edge_agent" tableName="ai_workflow_edge">
+            <column name="agent_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

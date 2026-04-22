@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <!-- 插入默认管理员用户 (密码: admin123) -->
+    <changeSet id="001-insert-admin-user" author="dabai">
+        <insert tableName="sys_user">
+            <column name="id" valueNumeric="1"/>
+            <column name="username" value="admin"/>
+            <column name="password" value="$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi"/>
+            <column name="nickname" value="管理员"/>
+            <column name="status" valueNumeric="1"/>
+            <column name="gender" valueNumeric="0"/>
+        </insert>
+    </changeSet>
+
+    <!-- 插入默认角色 -->
+    <changeSet id="002-insert-admin-role" author="dabai">
+        <insert tableName="sys_role">
+            <column name="id" valueNumeric="1"/>
+            <column name="role_name" value="超级管理员"/>
+            <column name="role_code" value="admin"/>
+            <column name="description" value="系统超级管理员"/>
+            <column name="status" valueNumeric="1"/>
+            <column name="sort" valueNumeric="1"/>
+        </insert>
+    </changeSet>
+
+    <!-- 插入默认菜单 -->
+    <changeSet id="003-insert-default-menus" author="dabai">
+        <insert tableName="sys_menu">
+            <column name="id" valueNumeric="1"/>
+            <column name="parent_id" valueNumeric="0"/>
+            <column name="menu_name" value="系统管理"/>
+            <column name="menu_type" valueNumeric="1"/>
+            <column name="path" value="/system"/>
+            <column name="component" value="Layout"/>
+            <column name="icon" value="setting"/>
+            <column name="sort" valueNumeric="1"/>
+            <column name="visible" valueNumeric="1"/>
+        </insert>
+        
+        <insert tableName="sys_menu">
+            <column name="id" valueNumeric="2"/>
+            <column name="parent_id" valueNumeric="1"/>
+            <column name="menu_name" value="用户管理"/>
+            <column name="menu_type" valueNumeric="2"/>
+            <column name="path" value="/system/user"/>
+            <column name="component" value="system/user/index"/>
+            <column name="perms" value="system:user:list"/>
+            <column name="icon" value="user"/>
+            <column name="sort" valueNumeric="1"/>
+            <column name="visible" valueNumeric="1"/>
+        </insert>
+        
+        <insert tableName="sys_menu">
+            <column name="id" valueNumeric="3"/>
+            <column name="parent_id" valueNumeric="1"/>
+            <column name="menu_name" value="角色管理"/>
+            <column name="menu_type" valueNumeric="2"/>
+            <column name="path" value="/system/role"/>
+            <column name="component" value="system/role/index"/>
+            <column name="perms" value="system:role:list"/>
+            <column name="icon" value="peoples"/>
+            <column name="sort" valueNumeric="2"/>
+            <column name="visible" valueNumeric="1"/>
+        </insert>
+        
+        <insert tableName="sys_menu">
+            <column name="id" valueNumeric="4"/>
+            <column name="parent_id" valueNumeric="1"/>
+            <column name="menu_name" value="菜单管理"/>
+            <column name="menu_type" valueNumeric="2"/>
+            <column name="path" value="/system/menu"/>
+            <column name="component" value="system/menu/index"/>
+            <column name="perms" value="system:menu:list"/>
+            <column name="icon" value="tree-table"/>
+            <column name="sort" valueNumeric="3"/>
+            <column name="visible" valueNumeric="1"/>
+        </insert>
+        
+        <insert tableName="sys_menu">
+            <column name="id" valueNumeric="5"/>
+            <column name="parent_id" valueNumeric="1"/>
+            <column name="menu_name" value="部门管理"/>
+            <column name="menu_type" valueNumeric="2"/>
+            <column name="path" value="/system/dept"/>
+            <column name="component" value="system/dept/index"/>
+            <column name="perms" value="system:dept:list"/>
+            <column name="icon" value="tree"/>
+            <column name="sort" valueNumeric="4"/>
+            <column name="visible" valueNumeric="1"/>
+        </insert>
+        
+        <insert tableName="sys_menu">
+            <column name="id" valueNumeric="6"/>
+            <column name="parent_id" valueNumeric="1"/>
+            <column name="menu_name" value="应用管理"/>
+            <column name="menu_type" valueNumeric="2"/>
+            <column name="path" value="/system/app"/>
+            <column name="component" value="system/app/index"/>
+            <column name="perms" value="system:app:list"/>
+            <column name="icon" value="example"/>
+            <column name="sort" valueNumeric="5"/>
+            <column name="visible" valueNumeric="1"/>
+        </insert>
+    </changeSet>
+
+    <!-- 插入默认部门 -->
+    <changeSet id="004-insert-default-dept" author="dabai">
+        <insert tableName="sys_dept">
+            <column name="id" valueNumeric="1"/>
+            <column name="parent_id" valueNumeric="0"/>
+            <column name="dept_name" value="总公司"/>
+            <column name="dept_code" value="headquarters"/>
+            <column name="sort" valueNumeric="1"/>
+            <column name="status" valueNumeric="1"/>
+        </insert>
+    </changeSet>
+
+    <!-- 分配管理员角色 -->
+    <changeSet id="005-assign-admin-role" author="dabai">
+        <insert tableName="sys_user_role">
+            <column name="user_id" valueNumeric="1"/>
+            <column name="role_id" valueNumeric="1"/>
+        </insert>
+    </changeSet>
+
+    <!-- 分配所有菜单给管理员角色 -->
+    <changeSet id="006-assign-all-menus" author="dabai">
+        <insert tableName="sys_role_menu">
+            <column name="role_id" valueNumeric="1"/>
+            <column name="menu_id" valueNumeric="1"/>
+        </insert>
+        <insert tableName="sys_role_menu">
+            <column name="role_id" valueNumeric="1"/>
+            <column name="menu_id" valueNumeric="2"/>
+        </insert>
+        <insert tableName="sys_role_menu">
+            <column name="role_id" valueNumeric="1"/>
+            <column name="menu_id" valueNumeric="3"/>
+        </insert>
+        <insert tableName="sys_role_menu">
+            <column name="role_id" valueNumeric="1"/>
+            <column name="menu_id" valueNumeric="4"/>
+        </insert>
+        <insert tableName="sys_role_menu">
+            <column name="role_id" valueNumeric="1"/>
+            <column name="menu_id" valueNumeric="5"/>
+        </insert>
+        <insert tableName="sys_role_menu">
+            <column name="role_id" valueNumeric="1"/>
+            <column name="menu_id" valueNumeric="6"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

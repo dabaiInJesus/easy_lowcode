@@ -1,0 +1,128 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: easy-lowcode
+  
+  # 数据源配置
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://127.0.0.1:5432/thinker?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: postgres
+    password: postgres
+  
+  # Liquibase 数据库版本管理配置
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    contexts: dev
+    database-change-log-table: databasechangelog
+    database-change-log-lock-table: databasechangeloglock
+  
+  # Redis配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: 
+      database: 0
+      timeout: 10s
+      lettuce:
+        pool:
+          max-active: 200
+          max-wait: -1ms
+          max-idle: 10
+          min-idle: 0
+  
+  # RocketMQ配置
+  rocketmq:
+    name-server: localhost:9876
+    producer:
+      group: easy-lowcode-producer
+      send-message-timeout: 3000
+  
+  # Flowable配置
+  flowable:
+    async-executor-activate: true
+    database-schema-update: true
+    check-process-definitions: false
+
+# MyBatis Plus配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: assign_id
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  mapper-locations: classpath*:/mapper/**/*.xml
+
+# Sa-Token配置
+sa-token:
+  # token名称 (同时也是cookie名称)
+  token-name: Authorization
+  # token有效期，单位s 默认30天, -1代表永不过期
+  timeout: 2592000
+  # token临时有效期 (指定时间内无操作就视为token过期) 单位: 秒
+  activity-timeout: -1
+  # 是否允许同一账号并发登录 (为true时允许一起登录, 为false时新登录挤掉旧登录)
+  is-concurrent: true
+  # 在多人登录同一账号时，是否共用一个token (为true时所有登录共用一个token, 为false时每次登录新建一个token)
+  is-share: false
+  # token风格
+  token-style: uuid
+  # 是否输出操作日志
+  is-log: false
+  # 是否从cookie中读取token
+  is-read-cookie: false
+  # 是否从head中读取token
+  is-read-header: true
+  # token前缀
+  token-prefix: Bearer
+
+# AI 配置
+ai:
+  # 默认 AI 提供商 (openai/dashscope/wenxin/hunyuan/zhipu/moonshot)
+  provider:
+    default: openai
+  
+  # OpenAI 配置
+  openai:
+    api-key: ${OPENAI_API_KEY:your-openai-api-key}
+    base-url: https://api.openai.com/v1
+    model: gpt-3.5-turbo
+  
+  # 通义千问配置
+  dashscope:
+    api-key: ${DASHSCOPE_API_KEY:your-dashscope-api-key}
+    model: qwen-turbo
+  
+  # 文心一言配置
+  wenxin:
+    api-key: ${WENXIN_API_KEY:your-wenxin-api-key}
+    secret-key: ${WENXIN_SECRET_KEY:your-wenxin-secret-key}
+    model: eb-instant
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.dabai.easy_lowcode: DEBUG
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
+
+# Actuator配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
