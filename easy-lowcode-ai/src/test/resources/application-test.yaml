@@ -1,0 +1,37 @@
+# 测试环境配置
+
+spring:
+  application:
+    name: easy-lowcode-ai-test
+
+# AI 配置 - 测试环境使用模拟配置
+ai:
+  provider:
+    default: openai
+  
+  openai:
+    api-key: test-api-key
+    base-url: http://localhost:8080/mock
+    model: gpt-3.5-turbo
+  
+  dashscope:
+    api-key: test-dashscope-key
+    model: qwen-turbo
+  
+  ollama:
+    base-url: http://localhost:11434
+    model: llama2
+  
+  deepseek:
+    api-key: test-deepseek-key
+    model: deepseek-chat
+  
+  minimax:
+    api-key: test-minimax-key
+    model: abab6-chat
+
+# 日志配置 - 测试环境
+logging:
+  level:
+    root: WARN
+    com.dabai.easy_lowcode.ai: DEBUG

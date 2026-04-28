@@ -18,7 +18,19 @@
     <dependencies>
         <dependency>
             <groupId>com.dabai</groupId>
+            <artifactId>easy-lowcode-common</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.dabai</groupId>
             <artifactId>easy-lowcode-database</artifactId>
+        </dependency>
+
+        <!-- Sa-Token -->
+        <dependency>
+            <groupId>cn.dev33</groupId>
+            <artifactId>sa-token-spring-boot3-starter</artifactId>
+            <version>${sa-token.version}</version>
         </dependency>
 
         <dependency>

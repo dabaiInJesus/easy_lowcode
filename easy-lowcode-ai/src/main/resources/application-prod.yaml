@@ -1,0 +1,29 @@
+# 生产环境配置
+
+# AI 配置 - 生产环境使用云端模型
+ai:
+  provider:
+    default: dashscope
+  
+  # 通义千问配置（生产环境）
+  dashscope:
+    api-key: ${DASHSCOPE_API_KEY}
+    model: qwen-plus  # 生产环境使用更强大的模型
+  
+  # OpenAI 配置（备选）
+  openai:
+    api-key: ${OPENAI_API_KEY}
+    model: gpt-4
+
+# 日志配置 - 生产环境只记录 WARN 及以上级别
+logging:
+  level:
+    root: WARN
+    com.dabai.easy_lowcode.ai: INFO
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
+    file: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
+  file:
+    name: logs/easy-lowcode-ai.log
+    max-size: 10MB
+    max-history: 30

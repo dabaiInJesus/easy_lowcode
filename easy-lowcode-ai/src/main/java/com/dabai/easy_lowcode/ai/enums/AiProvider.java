@@ -36,7 +36,22 @@ public enum AiProvider {
     /**
      * Moonshot (Kimi)
      */
-    MOONSHOT("moonshot", "Moonshot");
+    MOONSHOT("moonshot", "Moonshot"),
+    
+    /**
+     * Ollama
+     */
+    OLLAMA("ollama", "Ollama"),
+    
+    /**
+     * DeepSeek
+     */
+    DEEPSEEK("deepseek", "DeepSeek"),
+    
+    /**
+     * Minimax
+     */
+    MINIMAX("minimax", "Minimax");
     
     private final String code;
     private final String name;

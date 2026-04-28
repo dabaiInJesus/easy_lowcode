@@ -49,7 +49,7 @@ public class OpenAiServiceImpl implements AiService {
             
             // 调用 OpenAI
             var response = chatModel.call(prompt);
-            String content = response.getResult().getOutput().getContent();
+            String content = response.getResult().getOutput().getText();
             
             // 构建响应
             ChatResponse chatResponse = new ChatResponse();

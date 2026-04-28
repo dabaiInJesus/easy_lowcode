@@ -1,35 +1,36 @@
 package com.dabai.easy_lowcode.ai.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
-import com.dabai.easy_lowcode.ai.dto.ChatRequest;
-import com.dabai.easy_lowcode.ai.dto.ChatResponse;
-import com.dabai.easy_lowcode.ai.entity.AiAgent;
+import java.util.List;
+import java.util.Map;
 
 /**
- * AI 智能体服务接口
+ * AI Agent 服务接口
  */
-public interface AiAgentService extends IService<AiAgent> {
+public interface AiAgentService {
     
     /**
-     * 执行智能体对话
+     * 执行 Agent 任务
      * 
-     * @param agentCode 智能体编码
-     * @param request 聊天请求
-     * @return 聊天响应
+     * @param agentName Agent 名称
+     * @param task 任务描述
+     * @return 执行结果
      */
-    ChatResponse executeAgent(String agentCode, ChatRequest request);
+    String executeAgent(String agentName, String task);
     
     /**
-     * 发布智能体
+     * 获取所有可用的 Agent
      * 
-     * @param agentId 智能体ID
+     * @return Agent 列表
      */
-    void publishAgent(Long agentId);
+    List<Map<String, Object>> listAgents();
     
     /**
-     * 增加使用次数
+     * 创建自定义 Agent
      * 
-     * @param agentId 智能体ID
+     * @param name Agent 名称
+     * @param description Agent 描述
+     * @param instructions Agent 指令
+     * @return Agent ID
      */
-    void incrementUsageCount(Long agentId);
+    String createAgent(String name, String description, String instructions);
 }

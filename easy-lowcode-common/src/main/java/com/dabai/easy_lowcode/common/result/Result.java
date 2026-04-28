@@ -54,6 +54,10 @@ public class Result<T> implements Serializable {
         return new Result<>(200, "操作成功", data);
     }
     
+    public static <T> Result<T> success(String message) {
+        return new Result<>(200, message, null);
+    }
+    
     public static <T> Result<T> success(String message, T data) {
         return new Result<>(200, message, data);
     }

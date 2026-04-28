@@ -32,6 +32,21 @@ public class AiProperties {
      */
     private WenxinConfig wenxin = new WenxinConfig();
     
+    /**
+     * Ollama 配置
+     */
+    private OllamaConfig ollama = new OllamaConfig();
+    
+    /**
+     * DeepSeek 配置
+     */
+    private DeepSeekConfig deepseek = new DeepSeekConfig();
+    
+    /**
+     * Minimax 配置
+     */
+    private MinimaxConfig minimax = new MinimaxConfig();
+    
     @Data
     public static class OpenAiConfig {
         private String apiKey;
@@ -50,5 +65,25 @@ public class AiProperties {
         private String apiKey;
         private String secretKey;
         private String model = "eb-instant";
+    }
+    
+    @Data
+    public static class OllamaConfig {
+        private String baseUrl = "http://localhost:11434";
+        private String model = "llama2";
+    }
+    
+    @Data
+    public static class DeepSeekConfig {
+        private String apiKey;
+        private String baseUrl = "https://api.deepseek.com/v1";
+        private String model = "deepseek-chat";
+    }
+    
+    @Data
+    public static class MinimaxConfig {
+        private String apiKey;
+        private String baseUrl = "https://api.minimax.chat/v1";
+        private String model = "abab6-chat";
     }
 }

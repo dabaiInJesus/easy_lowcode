@@ -1,0 +1,17 @@
+# 开发环境配置
+
+# AI 配置 - 开发环境使用 Ollama（无需 API Key）
+ai:
+  provider:
+    default: ollama
+  
+  ollama:
+    base-url: http://localhost:11434
+    model: llama2
+
+# 日志配置 - 开发环境启用 DEBUG 级别
+logging:
+  level:
+    root: INFO
+    com.dabai.easy_lowcode.ai: DEBUG
+    org.springframework.ai: DEBUG

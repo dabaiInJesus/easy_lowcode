@@ -48,6 +48,12 @@ public class AiServiceFactory {
                 return service;
             } else if (provider == AiProvider.DASHSCOPE && className.contains("dashscope")) {
                 return service;
+            } else if (provider == AiProvider.OLLAMA && className.contains("ollama")) {
+                return service;
+            } else if (provider == AiProvider.DEEPSEEK && className.contains("deepseek")) {
+                return service;
+            } else if (provider == AiProvider.MINIMAX && className.contains("minimax")) {
+                return service;
             }
             // 可以继续添加其他厂商的判断逻辑
         }
