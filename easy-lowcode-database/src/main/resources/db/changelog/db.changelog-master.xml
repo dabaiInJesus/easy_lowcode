@@ -9,5 +9,9 @@
     <include file="db/changelog/001-init-schema.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/002-init-data.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/003-ai-agent-schema.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/004-add-real-name-field.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/005-update-admin-password.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/006-create-collector-tables.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/007-create-sys-resource-table.xml" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- 系统资源表 -->
+    <changeSet id="007-create-sys-resource-table" author="dabai">
+        <createTable tableName="sys_resource" remarks="系统资源表">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="resource_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="resource_code" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="resource_type" type="VARCHAR(20)" defaultValue="menu">
+                <constraints nullable="false"/>
+            </column>
+            <column name="parent_id" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="path" type="VARCHAR(200)"/>
+            <column name="component" type="VARCHAR(200)"/>
+            <column name="permission" type="VARCHAR(100)"/>
+            <column name="icon" type="VARCHAR(100)"/>
+            <column name="sort_order" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="SMALLINT" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="create_by" type="BIGINT"/>
+            <column name="update_by" type="BIGINT"/>
+            <column name="deleted" type="SMALLINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_resource_code" tableName="sys_resource">
+            <column name="resource_code"/>
+        </createIndex>
+        
+        <createIndex indexName="idx_resource_parent" tableName="sys_resource">
+            <column name="parent_id"/>
+        </createIndex>
+
+        <addUniqueConstraint columnNames="resource_code" constraintName="uk_resource_code" tableName="sys_resource"/>
+        
+        <comment>系统资源表，用于管理菜单、按钮、API等资源</comment>
+    </changeSet>
+
+    <!-- 插入默认资源数据 -->
+    <changeSet id="007-insert-default-resources" author="dabai">
+        <!-- 资源配置顶级菜单 -->
+        <insert tableName="sys_resource">
+            <column name="resource_name" value="资源配置"/>
+            <column name="resource_code" value="resource_config"/>
+            <column name="resource_type" value="menu"/>
+            <column name="parent_id" valueNumeric="0"/>
+            <column name="path" value="/resource"/>
+            <column name="component" value="Layout"/>
+            <column name="icon" value="database"/>
+            <column name="sort_order" valueNumeric="2"/>
+            <column name="status" valueNumeric="1"/>
+        </insert>
+        
+        <!-- 数据源配置子菜单 -->
+        <insert tableName="sys_resource">
+            <column name="resource_name" value="数据源配置"/>
+            <column name="resource_code" value="datasource_config"/>
+            <column name="resource_type" value="menu"/>
+            <column name="parent_id" valueNumeric="7"/>
+            <column name="path" value="/resource/datasource"/>
+            <column name="component" value="resource/datasource/index"/>
+            <column name="permission" value="resource:datasource:list"/>
+            <column name="icon" value="connection"/>
+            <column name="sort_order" valueNumeric="1"/>
+            <column name="status" valueNumeric="1"/>
+        </insert>
+        
+        <!-- 表资源注册子菜单 -->
+        <insert tableName="sys_resource">
+            <column name="resource_name" value="表资源注册"/>
+            <column name="resource_code" value="table_resource"/>
+            <column name="resource_type" value="menu"/>
+            <column name="parent_id" valueNumeric="7"/>
+            <column name="path" value="/resource/table"/>
+            <column name="component" value="resource/table/index"/>
+            <column name="permission" value="resource:table:list"/>
+            <column name="icon" value="table"/>
+            <column name="sort_order" valueNumeric="2"/>
+            <column name="status" valueNumeric="1"/>
+        </insert>
+        
+        <!-- 接口管理子菜单 -->
+        <insert tableName="sys_resource">
+            <column name="resource_name" value="接口管理"/>
+            <column name="resource_code" value="api_management"/>
+            <column name="resource_type" value="menu"/>
+            <column name="parent_id" valueNumeric="7"/>
+            <column name="path" value="/resource/api"/>
+            <column name="component" value="resource/api/index"/>
+            <column name="permission" value="resource:api:list"/>
+            <column name="icon" value="api"/>
+            <column name="sort_order" valueNumeric="3"/>
+            <column name="status" valueNumeric="1"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

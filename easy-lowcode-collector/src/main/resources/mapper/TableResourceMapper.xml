@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dabai.easy_lowcode.collector.mapper.TableResourceMapper">
+
+    <!-- 根据资源编码查询表资源 -->
+    <select id="selectByResourceCode" resultType="com.dabai.easy_lowcode.collector.entity.TableResource">
+        SELECT * FROM collector_table_resource 
+        WHERE resource_code = #{resourceCode} 
+        AND deleted = 0
+        LIMIT 1
+    </select>
+
+</mapper>

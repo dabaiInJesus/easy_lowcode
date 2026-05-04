@@ -26,6 +26,13 @@ public interface SysResourceService extends IService<SysResource> {
     List<SysResource> getAllMenus();
     
     /**
+     * 获取所有资源树
+     * 
+     * @return 资源树
+     */
+    List<SysResource> getAllResourceTree();
+    
+    /**
      * 根据角色ID获取资源
      * 
      * @param roleId 角色ID

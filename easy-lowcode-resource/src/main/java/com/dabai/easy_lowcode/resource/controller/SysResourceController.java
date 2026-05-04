@@ -6,12 +6,14 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dabai.easy_lowcode.common.result.PageResult;
 import com.dabai.easy_lowcode.common.result.Result;
 import com.dabai.easy_lowcode.resource.entity.SysResource;
+import com.dabai.easy_lowcode.resource.service.DynamicDataService;
 import com.dabai.easy_lowcode.resource.service.SysResourceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 资源管理控制器
@@ -23,6 +25,7 @@ import java.util.List;
 public class SysResourceController {
     
     private final SysResourceService resourceService;
+    private final DynamicDataService dynamicDataService;
     
     /**
      * 分页查询资源列表
@@ -71,6 +74,15 @@ public class SysResourceController {
     }
     
     /**
+     * 获取资源树（用于前端菜单展示）
+     */
+    @GetMapping("/tree")
+    public Result<List<SysResource>> getResourceTree() {
+        List<SysResource> tree = resourceService.getAllResourceTree();
+        return Result.success(tree);
+    }
+    
+    /**
      * 获取资源详情
      */
     @GetMapping("/{id}")
@@ -113,5 +125,22 @@ public class SysResourceController {
         
         resourceService.removeById(id);
         return Result.success("删除成功");
+    }
+    
+    /**
+     * 根据资源编码查询数据（动态API）
+     */
+    @GetMapping("/data/{resourceCode}")
+    public Result<List<Map<String, Object>>> getDataByResourceCode(
+            @PathVariable String resourceCode,
+            @RequestParam(required = false) Map<String, Object> params) {
+        log.info("查询资源数据: {}, 参数: {}", resourceCode, params);
+        
+        if (params == null) {
+            params = new java.util.HashMap<>();
+        }
+        
+        List<Map<String, Object>> data = dynamicDataService.queryDataByResourceCode(resourceCode, params);
+        return Result.success(data);
     }
 }

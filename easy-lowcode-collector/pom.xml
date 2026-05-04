@@ -39,11 +39,55 @@
             <artifactId>mssql-jdbc</artifactId>
         </dependency>
 
-        <!-- 达梦数据库驱动（需要根据实际情况添加） -->
+        <!-- 国产数据库驱动（根据实际需要启用） -->
+        
+        <!-- 达梦数据库驱动 -->
         <!-- <dependency>
             <groupId>com.dameng</groupId>
             <artifactId>DmJdbcDriver18</artifactId>
             <version>8.1.2.141</version>
+        </dependency> -->
+
+        <!-- 人大金仓驱动 -->
+        <!-- <dependency>
+            <groupId>com.kingbase</groupId>
+            <artifactId>kingbase8</artifactId>
+            <version>8.6.0</version>
+        </dependency> -->
+
+        <!-- GBase驱动 -->
+        <!-- <dependency>
+            <groupId>com.gbase</groupId>
+            <artifactId>gbase-connector-java</artifactId>
+            <version>8.3.81.53</version>
+        </dependency> -->
+
+        <!-- OceanBase驱动 -->
+        <!-- <dependency>
+            <groupId>com.oceanbase</groupId>
+            <artifactId>oceanbase-client</artifactId>
+            <version>2.4.0</version>
+        </dependency> -->
+
+        <!-- openGauss驱动 -->
+        <!-- <dependency>
+            <groupId>org.opengauss</groupId>
+            <artifactId>opengauss-jdbc</artifactId>
+            <version>3.0.0</version>
+        </dependency> -->
+
+        <!-- GaussDB驱动 -->
+        <!-- <dependency>
+            <groupId>com.huawei.gaussdb</groupId>
+            <artifactId>gaussdb-jdbc</artifactId>
+            <version>1.0.0</version>
+        </dependency> -->
+
+        <!-- 瀚高数据库驱动 -->
+        <!-- <dependency>
+            <groupId>com.highgo</groupId>
+            <artifactId>HighGoDB-JDBC</artifactId>
+            <version>6.2.3</version>
         </dependency> -->
 
         <!-- RocketMQ -->

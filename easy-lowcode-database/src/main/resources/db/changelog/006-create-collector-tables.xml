@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- 数据源配置表 -->
+    <changeSet id="006-create-datasource-table" author="dabai">
+        <createTable tableName="collector_datasource" remarks="数据源配置表">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="code" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="db_type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="url" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="username" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="password" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="driver_class_name" type="VARCHAR(200)"/>
+            <column name="status" type="SMALLINT" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="remark" type="VARCHAR(500)"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="create_by" type="BIGINT"/>
+            <column name="update_by" type="BIGINT"/>
+            <column name="deleted" type="SMALLINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_ds_code" tableName="collector_datasource">
+            <column name="code"/>
+        </createIndex>
+
+        <addUniqueConstraint columnNames="code" constraintName="uk_ds_code" tableName="collector_datasource"/>
+        
+        <comment>数据源配置表，用于管理多种数据库连接</comment>
+    </changeSet>
+
+    <!-- 表资源注册表 -->
+    <changeSet id="006-create-table-resource" author="dabai">
+        <createTable tableName="collector_table_resource" remarks="表资源注册表">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="datasource_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="table_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="table_comment" type="VARCHAR(200)"/>
+            <column name="resource_code" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="api_path" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="methods" type="VARCHAR(50)" defaultValue="GET,POST,PUT,DELETE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="SMALLINT" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="config_json" type="TEXT"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="create_by" type="BIGINT"/>
+            <column name="update_by" type="BIGINT"/>
+            <column name="deleted" type="SMALLINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_tr_datasource" tableName="collector_table_resource">
+            <column name="datasource_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_tr_resource_code" tableName="collector_table_resource">
+            <column name="resource_code"/>
+        </createIndex>
+
+        <addUniqueConstraint columnNames="resource_code" constraintName="uk_tr_resource_code" tableName="collector_table_resource"/>
+        
+        <comment>表资源注册表，将数据库表注册为API接口</comment>
+    </changeSet>
+
+    <!-- 插入默认数据源（PostgreSQL） -->
+    <changeSet id="006-insert-default-datasource" author="dabai">
+        <insert tableName="collector_datasource">
+            <column name="name" value="主数据库"/>
+            <column name="code" value="main_db"/>
+            <column name="db_type" value="postgresql"/>
+            <column name="url" value="jdbc:postgresql://localhost:5432/easy_lowcode"/>
+            <column name="username" value="postgres"/>
+            <column name="password" value="thinker"/>
+            <column name="driver_class_name" value="org.postgresql.Driver"/>
+            <column name="status" valueNumeric="1"/>
+            <column name="remark" value="系统主数据库"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

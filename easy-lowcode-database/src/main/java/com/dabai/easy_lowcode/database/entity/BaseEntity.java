@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -50,6 +51,7 @@ public class BaseEntity implements Serializable {
     /**
      * 删除标志(0-未删除 1-已删除)
      */
+    @TableLogic
     @TableField(value = "deleted")
     private Integer deleted;
 }

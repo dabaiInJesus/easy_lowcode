@@ -44,7 +44,22 @@ public class SysResourceServiceImpl extends ServiceImpl<SysResourceMapper, SysRe
         wrapper.eq(SysResource::getStatus, 1);
         wrapper.orderByAsc(SysResource::getSortOrder);
         
-        return this.list(wrapper);
+        List<SysResource> menus = this.list(wrapper);
+        // 构建树形结构
+        return buildResourceTree(menus, 0L);
+    }
+    
+    /**
+     * 获取所有资源树
+     */
+    @Override
+    public List<SysResource> getAllResourceTree() {
+        LambdaQueryWrapper<SysResource> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysResource::getStatus, 1);
+        wrapper.orderByAsc(SysResource::getSortOrder);
+        
+        List<SysResource> allResources = this.list(wrapper);
+        return buildResourceTree(allResources, 0L);
     }
     
     @Override
@@ -63,7 +78,9 @@ public class SysResourceServiceImpl extends ServiceImpl<SysResourceMapper, SysRe
             .peek(resource -> {
                 // 递归设置子节点
                 List<SysResource> children = buildResourceTree(allResources, resource.getId());
-                // 注意：SysResource 需要添加 children 字段
+                if (!children.isEmpty()) {
+                    resource.setChildren(children);
+                }
             })
             .collect(Collectors.toList());
     }

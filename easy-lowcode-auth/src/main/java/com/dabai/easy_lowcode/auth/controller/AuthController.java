@@ -25,6 +25,9 @@ import java.util.Map;
 public class AuthController {
     
     private final SysUserService userService;
+    private final com.dabai.easy_lowcode.auth.mapper.SysRoleMapper roleMapper;
+    private final com.dabai.easy_lowcode.auth.mapper.SysMenuMapper menuMapper;
+    private final com.dabai.easy_lowcode.auth.mapper.SysDeptMapper deptMapper;
     
     /**
      * 用户登录
@@ -140,9 +143,48 @@ public class AuthController {
         String newPassword = params.get("newPassword");
         SysUser user = new SysUser();
         user.setId(id);
-        user.setPassword(EncryptUtil.md5(newPassword));
+        // 使用 BCrypt 加密密码
+        user.setPassword(EncryptUtil.bcrypt(newPassword));
         userService.updateById(user);
         return Result.success("密码重置成功");
+    }
+    
+    /**
+     * 临时接口：生成BCrypt密码哈希（仅用于测试）
+     */
+    @GetMapping("/generate-bcrypt")
+    public Result<Map<String, String>> generateBcrypt(@RequestParam String password) {
+        String bcryptHash = EncryptUtil.bcrypt(password);
+        Map<String, String> data = new HashMap<>();
+        data.put("password", password);
+        data.put("bcryptHash", bcryptHash);
+        return Result.success(data);
+    }
+    
+    /**
+     * 临时接口：修复admin用户密码为BCrypt格式
+     */
+    @PostMapping("/fix-admin-password")
+    public Result<Map<String, String>> fixAdminPassword() {
+        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysUser::getUsername, "admin");
+        SysUser admin = userService.getOne(wrapper);
+        
+        if (admin != null) {
+            // 生成 BCrypt 密码
+            String bcryptPassword = EncryptUtil.bcrypt("admin123");
+            admin.setPassword(bcryptPassword);
+            userService.updateById(admin);
+            
+            Map<String, String> data = new HashMap<>();
+            data.put("message", "密码已修复");
+            data.put("username", "admin");
+            data.put("newPassword", "admin123");
+            data.put("bcryptHash", bcryptPassword);
+            return Result.success(data);
+        } else {
+            return Result.error("未找到 admin 用户");
+        }
     }
     
     /**
@@ -160,7 +202,7 @@ public class AuthController {
             return Result.error("原密码错误");
         }
         
-        user.setPassword(EncryptUtil.md5(newPassword));
+        user.setPassword(EncryptUtil.bcrypt(newPassword));
         userService.updateById(user);
         
         return Result.success("密码修改成功");
@@ -173,5 +215,103 @@ public class AuthController {
     public static class LoginRequest {
         private String username;
         private String password;
+    }
+    
+    /**
+     * 获取统计数据
+     */
+    @GetMapping("/statistics")
+    public Result<Map<String, Long>> getStatistics() {
+        Map<String, Long> statistics = new HashMap<>();
+        
+        // 用户总数
+        long userCount = userService.count();
+        statistics.put("userCount", userCount);
+        
+        // 角色总数
+        long roleCount = roleMapper.selectCount(null);
+        statistics.put("roleCount", roleCount);
+        
+        // 菜单总数
+        long menuCount = menuMapper.selectCount(null);
+        statistics.put("menuCount", menuCount);
+        
+        // 部门总数
+        long deptCount = deptMapper.selectCount(null);
+        statistics.put("deptCount", deptCount);
+        
+        return Result.success(statistics);
+    }
+    
+    /**
+     * 获取菜单列表
+     */
+    @GetMapping("/menu/list")
+    public Result<List<com.dabai.easy_lowcode.auth.entity.SysMenu>> getMenuList() {
+        List<com.dabai.easy_lowcode.auth.entity.SysMenu> menuList = menuMapper.selectList(null);
+        return Result.success(menuList);
+    }
+    
+    /**
+     * 创建菜单
+     */
+    @PostMapping("/menu")
+    public Result<Void> createMenu(@RequestBody com.dabai.easy_lowcode.auth.entity.SysMenu menu) {
+        menuMapper.insert(menu);
+        return Result.success("创建成功");
+    }
+    
+    /**
+     * 更新菜单
+     */
+    @PutMapping("/menu")
+    public Result<Void> updateMenu(@RequestBody com.dabai.easy_lowcode.auth.entity.SysMenu menu) {
+        menuMapper.updateById(menu);
+        return Result.success("更新成功");
+    }
+    
+    /**
+     * 删除菜单
+     */
+    @DeleteMapping("/menu/{id}")
+    public Result<Void> deleteMenu(@PathVariable Long id) {
+        menuMapper.deleteById(id);
+        return Result.success("删除成功");
+    }
+    
+    /**
+     * 获取部门列表
+     */
+    @GetMapping("/dept/list")
+    public Result<List<com.dabai.easy_lowcode.auth.entity.SysDept>> getDeptList() {
+        List<com.dabai.easy_lowcode.auth.entity.SysDept> deptList = deptMapper.selectList(null);
+        return Result.success(deptList);
+    }
+    
+    /**
+     * 创建部门
+     */
+    @PostMapping("/dept")
+    public Result<Void> createDept(@RequestBody com.dabai.easy_lowcode.auth.entity.SysDept dept) {
+        deptMapper.insert(dept);
+        return Result.success("创建成功");
+    }
+    
+    /**
+     * 更新部门
+     */
+    @PutMapping("/dept")
+    public Result<Void> updateDept(@RequestBody com.dabai.easy_lowcode.auth.entity.SysDept dept) {
+        deptMapper.updateById(dept);
+        return Result.success("更新成功");
+    }
+    
+    /**
+     * 删除部门
+     */
+    @DeleteMapping("/dept/{id}")
+    public Result<Void> deleteDept(@PathVariable Long id) {
+        deptMapper.deleteById(id);
+        return Result.success("删除成功");
     }
 }

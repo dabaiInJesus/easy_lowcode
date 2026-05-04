@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 /**
  * 低代码平台启动类
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.dabai.easy_lowcode"})
 @MapperScan("com.dabai.easy_lowcode.**.mapper")
 public class EasyLowcodeApplication {
 

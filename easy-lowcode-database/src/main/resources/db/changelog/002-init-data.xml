@@ -27,6 +27,15 @@
             <column name="status" valueNumeric="1"/>
             <column name="sort" valueNumeric="1"/>
         </insert>
+        
+        <insert tableName="sys_role">
+            <column name="id" valueNumeric="2"/>
+            <column name="role_name" value="普通用户"/>
+            <column name="role_code" value="user"/>
+            <column name="description" value="普通用户"/>
+            <column name="status" valueNumeric="1"/>
+            <column name="sort" valueNumeric="2"/>
+        </insert>
     </changeSet>
 
     <!-- 插入默认菜单 -->

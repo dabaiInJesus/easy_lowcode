@@ -26,6 +26,12 @@
             <artifactId>easy-lowcode-database</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.dabai</groupId>
+            <artifactId>easy-lowcode-collector</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Sa-Token -->
         <dependency>
             <groupId>cn.dev33</groupId>

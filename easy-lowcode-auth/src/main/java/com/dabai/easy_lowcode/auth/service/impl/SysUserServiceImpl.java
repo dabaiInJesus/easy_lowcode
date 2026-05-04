@@ -7,6 +7,7 @@ import com.dabai.easy_lowcode.auth.entity.SysUser;
 import com.dabai.easy_lowcode.auth.mapper.SysUserMapper;
 import com.dabai.easy_lowcode.auth.service.SysUserService;
 import com.dabai.easy_lowcode.common.exception.BusinessException;
+import com.dabai.easy_lowcode.common.util.EncryptUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,8 +31,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             throw new BusinessException("用户名或密码错误");
         }
         
-        // TODO: 验证密码（实际应该使用加密后的密码比对）
-        if (!password.equals(user.getPassword())) {
+        // 验证密码（使用 BCrypt 比对）
+        if (!EncryptUtil.verifyPassword(password, user.getPassword())) {
             throw new BusinessException("用户名或密码错误");
         }
         

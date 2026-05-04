@@ -1,9 +1,12 @@
 package com.dabai.easy_lowcode.resource.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.dabai.easy_lowcode.database.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.util.List;
 
 /**
  * 系统资源实体
@@ -62,4 +65,10 @@ public class SysResource extends BaseEntity {
      * 状态 (0-禁用 1-启用)
      */
     private Integer status = 1;
+    
+    /**
+     * 子资源列表（非数据库字段）
+     */
+    @TableField(exist = false)
+    private List<SysResource> children;
 }
