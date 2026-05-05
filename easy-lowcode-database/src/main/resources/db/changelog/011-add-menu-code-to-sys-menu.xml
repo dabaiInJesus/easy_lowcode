@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="011-add-menu-code-to-sys-menu" author="system">
+        <!-- 添加menu_code字段 -->
+        <addColumn tableName="sys_menu">
+            <column name="menu_code" type="VARCHAR(50)" remarks="菜单编码">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        
+        <!-- 为现有数据填充menu_code -->
+        <sql>
+            -- 系统管理目录
+            UPDATE sys_menu SET menu_code = 'system' WHERE menu_name = '系统管理' AND menu_type = 1;
+            -- 资源配置目录
+            UPDATE sys_menu SET menu_code = 'resource' WHERE menu_name = '资源配置' AND menu_type = 1;
+            -- 其他菜单根据名称生成
+            UPDATE sys_menu SET menu_code = LOWER(REPLACE(menu_name, ' ', '_')) WHERE menu_code IS NULL;
+        </sql>
+        
+        <!-- 添加唯一约束 -->
+        <addUniqueConstraint tableName="sys_menu" columnNames="menu_code" constraintName="uk_menu_code"/>
+        
+        <!-- 添加索引 -->
+        <createIndex indexName="idx_menu_code" tableName="sys_menu">
+            <column name="menu_code"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

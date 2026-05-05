@@ -75,7 +75,7 @@ export function deleteTableResource(id: number): Promise<ApiResponse<void>> {
 /**
  * 生成API接口
  */
-export function generateApi(id: number): Promise<ApiResponse<void>> {
+export function generateApi(id: number | string): Promise<ApiResponse<void>> {
   return request({
     url: `/collector/table-resource/${id}/generate-api`,
     method: 'post',

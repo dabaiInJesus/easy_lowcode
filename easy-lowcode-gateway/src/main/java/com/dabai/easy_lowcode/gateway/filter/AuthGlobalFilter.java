@@ -40,6 +40,7 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
         
         // 检查是否在白名单中
         if (isWhiteList(path)) {
+
             return chain.filter(exchange);
         }
         

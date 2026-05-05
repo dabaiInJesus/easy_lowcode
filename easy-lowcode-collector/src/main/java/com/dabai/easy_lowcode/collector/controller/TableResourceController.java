@@ -3,6 +3,7 @@ package com.dabai.easy_lowcode.collector.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dabai.easy_lowcode.collector.entity.TableResource;
+import com.dabai.easy_lowcode.collector.mapper.TableResourceMapper;
 import com.dabai.easy_lowcode.collector.service.DataPreviewService;
 import com.dabai.easy_lowcode.collector.service.TableResourceService;
 import com.dabai.easy_lowcode.common.result.PageResult;
@@ -25,6 +26,7 @@ public class TableResourceController {
     
     private final TableResourceService tableResourceService;
     private final DataPreviewService dataPreviewService;
+    private final TableResourceMapper tableResourceMapper;
     
     /**
      * 分页查询表资源列表
@@ -48,9 +50,8 @@ public class TableResourceController {
             }
             wrapper.orderByDesc(TableResource::getCreateTime);
             
-            Page<TableResource> page = tableResourceService.page(new Page<>(current, size), wrapper);
-            
-            // TODO: 如果需要填充数据源名称，可以在这里注入 DataSourceConfigService 并批量查询
+            // 使用带数据源名称的page方法
+            Page<TableResource> page = ((com.dabai.easy_lowcode.collector.service.impl.TableResourceServiceImpl) tableResourceService).pageWithDatasourceName(new Page<>(current, size), wrapper);
             
             PageResult<TableResource> result = new PageResult<>(
                 page.getTotal(),
@@ -77,7 +78,8 @@ public class TableResourceController {
         }
         wrapper.orderByDesc(TableResource::getCreateTime);
         
-        List<TableResource> list = tableResourceService.list(wrapper);
+        // 使用带数据源名称的list方法
+        List<TableResource> list = ((com.dabai.easy_lowcode.collector.service.impl.TableResourceServiceImpl) tableResourceService).listWithDatasourceName(wrapper);
         return Result.success(list);
     }
     
@@ -98,22 +100,29 @@ public class TableResourceController {
      */
     @PostMapping
     public Result<Void> register(@RequestBody TableResource tableResource) {
+        log.info("收到注册请求: {}", tableResource);
+        
         // 参数验证
         if (tableResource.getDatasourceId() == null) {
+            log.warn("数据源ID为空");
             return Result.error("数据源ID不能为空");
         }
         if (tableResource.getTableName() == null || tableResource.getTableName().trim().isEmpty()) {
+            log.warn("表名为空");
             return Result.error("表名不能为空");
         }
         if (tableResource.getResourceCode() == null || tableResource.getResourceCode().trim().isEmpty()) {
+            log.warn("资源编码为空");
             return Result.error("资源编码不能为空");
         }
         if (tableResource.getApiPath() == null || tableResource.getApiPath().trim().isEmpty()) {
+            log.warn("API路径为空");
             return Result.error("API路径不能为空");
         }
         
         // 验证API路径格式
         if (!tableResource.getApiPath().startsWith("/")) {
+            log.warn("API路径格式错误: {}", tableResource.getApiPath());
             return Result.error("API路径必须以/开头");
         }
         
@@ -121,6 +130,7 @@ public class TableResourceController {
         LambdaQueryWrapper<TableResource> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(TableResource::getResourceCode, tableResource.getResourceCode());
         if (tableResourceService.count(wrapper) > 0) {
+            log.warn("资源编码已存在: {}", tableResource.getResourceCode());
             return Result.error("资源编码已存在: " + tableResource.getResourceCode());
         }
         
@@ -128,6 +138,7 @@ public class TableResourceController {
         wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(TableResource::getApiPath, tableResource.getApiPath());
         if (tableResourceService.count(wrapper) > 0) {
+            log.warn("API路径已存在: {}", tableResource.getApiPath());
             return Result.error("API路径已存在: " + tableResource.getApiPath());
         }
         
@@ -139,16 +150,18 @@ public class TableResourceController {
             tableResource.setStatus(1);
         }
         
+        log.info("开始调用Service注册表资源");
         try {
             boolean success = tableResourceService.registerTableResource(tableResource);
             if (success) {
                 log.info("注册表资源成功: {} -> {}", tableResource.getTableName(), tableResource.getResourceCode());
                 return Result.success("注册成功");
             } else {
+                log.error("Service返回失败");
                 return Result.error("注册失败");
             }
         } catch (Exception e) {
-            log.error("注册表资源失败", e);
+            log.error("注册表资源异常", e);
             return Result.error("注册失败: " + e.getMessage());
         }
     }
@@ -203,17 +216,39 @@ public class TableResourceController {
      */
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
+        log.info("收到删除请求，ID: {}", id);
+        
         TableResource resource = tableResourceService.getById(id);
         if (resource == null) {
+            log.warn("表资源不存在，ID: {}", id);
             return Result.error("表资源不存在");
         }
         
+        // 检查是否有关联的API
+        if (tableResourceService.hasRelatedApi(id)) {
+            log.warn("表资源 {} 有关联的API，无法删除", id);
+            return Result.error(
+                String.format("无法删除表资源「%s」\n该表已生成 API 接口（%s），请先在 API 管理中删除相关接口后再试",
+                    resource.getTableName(),
+                    resource.getApiPath()
+                )
+            );
+        }
+        
+        log.info("找到表资源: ID={}, 表名={}", id, resource.getTableName());
+        
         try {
-            tableResourceService.removeById(id);
-            log.info("删除表资源成功: {}", id);
-            return Result.success("删除成功");
+            // 物理删除：使用自定义Mapper方法
+            int count = tableResourceMapper.physicalDeleteById(id);
+            if (count > 0) {
+                log.info("物理删除表资源成功: {}, 表名: {}", id, resource.getTableName());
+                return Result.success("删除成功");
+            } else {
+                log.error("物理删除表资源失败，返回0: {}", id);
+                return Result.error("删除失败");
+            }
         } catch (Exception e) {
-            log.error("删除表资源失败", e);
+            log.error("物理删除表资源异常，ID: " + id, e);
             return Result.error("删除失败: " + e.getMessage());
         }
     }
@@ -223,10 +258,15 @@ public class TableResourceController {
      */
     @PostMapping("/{id}/generate-api")
     public Result<Void> generateApi(@PathVariable Long id) {
+        log.info("生成API接口，请求ID: {}", id);
+        
         TableResource resource = tableResourceService.getById(id);
         if (resource == null) {
+            log.warn("表资源不存在，ID: {}", id);
             return Result.error("表资源不存在");
         }
+        
+        log.info("找到表资源: ID={}, 表名={}, API路径={}", id, resource.getTableName(), resource.getApiPath());
         
         try {
             boolean success = tableResourceService.generateApi(id);
@@ -275,11 +315,12 @@ public class TableResourceController {
         }
         
         try {
-            tableResourceService.removeByIds(ids);
-            log.info("批量删除表资源成功，数量: {}", ids.size());
+            // 物理删除：使用自定义Mapper方法
+            int count = tableResourceMapper.physicalDeleteBatchIds(ids);
+            log.info("物理批量删除表资源成功，数量: {}", count);
             return Result.success("批量删除成功");
         } catch (Exception e) {
-            log.error("批量删除表资源失败", e);
+            log.error("物理批量删除表资源失败", e);
             return Result.error("批量删除失败: " + e.getMessage());
         }
     }

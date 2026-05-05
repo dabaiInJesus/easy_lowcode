@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <!-- 添加应用管理菜单权限 -->
+    <changeSet id="008-add-app-management-menu" author="dabai">
+        <!-- 检查菜单是否已存在，如果不存在则插入 -->
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <sqlCheck expectedResult="1">
+                    SELECT COUNT(*) FROM sys_menu WHERE id = 6
+                </sqlCheck>
+            </not>
+        </preConditions>
+        
+        <insert tableName="sys_menu">
+            <column name="id" valueNumeric="6"/>
+            <column name="parent_id" valueNumeric="1"/>
+            <column name="menu_name" value="应用管理"/>
+            <column name="menu_type" valueNumeric="2"/>
+            <column name="path" value="/system/app"/>
+            <column name="component" value="system/app/index"/>
+            <column name="perms" value="system:app:list"/>
+            <column name="icon" value="monitor"/>
+            <column name="sort" valueNumeric="5"/>
+            <column name="visible" valueNumeric="1"/>
+        </insert>
+        
+        <!-- 分配应用管理菜单给管理员角色 -->
+        <insert tableName="sys_role_menu">
+            <column name="role_id" valueNumeric="1"/>
+            <column name="menu_id" valueNumeric="6"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

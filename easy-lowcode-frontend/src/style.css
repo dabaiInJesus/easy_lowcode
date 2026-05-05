@@ -15,3 +15,45 @@ body {
   width: 100%;
   height: 100vh;
 }
+
+/* ========== 全局弹框样式配置 ========== */
+
+/* 防止弹框打开时页面出现滚动条 */
+.el-overlay {
+  overflow: hidden !important;
+}
+
+/* 弹框主体最大高度限制 */
+.el-dialog__body {
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  padding-right: 10px; /* 避免滚动条遮挡内容 */
+}
+
+/* 小屏幕适配 */
+@media (max-width: 768px) {
+  .el-dialog__body {
+    max-height: calc(100vh - 150px);
+  }
+}
+
+/* 弹框内容区域通用样式类 */
+.dialog-content {
+  max-height: 500px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+/* 大弹框内容区域 */
+.dialog-content-lg {
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+/* 小弹框内容区域 */
+.dialog-content-sm {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 10px;
+}

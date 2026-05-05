@@ -5,6 +5,13 @@
       <div class="logo">
         <span v-if="!isCollapse">低代码平台</span>
         <span v-else>LC</span>
+        <!-- 折叠按钮移到侧边栏右上角 -->
+        <div class="sidebar-toggle" @click="toggleCollapse">
+          <el-icon :size="16">
+            <DArrowLeft v-if="!isCollapse" />
+            <DArrowRight v-else />
+          </el-icon>
+        </div>
       </div>
       <el-menu
         :default-active="activeMenu"
@@ -44,6 +51,10 @@
             <el-icon><Key /></el-icon>
             <template #title>授权管理</template>
           </el-menu-item>
+          <el-menu-item index="/system/app">
+            <el-icon><Monitor /></el-icon>
+            <template #title>应用管理</template>
+          </el-menu-item>
         </el-sub-menu>
         
         <el-sub-menu index="resource">
@@ -59,6 +70,10 @@
             <el-icon><Document /></el-icon>
             <template #title>表资源注册</template>
           </el-menu-item>
+          <el-menu-item index="/resource/api">
+            <el-icon><Document /></el-icon>
+            <template #title>API管理</template>
+          </el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>
@@ -67,13 +82,6 @@
       <!-- 顶部导航栏 -->
       <el-header class="header">
         <div class="header-left">
-          <el-icon 
-            class="collapse-btn" 
-            @click="toggleCollapse"
-          >
-            <Fold v-if="!isCollapse" />
-            <Expand v-else />
-          </el-icon>
           <!-- 面包屑导航 -->
           <el-breadcrumb separator="/" class="breadcrumb">
             <el-breadcrumb-item 
@@ -124,11 +132,12 @@ import {
   Menu,
   OfficeBuilding,
   Key,
+  Monitor,
   Collection,
   Connection,
   Document,
-  Fold,
-  Expand,
+  DArrowLeft,
+  DArrowRight,
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -206,6 +215,30 @@ const handleCommand = async (command: string) => {
   font-size: 18px;
   font-weight: bold;
   background-color: #2b3a4c;
+  position: relative;
+}
+
+.sidebar-toggle {
+  position: absolute;
+  top: 18px;
+  right: 2px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #bfcbd9;
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  transition: all 0.3s;
+  z-index: 10;
+}
+
+.sidebar-toggle:hover {
+  color: #409EFF;
+  border-color: #409EFF;
+  background-color: rgba(64, 158, 255, 0.1);
 }
 
 .el-menu {

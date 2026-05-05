@@ -10,6 +10,11 @@ export interface ApiResponse<T = any> {
   data: T
 }
 
+// 扩展请求配置，添加静默错误选项
+interface CustomRequestConfig extends InternalAxiosRequestConfig {
+  silentError?: boolean // 是否静默错误（不显示错误提示）
+}
+
 // 创建 axios 实例
 const service: AxiosInstance = axios.create({
   baseURL: '/api',
@@ -18,7 +23,7 @@ const service: AxiosInstance = axios.create({
 
 // 请求拦截器
 service.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  (config: CustomRequestConfig) => {
     // 从 Pinia store 获取 token
     const userStore = useUserStore()
     if (userStore.token) {
@@ -39,9 +44,13 @@ service.interceptors.response.use(
     
     // 如果返回的状态码不是 200，则认为是错误
     if (res.code !== 200) {
-      ElMessage.error(res.message || '请求失败')
+      // 检查是否设置了静默错误
+      const config = response.config as CustomRequestConfig
+      if (!config.silentError) {
+        ElMessage.error(res.message || '请求失败')
+      }
       
-      // 401: 未授权，需要重新登录
+      // 401: 未授权，需要重新登录（总是显示）
       if (res.code === 401) {
         const userStore = useUserStore()
         userStore.clearUser()
@@ -56,7 +65,11 @@ service.interceptors.response.use(
   },
   (error) => {
     console.error('Response error:', error)
-    ElMessage.error(error.message || '网络错误')
+    // 检查是否设置了静默错误
+    const config = error.config as CustomRequestConfig
+    if (!config?.silentError) {
+      ElMessage.error(error.message || '网络错误')
+    }
     return Promise.reject(error)
   }
 )

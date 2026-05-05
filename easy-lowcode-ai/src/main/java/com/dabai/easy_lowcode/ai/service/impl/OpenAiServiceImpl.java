@@ -14,6 +14,7 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
@@ -22,11 +23,14 @@ import org.springframework.stereotype.Service;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @ConditionalOnProperty(name = "ai.provider.default", havingValue = "openai", matchIfMissing = true)
 public class OpenAiServiceImpl implements AiService {
     
     private final ChatModel chatModel;
+    
+    public OpenAiServiceImpl(@Qualifier("openAiChatModel") ChatModel chatModel) {
+        this.chatModel = chatModel;
+    }
     
     @Override
     public ChatResponse chat(ChatRequest request) {

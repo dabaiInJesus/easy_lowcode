@@ -32,18 +32,9 @@
             <el-option label="禁用" :value="0" />
           </el-select>
         </el-form-item>
-        <el-form-item label="视图">
-          <el-radio-group v-model="viewMode" size="small">
-            <el-radio-button value="table">列表</el-radio-button>
-            <el-radio-button value="catalog">目录</el-radio-button>
-          </el-radio-group>
-        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">查询</el-button>
           <el-button @click="handleReset">重置</el-button>
-          <el-button type="warning" @click="handleScanTables" :disabled="!searchForm.datasourceId">
-            扫描表
-          </el-button>
           <el-button type="success" @click="handleRegister">注册表资源</el-button>
         </el-form-item>
       </el-form>
@@ -51,35 +42,28 @@
 
     <!-- 数据表格 -->
     <el-card class="table-card">
-      <el-alert
-        v-if="isScanning"
-        title="扫描模式：显示数据源中的所有表（包括已注册和未注册的）"
-        type="info"
-        :closable="false"
-        style="margin-bottom: 15px"
-      />
       <el-table :data="tableData" border stripe v-loading="loading">
-        <el-table-column prop="id" label="ID" width="80" v-if="!isScanning" />
-        <el-table-column prop="datasourceName" label="数据源" min-width="150" v-if="!isScanning" />
+        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="datasourceName" label="数据源" min-width="150" />
         <el-table-column prop="tableName" label="表名" min-width="200" />
         <el-table-column prop="tableComment" label="表注释" min-width="250" show-overflow-tooltip />
-        <el-table-column prop="resourceCode" label="资源编码" min-width="150" v-if="!isScanning" />
-        <el-table-column prop="apiPath" label="API路径" min-width="200" show-overflow-tooltip v-if="!isScanning" />
-        <el-table-column prop="methods" label="支持方法" width="150" v-if="!isScanning">
+        <el-table-column prop="resourceCode" label="资源编码" min-width="150" />
+        <el-table-column prop="apiPath" label="API路径" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="methods" label="支持方法" width="150">
           <template #default="{ row }">
             <el-tag v-for="method in row.methods?.split(',')" :key="method" size="small" style="margin-right: 5px">
               {{ method }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="100" v-if="!isScanning">
+        <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'">
               {{ row.status === 1 ? '启用' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right" v-if="!isScanning">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
             <el-button size="small" type="primary" @click="handleGenerateApi(row)">
               生成API
@@ -88,84 +72,7 @@
             <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right" v-if="isScanning">
-          <template #default="{ row }">
-            <el-button size="small" type="success" @click="handleRegisterFromScan(row)">
-              注册
-            </el-button>
-          </template>
-        </el-table-column>
       </el-table>
-
-      <!-- 目录视图 -->
-      <div v-if="viewMode === 'catalog'" class="catalog-view">
-        <el-row :gutter="20">
-          <el-col
-            v-for="item in tableData"
-            :key="item.id"
-            :xs="24"
-            :sm="12"
-            :md="8"
-            :lg="6"
-          >
-            <el-card class="resource-card" shadow="hover">
-              <template #header>
-                <div class="card-header">
-                  <span class="table-name">{{ item.tableName }}</span>
-                  <el-tag :type="item.status === 1 ? 'success' : 'danger'" size="small">
-                    {{ item.status === 1 ? '启用' : '禁用' }}
-                  </el-tag>
-                </div>
-              </template>
-              <div class="card-body">
-                <div class="info-item">
-                  <span class="label">数据源：</span>
-                  <span class="value">{{ item.datasourceName }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="label">资源编码：</span>
-                  <span class="value">{{ item.resourceCode }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="label">API路径：</span>
-                  <el-tooltip :content="item.apiPath" placement="top">
-                    <span class="value api-path">{{ item.apiPath }}</span>
-                  </el-tooltip>
-                </div>
-                <div class="info-item" v-if="item.tableComment">
-                  <span class="label">表注释：</span>
-                  <el-tooltip :content="item.tableComment" placement="top">
-                    <span class="value">{{ item.tableComment }}</span>
-                  </el-tooltip>
-                </div>
-                <div class="info-item">
-                  <span class="label">支持方法：</span>
-                  <div class="methods">
-                    <el-tag
-                      v-for="method in item.methods?.split(',')"
-                      :key="method"
-                      size="small"
-                      type="info"
-                    >
-                      {{ method }}
-                    </el-tag>
-                  </div>
-                </div>
-              </div>
-              <template #footer>
-                <div class="card-footer">
-                  <el-button size="small" type="primary" @click="handleGenerateApi(item)">
-                    生成API
-                  </el-button>
-                  <el-button size="small" @click="handleEdit(item)">编辑</el-button>
-                  <el-button size="small" type="danger" @click="handleDelete(item)">删除</el-button>
-                </div>
-              </template>
-            </el-card>
-          </el-col>
-        </el-row>
-        <el-empty v-if="tableData.length === 0" description="暂无数据" />
-      </div>
 
       <!-- 分页 -->
       <el-pagination
@@ -185,16 +92,19 @@
       v-model="registerDialogVisible"
       title="注册表资源"
       width="900px"
+      top="8vh"
+      :close-on-click-modal="false"
       @close="handleRegisterDialogClose"
     >
-      <el-steps :active="currentStep" finish-status="success">
-        <el-step title="选择数据源" />
-        <el-step title="选择表" />
-        <el-step title="配置接口" />
-      </el-steps>
+      <div class="dialog-content">
+        <el-steps :active="currentStep" finish-status="success">
+          <el-step title="选择数据源" />
+          <el-step title="选择表" />
+          <el-step title="配置接口" />
+        </el-steps>
 
-      <!-- 步骤1：选择数据源 -->
-      <div v-if="currentStep === 0" class="step-content">
+        <!-- 步骤1：选择数据源 -->
+        <div v-if="currentStep === 0" class="step-content">
         <el-form label-width="120px">
           <el-form-item label="数据源">
             <el-select
@@ -222,19 +132,35 @@
           :closable="false"
           style="margin-bottom: 15px"
         />
+        <el-input
+          v-model="tableSearchKeyword"
+          placeholder="搜索表名或表注释"
+          clearable
+          prefix-icon="Search"
+          style="margin-bottom: 15px"
+        />
         <el-table
-          :data="tableList"
+          :data="filteredTableList"
           border
           stripe
-          max-height="400"
+          max-height="300"
           v-loading="tableListLoading"
           @row-click="handleTableSelect"
           highlight-current-row
         >
           <el-table-column type="index" width="50" />
           <el-table-column prop="tableName" label="表名" min-width="200" />
-          <el-table-column prop="tableComment" label="表注释" min-width="250" />
+          <el-table-column prop="tableComment" label="表注释" min-width="200" />
+          <el-table-column label="注册状态" width="100" align="center">
+            <template #default="{ row }">
+              <el-tag v-if="row.isRegistered" type="success" size="small">已注册</el-tag>
+              <el-tag v-else type="info" size="small">未注册</el-tag>
+            </template>
+          </el-table-column>
         </el-table>
+        <div v-if="filteredTableList.length === 0 && !tableListLoading" style="text-align: center; padding: 20px; color: #909399">
+          暂无匹配的表
+        </div>
       </div>
 
       <!-- 步骤3：配置接口 -->
@@ -280,7 +206,38 @@
               <el-radio :value="0">禁用</el-radio>
             </el-radio-group>
           </el-form-item>
+          
+          <!-- 字段配置 -->
+          <el-divider>字段查询配置</el-divider>
+          <el-form-item label="字段列表">
+            <el-table
+              :data="tableColumns"
+              border
+              stripe
+              max-height="300"
+              v-loading="columnsLoading"
+              size="small"
+            >
+              <el-table-column prop="columnName" label="字段名" min-width="150" />
+              <el-table-column prop="dataType" label="数据类型" width="120" />
+              <el-table-column prop="columnComment" label="字段注释" min-width="150" show-overflow-tooltip />
+              <el-table-column label="精确查询" width="100" align="center">
+                <template #default="{ row }">
+                  <el-checkbox v-model="row.exactQuery" />
+                </template>
+              </el-table-column>
+              <el-table-column label="模糊查询" width="100" align="center">
+                <template #default="{ row }">
+                  <el-checkbox v-model="row.fuzzyQuery" @change="handleFuzzyQueryChange(row)" />
+                </template>
+              </el-table-column>
+            </el-table>
+            <div class="form-tip">
+              勾选字段以支持对应的查询方式，默认主键支持精确查询
+            </div>
+          </el-form-item>
         </el-form>
+      </div>
       </div>
 
       <template #footer>
@@ -341,6 +298,94 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 生成API对话框 -->
+    <el-dialog
+      v-model="generateApiDialogVisible"
+      title="生成 API 接口"
+      width="900px"
+      top="8vh"
+      :close-on-click-modal="false"
+    >
+      <div class="dialog-content">
+        <el-alert
+          title="请确认以下 API 配置信息"
+          type="info"
+          :closable="false"
+          style="margin-bottom: 20px"
+        />
+        
+        <!-- 基本信息 -->
+        <el-descriptions title="基本信息" :column="2" border>
+          <el-descriptions-item label="表名">{{ generateApiData.tableName }}</el-descriptions-item>
+          <el-descriptions-item label="表注释">{{ generateApiData.tableComment || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="数据源">{{ generateApiData.datasourceName || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="资源编码">{{ generateApiData.resourceCode }}</el-descriptions-item>
+          <el-descriptions-item label="API路径" :span="2">{{ generateApiData.apiPath }}</el-descriptions-item>
+          <el-descriptions-item label="支持方法">
+            <el-tag v-for="method in generateApiData.methods?.split(',')" :key="method" size="small" style="margin-right: 5px">
+              {{ method }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="状态">
+            <el-tag :type="generateApiData.status === 1 ? 'success' : 'danger'">
+              {{ generateApiData.status === 1 ? '启用' : '禁用' }}
+            </el-tag>
+          </el-descriptions-item>
+        </el-descriptions>
+        
+        <!-- 字段配置 -->
+        <el-divider>查询字段配置</el-divider>
+        <div v-if="generateApiData.fieldConfig && generateApiData.fieldConfig.length > 0">
+          <el-table :data="generateApiData.fieldConfig" border stripe size="small">
+            <el-table-column prop="columnName" label="字段名" min-width="150" />
+            <el-table-column prop="dataType" label="数据类型" width="120" />
+            <el-table-column prop="columnComment" label="字段注释" min-width="150" show-overflow-tooltip />
+            <el-table-column label="精确查询" width="100" align="center">
+              <template #default="{ row }">
+                <el-tag v-if="row.exactQuery" type="success" size="small">是</el-tag>
+                <el-tag v-else type="info" size="small">否</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="模糊查询" width="100" align="center">
+              <template #default="{ row }">
+                <el-tag v-if="row.fuzzyQuery" type="success" size="small">是</el-tag>
+                <el-tag v-else type="info" size="small">否</el-tag>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+        <el-empty v-else description="未配置查询字段" :image-size="80" />
+        
+        <!-- API示例 -->
+        <el-divider>API 调用示例</el-divider>
+        <div class="api-example">
+          <div class="example-item">
+            <strong>GET 查询列表：</strong>
+            <code>{{ generateApiData.apiPath }}</code>
+          </div>
+          <div class="example-item">
+            <strong>GET 条件查询：</strong>
+            <code>{{ generateApiData.apiPath }}?page=1&size=10</code>
+          </div>
+          <div v-if="generateApiData.fieldConfig && generateApiData.fieldConfig.some((f: any) => f.exactQuery)" class="example-item">
+            <strong>精确查询示例：</strong>
+            <code>{{ generateApiData.apiPath }}?{{ generateApiData.fieldConfig.find((f: any) => f.exactQuery)?.columnName }}=value</code>
+          </div>
+          <div v-if="generateApiData.fieldConfig && generateApiData.fieldConfig.some((f: any) => f.fuzzyQuery)" class="example-item">
+            <strong>模糊查询示例：</strong>
+            <code>{{ generateApiData.apiPath }}?{{ generateApiData.fieldConfig.find((f: any) => f.fuzzyQuery)?.columnName }}=keyword</code>
+          </div>
+        </div>
+      </div>
+      
+      <template #footer>
+        <el-button @click="generateApiDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmGenerateApi" :loading="submitLoading">
+          确认生成
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -355,7 +400,7 @@ import {
   generateApi,
   type TableResource,
 } from '@/api/tableResource'
-import { getDataSourcePage, scanTables, type DataSourceConfig } from '@/api/datasource'
+import { getDataSourcePage, scanTables, getTableColumns, type DataSourceConfig } from '@/api/datasource'
 
 // 搜索表单
 const searchForm = reactive({
@@ -364,14 +409,9 @@ const searchForm = reactive({
   status: undefined as number | undefined,
 })
 
-// 视图模式：table（列表）或 catalog（目录）
-const viewMode = ref<'table' | 'catalog'>('table')
-
 // 表格数据
 const tableData = ref<TableResource[]>([])
 const loading = ref(false)
-const isScanning = ref(false) // 是否正在扫描模式
-const scannedTables = ref<any[]>([]) // 保存扫描到的所有表，用于前端过滤
 
 // 分页
 const pagination = reactive({
@@ -392,17 +432,20 @@ const tableListLoading = ref(false)
 const selectedTable = ref<any>(null)
 const registerFormRef = ref<FormInstance>()
 const submitLoading = ref(false)
+const tableSearchKeyword = ref('') // 表搜索关键词
+const tableColumns = ref<any[]>([]) // 表字段列表
+const columnsLoading = ref(false) // 字段加载状态
 
 const registerFormData = reactive<Partial<TableResource>>({
   tableName: '',
   tableComment: '',
   resourceCode: '',
   apiPath: '',
-  methods: 'GET,POST,PUT,DELETE',
+  methods: 'GET',
   status: 1,
 })
 
-const selectedMethods = ref<string[]>(['GET', 'POST', 'PUT', 'DELETE'])
+const selectedMethods = ref<string[]>(['GET'])
 
 const registerFormRules: FormRules = {
   resourceCode: [{ required: true, message: '请输入资源编码', trigger: 'blur' }],
@@ -419,6 +462,20 @@ const editFormRules: FormRules = {
   apiPath: [{ required: true, message: '请输入API路径', trigger: 'blur' }],
 }
 
+// 生成API对话框
+const generateApiDialogVisible = ref(false)
+const generateApiData = reactive<any>({
+  id: null,
+  tableName: '',
+  tableComment: '',
+  datasourceName: '',
+  resourceCode: '',
+  apiPath: '',
+  methods: '',
+  status: 1,
+  fieldConfig: [],
+})
+
 // 是否可以进入下一步
 const canNextStep = computed(() => {
   if (currentStep.value === 0) {
@@ -430,6 +487,20 @@ const canNextStep = computed(() => {
   return true
 })
 
+// 过滤后的表列表（支持模糊搜索）
+const filteredTableList = computed(() => {
+  if (!tableSearchKeyword.value) {
+    return tableList.value
+  }
+  
+  const keyword = tableSearchKeyword.value.toLowerCase()
+  return tableList.value.filter((table: any) => {
+    const tableName = table.tableName?.toLowerCase() || ''
+    const tableComment = table.tableComment?.toLowerCase() || ''
+    return tableName.includes(keyword) || tableComment.includes(keyword)
+  })
+})
+
 // 监听数据源变化，自动扫描表
 watch(selectedDatasourceId, async (newVal, oldVal) => {
   // 只在注册对话框打开且在第0步时才自动扫描
@@ -438,19 +509,14 @@ watch(selectedDatasourceId, async (newVal, oldVal) => {
   }
   
   if (!newVal) {
-    console.log('数据源ID清空')
     return
   }
-  
-  console.log('检测到数据源变化:', newVal)
   
   tableListLoading.value = true
   try {
     const res = await scanTables(newVal)
-    console.log('扫描结果:', res)
     // 响应拦截器已经解包，res 就是数组
     tableList.value = res || []
-    ElMessage.success(`扫描到 ${res?.length || 0} 个表`)
     
     // 自动进入下一步（选择表）
     if (tableList.value.length > 0) {
@@ -459,7 +525,6 @@ watch(selectedDatasourceId, async (newVal, oldVal) => {
       }, 500)
     }
   } catch (error) {
-    console.error('扫描表失败:', error)
     ElMessage.error('扫描表失败')
   } finally {
     tableListLoading.value = false
@@ -496,7 +561,7 @@ const loadData = async () => {
     }
     
     tableData.value = records
-    pagination.total = records.length
+    pagination.total = res.total
   } catch (error) {
     ElMessage.error('加载数据失败')
   } finally {
@@ -507,86 +572,11 @@ const loadData = async () => {
 // 搜索
 const handleSearch = () => {
   pagination.current = 1
-  
-  if (isScanning.value) {
-    // 扫描模式下，前端过滤
-    filterScannedTables()
-  } else {
-    // 正常模式，后端查询
-    loadData()
-  }
-}
-
-// 过滤扫描到的表（前端模糊搜索）
-const filterScannedTables = () => {
-  const keyword = searchForm.keyword?.toLowerCase() || ''
-  
-  if (!keyword) {
-    // 没有关键词，显示所有表
-    tableData.value = scannedTables.value
-  } else {
-    // 有关键词，过滤表名或表注释
-    tableData.value = scannedTables.value.filter((table: any) => {
-      const tableName = table.tableName?.toLowerCase() || ''
-      const tableComment = table.tableComment?.toLowerCase() || ''
-      return tableName.includes(keyword) || tableComment.includes(keyword)
-    })
-  }
-  
-  pagination.total = tableData.value.length
-}
-
-// 扫描表
-const handleScanTables = async () => {
-  if (!searchForm.datasourceId) {
-    ElMessage.warning('请先选择数据源')
-    return
-  }
-  
-  loading.value = true
-  isScanning.value = true
-  try {
-    const res = await scanTables(searchForm.datasourceId)
-    // 响应拦截器已经解包，res 就是数组
-    scannedTables.value = res || []
-    
-    // 应用过滤
-    filterScannedTables()
-    
-    ElMessage.success(`扫描到 ${scannedTables.value.length} 个表`)
-  } catch (error) {
-    console.error('扫描表失败:', error)
-    ElMessage.error('扫描表失败')
-  } finally {
-    loading.value = false
-  }
-}
-
-// 从扫描结果注册表
-const handleRegisterFromScan = (table: any) => {
-  // 打开注册对话框，并预填信息
-  registerDialogVisible.value = true
-  currentStep.value = 2 // 直接跳到第三步
-  selectedDatasourceId.value = searchForm.datasourceId
-  
-  // 生成资源编码：r_{数据源编码}_{表名}
-  const datasource = datasourceList.value.find(ds => ds.id === searchForm.datasourceId)
-  const dsCode = datasource?.code || 'db'
-  const tableName = table.tableName.toLowerCase()
-  const resourceCode = `r_${dsCode}_${tableName}`
-  
-  // 预填表单
-  registerFormData.tableName = table.tableName
-  registerFormData.tableComment = table.tableComment
-  registerFormData.resourceCode = resourceCode
-  registerFormData.apiPath = `/api/${dsCode}/${tableName}`
-  registerFormData.datasourceId = searchForm.datasourceId
+  loadData()
 }
 
 // 重置
 const handleReset = () => {
-  isScanning.value = false
-  scannedTables.value = []
   searchForm.datasourceId = undefined
   searchForm.keyword = ''
   searchForm.status = undefined
@@ -594,7 +584,9 @@ const handleReset = () => {
 }
 
 // 注册表资源
-const handleRegister = () => {
+const handleRegister = async () => {
+  // 确保列表数据是最新的
+  await loadData()
   registerDialogVisible.value = true
   currentStep.value = 0
 }
@@ -602,18 +594,33 @@ const handleRegister = () => {
 // 数据源变化
 const handleDatasourceChange = async () => {
   if (!selectedDatasourceId.value) {
-    console.log('未选择数据源')
     return
   }
   
-  console.log('开始扫描数据源 ID:', selectedDatasourceId.value)
   tableListLoading.value = true
   try {
     const res = await scanTables(selectedDatasourceId.value)
-    console.log('扫描结果:', res)
     // 响应拦截器已经解包，res 就是数组
-    tableList.value = res || []
-    ElMessage.success(`扫描到 ${res?.length || 0} 个表`)
+    const tables = res || []
+    
+    // 标记已注册的表（使用宽松比较，兼容字符串和数字类型）
+    const registeredTableNames = new Set(
+      tableData.value
+        .filter(item => String(item.datasourceId) === String(selectedDatasourceId.value))
+        .map(item => item.tableName)
+    )
+    
+    console.log('已注册的表名:', Array.from(registeredTableNames))
+    console.log('扫描到的表:', tables.map(t => t.tableName))
+    
+    tableList.value = tables.map(table => ({
+      ...table,
+      isRegistered: registeredTableNames.has(table.tableName),
+    }))
+    
+    console.log('标记后的表列表:', tableList.value.map(t => ({ name: t.tableName, registered: t.isRegistered })))
+    
+    ElMessage.success(`扫描到 ${tables.length} 个表`)
     
     // 自动进入下一步（选择表）
     if (tableList.value.length > 0) {
@@ -622,7 +629,6 @@ const handleDatasourceChange = async () => {
       }, 500)
     }
   } catch (error) {
-    console.error('扫描表失败:', error)
     ElMessage.error('扫描表失败')
   } finally {
     tableListLoading.value = false
@@ -634,8 +640,38 @@ const handleTableSelect = (row: any) => {
   selectedTable.value = row
 }
 
+// 处理模糊查询变化（互斥）
+const handleFuzzyQueryChange = (row: any) => {
+  // 如果勾选了模糊查询，自动取消精确查询
+  if (row.fuzzyQuery) {
+    row.exactQuery = false
+  }
+}
+
+// 加载表字段
+const loadTableColumns = async () => {
+  if (!selectedDatasourceId.value || !selectedTable.value) {
+    return
+  }
+  
+  columnsLoading.value = true
+  try {
+    const res = await getTableColumns(selectedDatasourceId.value, selectedTable.value.tableName)
+    // 响应拦截器已经解包，res 就是数组
+    tableColumns.value = (res || []).map((col: any) => ({
+      ...col,
+      exactQuery: col.columnKey === 'PRI', // 主键默认支持精确查询
+      fuzzyQuery: false,
+    }))
+  } catch (error) {
+    ElMessage.error('加载表字段失败')
+  } finally {
+    columnsLoading.value = false
+  }
+}
+
 // 下一步
-const handleNextStep = () => {
+const handleNextStep = async () => {
   if (currentStep.value === 1 && selectedTable.value) {
     // 填充表单
     const datasource = datasourceList.value.find(ds => ds.id === selectedDatasourceId.value)
@@ -647,6 +683,9 @@ const handleNextStep = () => {
     // 生成资源编码：r_{数据源编码}_{表名}
     registerFormData.resourceCode = `r_${dsCode}_${tableName}`
     registerFormData.apiPath = `/api/${dsCode}/${tableName}`
+    
+    // 加载表字段
+    await loadTableColumns()
   }
   currentStep.value++
 }
@@ -660,18 +699,75 @@ const handleSubmitRegister = async () => {
     
     submitLoading.value = true
     try {
+      // 构建字段配置
+      const fieldConfig = tableColumns.value
+        .filter(col => col.exactQuery || col.fuzzyQuery)
+        .map(col => ({
+          columnName: col.columnName,
+          dataType: col.dataType,
+          columnComment: col.columnComment,
+          exactQuery: col.exactQuery,
+          fuzzyQuery: col.fuzzyQuery,
+        }))
+      
       const data: Partial<TableResource> = {
         ...registerFormData,
         datasourceId: selectedDatasourceId.value,
         methods: selectedMethods.value.join(','),
+        configJson: JSON.stringify({ fields: fieldConfig }),
       }
       
       await registerTableResource(data)
       ElMessage.success('注册成功')
       registerDialogVisible.value = false
       loadData()
-    } catch (error) {
-      ElMessage.error('注册失败')
+    } catch (error: any) {
+      const errorMsg = error?.response?.data?.message || error?.message || '注册失败'
+      
+      // 如果是资源编码已存在的错误，提供特殊处理
+      if (errorMsg.includes('资源编码已存在')) {
+        try {
+          await ElMessageBox.confirm(
+            `${errorMsg}\n\n您可以：\n1. 修改资源编码后重新注册\n2. 查看并编辑已有的资源`,
+            '资源编码冲突',
+            {
+              confirmButtonText: '去编辑',
+              cancelButtonText: '修改编码',
+              type: 'warning',
+            }
+          )
+          
+          // 用户选择“去编辑”，先刷新列表数据，再查找已有资源
+          registerDialogVisible.value = false
+          await loadData() // 先刷新列表
+          
+          const existingResource = tableData.value.find(
+            item => item.resourceCode === registerFormData.resourceCode
+          )
+          
+          if (existingResource) {
+            handleEdit(existingResource)
+          } else {
+            // 如果还是找不到，尝试通过API路径搜索
+            const searchByPath = tableData.value.find(
+              item => item.apiPath === registerFormData.apiPath
+            )
+            if (searchByPath) {
+              handleEdit(searchByPath)
+            } else {
+              ElMessage.warning('未找到该资源，请手动在列表中查找')
+            }
+          }
+        } catch (confirmError) {
+          // 用户选择“修改编码”，保持对话框打开，让用户修改
+          if (confirmError !== 'cancel') {
+            console.error('操作失败:', confirmError)
+          }
+        }
+      } else {
+        // 其他错误，显示错误信息
+        ElMessage.error(errorMsg)
+      }
     } finally {
       submitLoading.value = false
     }
@@ -684,16 +780,18 @@ const handleRegisterDialogClose = () => {
   selectedDatasourceId.value = undefined
   selectedTable.value = null
   tableList.value = []
+  tableSearchKeyword.value = '' // 清空搜索关键词
+  tableColumns.value = [] // 清空字段列表
   registerFormRef.value?.resetFields()
   Object.assign(registerFormData, {
     tableName: '',
     tableComment: '',
     resourceCode: '',
     apiPath: '',
-    methods: 'GET,POST,PUT,DELETE',
+    methods: 'GET',
     status: 1,
   })
-  selectedMethods.value = ['GET', 'POST', 'PUT', 'DELETE']
+  selectedMethods.value = ['GET']
 }
 
 // 编辑
@@ -732,29 +830,101 @@ const handleEditDialogClose = () => {
 // 删除
 const handleDelete = async (row: TableResource) => {
   try {
-    await ElMessageBox.confirm('确定要删除该表资源吗？', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
-    })
+    await ElMessageBox.confirm(
+      `确定要删除表资源「${row.tableName}」吗？\n此操作不可恢复！`,
+      '删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
     
     await deleteTableResource(row.id!)
     ElMessage.success('删除成功')
     loadData()
-  } catch (error) {
+  } catch (error: any) {
     if (error !== 'cancel') {
-      ElMessage.error('删除失败')
+      console.error('删除失败:', error)
+      // 错误提示由响应拦截器统一处理，这里不需要额外显示
     }
   }
 }
 
 // 生成API
 const handleGenerateApi = async (row: TableResource) => {
+  // 填充生成API对话框数据
+  generateApiData.id = row.id
+  generateApiData.tableName = row.tableName || ''
+  generateApiData.tableComment = row.tableComment || ''
+  generateApiData.datasourceName = row.datasourceName || ''
+  generateApiData.resourceCode = row.resourceCode || ''
+  generateApiData.apiPath = row.apiPath || ''
+  generateApiData.methods = row.methods || 'GET'
+  generateApiData.status = row.status || 1
+  
+  // 解析字段配置
+  if (row.configJson) {
+    try {
+      const config = JSON.parse(row.configJson)
+      generateApiData.fieldConfig = config.fields || []
+    } catch (e) {
+      generateApiData.fieldConfig = []
+    }
+  } else {
+    generateApiData.fieldConfig = []
+  }
+  
+  // 显示对话框
+  generateApiDialogVisible.value = true
+}
+
+// 确认生成API
+const confirmGenerateApi = async () => {
   try {
-    await generateApi(row.id!)
-    ElMessage.success('API生成成功')
-  } catch (error) {
-    ElMessage.error('API生成失败')
+    submitLoading.value = true
+    await generateApi(generateApiData.id!)
+    ElMessage.success('API 生成成功')
+    generateApiDialogVisible.value = false
+    loadData()
+  } catch (error: any) {
+    console.error('生成 API 失败:', error)
+    const errorMsg = error?.response?.data?.message || error?.message || 'API 生成失败'
+    
+    // 如果是API路径冲突的错误，提供特殊处理
+    if (errorMsg.includes('duplicate key') && errorMsg.includes('uk_api_path_method')) {
+      try {
+        await ElMessageBox.confirm(
+          `API 已存在！\n\n` +
+          `API路径：${generateApiData.apiPath}\n` +
+          `HTTP方法：${generateApiData.methods}\n\n` +
+          `该 API 已经生成过，您可以：\n` +
+          `1. 前往 API 管理页面查看和编辑\n` +
+          `2. 取消操作`,
+          'API 已存在',
+          {
+            confirmButtonText: '去 API 管理',
+            cancelButtonText: '取消',
+            type: 'warning',
+          }
+        )
+        
+        // 用户选择“去 API 管理”，跳转到 API 管理页面
+        generateApiDialogVisible.value = false
+        // 这里可以通过路由跳转到 API 管理页面
+        window.location.href = '/#/resource/api'
+      } catch (confirmError) {
+        // 用户选择“取消”
+        if (confirmError !== 'cancel') {
+          console.error('操作失败:', confirmError)
+        }
+      }
+    } else {
+      // 其他错误，显示错误信息
+      ElMessage.error(errorMsg)
+    }
+  } finally {
+    submitLoading.value = false
   }
 }
 
@@ -789,6 +959,13 @@ onMounted(() => {
   margin-bottom: 20px;
 }
 
+/* 对话框内容区域 */
+.dialog-content {
+  max-height: calc(80vh - 120px);
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
 .pagination {
   margin-top: 20px;
   justify-content: flex-end;
@@ -796,78 +973,7 @@ onMounted(() => {
 
 .step-content {
   margin-top: 20px;
-  min-height: 300px;
-}
-
-/* 目录视图样式 */
-.catalog-view {
-  margin-top: 20px;
-}
-
-.resource-card {
-  margin-bottom: 20px;
-  transition: all 0.3s;
-}
-
-.resource-card:hover {
-  transform: translateY(-5px);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.table-name {
-  font-weight: bold;
-  font-size: 16px;
-  color: #303133;
-}
-
-.card-body {
-  min-height: 150px;
-}
-
-.info-item {
-  margin-bottom: 12px;
-  display: flex;
-  align-items: flex-start;
-}
-
-.info-item .label {
-  font-weight: 500;
-  color: #909399;
-  min-width: 80px;
-  flex-shrink: 0;
-}
-
-.info-item .value {
-  color: #606266;
-  flex: 1;
-  word-break: break-all;
-}
-
-.info-item .api-path {
-  font-family: 'Courier New', monospace;
-  font-size: 12px;
-  color: #409eff;
-}
-
-.methods {
-  display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
-}
-
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.card-footer .el-button {
-  flex: 1;
+  min-height: 200px;
 }
 
 .form-tip {
@@ -875,5 +981,32 @@ onMounted(() => {
   font-size: 12px;
   color: #909399;
   line-height: 1.5;
+}
+
+.api-example {
+  padding: 15px;
+  background-color: #f5f7fa;
+  border-radius: 4px;
+}
+
+.example-item {
+  margin-bottom: 10px;
+  line-height: 1.8;
+}
+
+.example-item:last-child {
+  margin-bottom: 0;
+}
+
+.example-item code {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 8px;
+  background-color: #fff;
+  border: 1px solid #dcdfe6;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: #409eff;
 }
 </style>

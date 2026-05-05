@@ -1,30 +1,30 @@
 package com.dabai.easy_lowcode.collector.mapper;
 
 import com.dabai.easy_lowcode.database.mapper.BaseMapper;
-import com.dabai.easy_lowcode.collector.entity.TableResource;
+import com.dabai.easy_lowcode.collector.entity.ApiManagement;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
 /**
- * 表资源 Mapper
+ * API管理 Mapper
  */
 @Mapper
-public interface TableResourceMapper extends BaseMapper<TableResource> {
+public interface ApiManagementMapper extends BaseMapper<ApiManagement> {
     
     /**
-     * 根据资源编码查询表资源
+     * 根据API路径和方法查询
      */
-    TableResource selectByResourceCode(String resourceCode);
+    ApiManagement selectByPathAndMethod(@Param("apiPath") String apiPath, @Param("apiMethod") String apiMethod);
     
     /**
-     * 物理删除表资源（绕过逻辑删除）
+     * 物理删除API（绕过逻辑删除）
      */
     int physicalDeleteById(@Param("id") Long id);
     
     /**
-     * 物理批量删除表资源（绕过逻辑删除）
+     * 物理批量删除API（绕过逻辑删除）
      */
     int physicalDeleteBatchIds(@Param("ids") List<Long> ids);
 }

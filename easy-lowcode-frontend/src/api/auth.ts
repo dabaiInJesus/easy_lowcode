@@ -161,6 +161,52 @@ export function deleteMenu(id: number) {
 }
 
 /**
+ * 获取角色列表
+ */
+export function getRoleList() {
+  return request({
+    url: '/auth/role/list',
+    method: 'get',
+    silentError: true, // 静默错误，由调用方统一处理
+  })
+}
+
+/**
+ * 创建角色
+ */
+export function createRole(data: any) {
+  return request({
+    url: '/auth/role',
+    method: 'post',
+    data,
+    silentError: true, // 静默错误，由调用方统一处理
+  })
+}
+
+/**
+ * 更新角色
+ */
+export function updateRole(data: any) {
+  return request({
+    url: '/auth/role',
+    method: 'put',
+    data,
+    silentError: true, // 静默错误，由调用方统一处理
+  })
+}
+
+/**
+ * 删除角色
+ */
+export function deleteRole(id: number) {
+  return request({
+    url: `/auth/role/${id}`,
+    method: 'delete',
+    silentError: true, // 静默错误，由调用方统一处理
+  })
+}
+
+/**
  * 获取部门列表
  */
 export function getDeptList(): Promise<ApiResponse<any>> {
@@ -199,5 +245,143 @@ export function deleteDept(id: number) {
   return request({
     url: `/auth/dept/${id}`,
     method: 'delete',
+  })
+}
+
+/**
+ * 获取应用列表
+ */
+export function getAppList() {
+  return request({
+    url: '/auth/app/list',
+    method: 'get',
+  })
+}
+
+/**
+ * 分页查询应用列表
+ */
+export function getAppPage(current: number, size: number, keyword?: string) {
+  return request({
+    url: '/auth/app/page',
+    method: 'get',
+    params: { current, size, keyword },
+  })
+}
+
+/**
+ * 创建应用
+ */
+export function createApp(data: any) {
+  return request({
+    url: '/auth/app',
+    method: 'post',
+    data,
+  })
+}
+
+/**
+ * 更新应用
+ */
+export function updateApp(data: any) {
+  return request({
+    url: '/auth/app',
+    method: 'put',
+    data,
+  })
+}
+
+/**
+ * 删除应用
+ */
+export function deleteApp(id: number) {
+  return request({
+    url: `/auth/app/${id}`,
+    method: 'delete',
+  })
+}
+
+/**
+ * 获取用户列表（包含角色信息）
+ */
+export function getUsersWithRoles() {
+  return request({
+    url: '/auth/authorization/users',
+    method: 'get',
+    silentError: true, // 静默错误，不显示提示
+  })
+}
+
+/**
+ * 获取角色列表（包含菜单数量）
+ */
+export function getRolesWithMenuCount() {
+  return request({
+    url: '/auth/authorization/roles',
+    method: 'get',
+    silentError: true, // 静默错误，不显示提示
+  })
+}
+
+/**
+ * 获取所有角色
+ */
+export function getAllRoles() {
+  return request({
+    url: '/auth/authorization/all-roles',
+    method: 'get',
+    silentError: true, // 静默错误，不显示提示
+  })
+}
+
+/**
+ * 获取用户的角色
+ */
+export function getUserRoles(userId: number) {
+  return request({
+    url: `/auth/authorization/user/${userId}/roles`,
+    method: 'get',
+  })
+}
+
+/**
+ * 为用户分配角色
+ */
+export function assignRolesToUser(userId: number, roleIds: number[]) {
+  return request({
+    url: `/auth/authorization/user/${userId}/roles`,
+    method: 'post',
+    data: { roleIds },
+  })
+}
+
+/**
+ * 获取角色的菜单
+ */
+export function getRoleMenus(roleId: number) {
+  return request({
+    url: `/auth/authorization/role/${roleId}/menus`,
+    method: 'get',
+  })
+}
+
+/**
+ * 获取菜单树
+ */
+export function getMenuTree() {
+  return request({
+    url: '/auth/authorization/menus/tree',
+    method: 'get',
+  })
+}
+
+/**
+ * 为角色分配菜单
+ */
+export function assignMenusToRole(roleId: number, menuIds: number[]) {
+  return request({
+    url: `/auth/authorization/role/${roleId}/menus`,
+    method: 'post',
+    data: { menuIds },
   })
 }

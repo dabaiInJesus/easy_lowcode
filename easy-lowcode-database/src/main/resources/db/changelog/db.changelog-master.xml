@@ -13,5 +13,9 @@
     <include file="db/changelog/005-update-admin-password.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/006-create-collector-tables.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/007-create-sys-resource-table.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/008-add-app-management-menu.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/011-add-menu-code-to-sys-menu.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/009-create-api-management-table.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/010-add-api-management-menu.xml" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

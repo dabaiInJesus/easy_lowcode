@@ -60,6 +60,21 @@ spring:
     async-executor-activate: true
     database-schema-update: true
     check-process-definitions: false
+  
+  # DevTools 热重载配置
+  devtools:
+    restart:
+      enabled: true  # 启用热重载
+      additional-paths: src/main/java  # 监控的额外路径
+      exclude: static/**,public/**,templates/**  # 排除不需要重启的资源
+    livereload:
+      enabled: true  # 启用 LiveReload
+  # 自由标记模板缓存（开发时关闭）
+  freemarker:
+    cache: false
+  # Thymeleaf 模板缓存（开发时关闭）
+  thymeleaf:
+    cache: false
 
 # MyBatis Plus配置
 mybatis-plus:
@@ -145,7 +160,7 @@ logging:
   pattern:
     console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
 
-# Actuator配置
+# Actuator 配置
 management:
   endpoints:
     web:

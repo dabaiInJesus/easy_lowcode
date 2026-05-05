@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="009-create-api-management-table" author="system">
+        <createTable tableName="collector_api_management" remarks="API管理表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            
+            <column name="api_name" type="VARCHAR(100)" remarks="API名称">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="api_path" type="VARCHAR(200)" remarks="API路径">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="api_method" type="VARCHAR(10)" remarks="HTTP方法(GET/POST/PUT/DELETE/PATCH)">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="api_type" type="VARCHAR(20)" remarks="API类型(TABLE_RESOURCE-表资源,EXTERNAL-外部接口)">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="source_id" type="BIGINT" remarks="来源ID(表资源ID或外部接口配置ID)"/>
+            
+            <column name="description" type="TEXT" remarks="API描述"/>
+            
+            <column name="request_config" type="TEXT" remarks="请求配置JSON(参数、headers等)"/>
+            
+            <column name="response_config" type="TEXT" remarks="响应配置JSON(字段映射等)"/>
+            
+            <column name="status" type="INT" defaultValueNumeric="1" remarks="状态(0-禁用 1-启用)"/>
+            
+            <column name="version" type="VARCHAR(20)" defaultValue="v1" remarks="API版本"/>
+            
+            <column name="auth_required" type="INT" defaultValueNumeric="0" remarks="是否需要认证(0-否 1-是)"/>
+            
+            <column name="rate_limit" type="INT" remarks="限流次数/分钟"/>
+            
+            <column name="sort_order" type="INT" defaultValueNumeric="0" remarks="排序号"/>
+            
+            <column name="deleted" type="INT" defaultValueNumeric="0" remarks="删除标志(0-未删除 1-已删除)"/>
+            
+            <column name="create_time" type="DATETIME" remarks="创建时间">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="update_time" type="DATETIME" remarks="更新时间">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="create_by" type="BIGINT" remarks="创建人ID"/>
+            
+            <column name="update_by" type="BIGINT" remarks="更新人ID"/>
+        </createTable>
+        
+        <!-- 创建唯一索引：API路径 + 方法 -->
+        <createIndex indexName="uk_api_path_method" tableName="collector_api_management" unique="true">
+            <column name="api_path"/>
+            <column name="api_method"/>
+        </createIndex>
+        
+        <!-- 创建普通索引 -->
+        <createIndex indexName="idx_api_type" tableName="collector_api_management">
+            <column name="api_type"/>
+        </createIndex>
+        
+        <createIndex indexName="idx_status" tableName="collector_api_management">
+            <column name="status"/>
+        </createIndex>
+        
+        <createIndex indexName="idx_source_id" tableName="collector_api_management">
+            <column name="source_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

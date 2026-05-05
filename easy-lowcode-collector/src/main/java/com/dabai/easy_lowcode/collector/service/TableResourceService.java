@@ -23,4 +23,12 @@ public interface TableResourceService extends IService<TableResource> {
      * @return 是否成功
      */
     boolean generateApi(Long resourceId);
+    
+    /**
+     * 检查表资源是否有关联的API
+     * 
+     * @param resourceId 表资源ID
+     * @return 是否有关联API
+     */
+    boolean hasRelatedApi(Long resourceId);
 }

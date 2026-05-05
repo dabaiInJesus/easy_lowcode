@@ -56,6 +56,12 @@ const router = createRouter({
               component: () => import('../views/system/AuthManagement.vue'),
               meta: { title: '授权管理' },
             },
+            {
+              path: 'app',
+              name: 'appManagement',
+              component: () => import('../views/system/AppManagement.vue'),
+              meta: { title: '应用管理' },
+            },
           ],
         },
         {
@@ -73,6 +79,12 @@ const router = createRouter({
               name: 'tableResourceManagement',
               component: () => import('../views/resource/TableResourceManagement.vue'),
               meta: { title: '表资源注册' },
+            },
+            {
+              path: 'api',
+              name: 'apiManagement',
+              component: () => import('../views/resource/ApiManagement.vue'),
+              meta: { title: 'API管理' },
             },
           ],
         },
