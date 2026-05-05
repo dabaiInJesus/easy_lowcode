@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- 数据大屏配置表（新版，匹配Dashboard实体） -->
+    <changeSet id="016-create-dashboard" author="dabai">
+        <createTable tableName="dashboard" remarks="数据大屏配置表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(100)" remarks="大屏名称">
+                <constraints nullable="false"/>
+            </column>
+            <column name="code" type="VARCHAR(100)" remarks="大屏编码">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="title" type="VARCHAR(200)" remarks="大屏标题"/>
+            <column name="description" type="TEXT" remarks="大屏描述"/>
+            <column name="width" type="INTEGER" defaultValueNumeric="1920" remarks="大屏宽度(px)"/>
+            <column name="height" type="INTEGER" defaultValueNumeric="1080" remarks="大屏高度(px)"/>
+            <column name="background_color" type="VARCHAR(20)" defaultValue="#0a1628" remarks="背景色"/>
+            <column name="background_image" type="VARCHAR(500)" remarks="背景图URL"/>
+            <column name="layout_config" type="TEXT" remarks="布局配置JSON"/>
+            <column name="style_config" type="TEXT" remarks="全局样式JSON"/>
+            <column name="refresh_interval" type="INTEGER" defaultValueNumeric="0" remarks="自动刷新间隔(秒)"/>
+            <column name="status" type="SMALLINT" defaultValueNumeric="0" remarks="状态(0-草稿 1-发布 2-下线)"/>
+            <column name="thumbnail" type="VARCHAR(500)" remarks="缩略图URL"/>
+            <column name="category" type="VARCHAR(50)" remarks="分类"/>
+            <column name="tags" type="VARCHAR(200)" remarks="标签(逗号分隔)"/>
+            <column name="sort_order" type="INTEGER" defaultValueNumeric="0" remarks="排序号"/>
+            <column name="is_builtin" type="SMALLINT" defaultValueNumeric="0" remarks="是否内置模板(0-否 1-是)"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间"/>
+            <column name="create_by" type="BIGINT" remarks="创建人"/>
+            <column name="update_by" type="BIGINT" remarks="更新人"/>
+            <column name="deleted" type="SMALLINT" defaultValueNumeric="0" remarks="删除标志"/>
+        </createTable>
+        <addUniqueConstraint columnNames="code" constraintName="uk_dashboard_code" tableName="dashboard"/>
+    </changeSet>
+
+    <!-- 大屏图表配置表 -->
+    <changeSet id="016-create-dashboard-chart" author="dabai">
+        <createTable tableName="dashboard_chart" remarks="大屏图表配置表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="dashboard_id" type="BIGINT" remarks="大屏ID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(200)" remarks="图表标题"/>
+            <column name="chart_type" type="VARCHAR(30)" remarks="图表类型(bar/line/pie/scatter/map/radar/gauge/text/number/table/iframe)"/>
+            <column name="datasource_id" type="BIGINT" remarks="数据源ID"/>
+            <column name="table_resource_id" type="BIGINT" remarks="表资源ID"/>
+            <column name="query_sql" type="TEXT" remarks="查询SQL"/>
+            <column name="x_field" type="VARCHAR(100)" remarks="X轴字段"/>
+            <column name="y_field" type="VARCHAR(200)" remarks="Y轴字段(逗号分隔)"/>
+            <column name="group_field" type="VARCHAR(100)" remarks="分组字段"/>
+            <column name="filter_config" type="TEXT" remarks="筛选条件JSON"/>
+            <column name="order_field" type="VARCHAR(100)" remarks="排序字段"/>
+            <column name="order_direction" type="VARCHAR(10)" defaultValue="ASC" remarks="排序方向"/>
+            <column name="limit_records" type="INTEGER" defaultValueNumeric="100" remarks="限制记录数"/>
+            <column name="chart_option" type="TEXT" remarks="图表样式配置JSON"/>
+            <column name="pos_x" type="INTEGER" remarks="位置X"/>
+            <column name="pos_y" type="INTEGER" remarks="位置Y"/>
+            <column name="width" type="INTEGER" remarks="宽度(网格)"/>
+            <column name="height" type="INTEGER" remarks="高度(网格)"/>
+            <column name="refresh_interval" type="INTEGER" defaultValueNumeric="0" remarks="刷新间隔(秒)"/>
+            <column name="sort_order" type="INTEGER" defaultValueNumeric="0" remarks="排序号"/>
+            <column name="remark" type="VARCHAR(500)" remarks="备注"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间"/>
+            <column name="create_by" type="BIGINT" remarks="创建人"/>
+            <column name="update_by" type="BIGINT" remarks="更新人"/>
+            <column name="deleted" type="SMALLINT" defaultValueNumeric="0" remarks="删除标志"/>
+        </createTable>
+        <createIndex indexName="idx_chart_dashboard" tableName="dashboard_chart">
+            <column name="dashboard_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 图表数据源配置表 -->
+    <changeSet id="016-create-chart-datasource" author="dabai">
+        <createTable tableName="dashboard_chart_datasource" remarks="图表数据源配置表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="chart_id" type="BIGINT" remarks="图表ID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_type" type="VARCHAR(20)" remarks="数据源类型(SQL/API/RESOURCE)"/>
+            <column name="datasource_id" type="BIGINT" remarks="数据源ID"/>
+            <column name="query_sql" type="TEXT" remarks="查询SQL"/>
+            <column name="api_path" type="VARCHAR(500)" remarks="API路径"/>
+            <column name="api_method" type="VARCHAR(10)" defaultValue="GET" remarks="API方法"/>
+            <column name="request_params" type="TEXT" remarks="请求参数JSON"/>
+            <column name="data_transform_script" type="TEXT" remarks="数据预处理脚本"/>
+            <column name="cache_seconds" type="INTEGER" defaultValueNumeric="0" remarks="缓存时间(秒)"/>
+            <column name="sort_order" type="INTEGER" defaultValueNumeric="0" remarks="排序号"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间"/>
+            <column name="create_by" type="BIGINT" remarks="创建人"/>
+            <column name="update_by" type="BIGINT" remarks="更新人"/>
+            <column name="deleted" type="SMALLINT" defaultValueNumeric="0" remarks="删除标志"/>
+        </createTable>
+        <createIndex indexName="idx_chart_ds_chart" tableName="dashboard_chart_datasource">
+            <column name="chart_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

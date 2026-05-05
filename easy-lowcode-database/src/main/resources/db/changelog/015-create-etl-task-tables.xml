@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ETL任务配置表（新版，匹配EtlTask实体） -->
+    <changeSet id="015-create-etl-task" author="dabai">
+        <createTable tableName="etl_task" remarks="ETL任务配置表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="task_name" type="VARCHAR(100)" remarks="任务名称">
+                <constraints nullable="false"/>
+            </column>
+            <column name="task_code" type="VARCHAR(100)" remarks="任务编码">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="source_datasource_id" type="BIGINT" remarks="源数据源ID"/>
+            <column name="source_table" type="VARCHAR(200)" remarks="源表/视图名"/>
+            <column name="source_sql" type="TEXT" remarks="源查询SQL"/>
+            <column name="read_mode" type="VARCHAR(20)" defaultValue="TABLE" remarks="读取模式(TABLE/SQL)"/>
+            <column name="target_datasource_id" type="BIGINT" remarks="目标数据源ID"/>
+            <column name="target_table" type="VARCHAR(200)" remarks="目标表名">
+                <constraints nullable="false"/>
+            </column>
+            <column name="write_mode" type="VARCHAR(20)" defaultValue="INSERT" remarks="写入模式(INSERT/MERGE/REPLACE/TRUNCATE)"/>
+            <column name="field_mapping" type="TEXT" remarks="字段映射JSON"/>
+            <column name="transform_rules" type="TEXT" remarks="转换规则JSON"/>
+            <column name="schedule_type" type="VARCHAR(20)" defaultValue="MANUAL" remarks="调度方式(MANUAL/CRON/INTERVAL)"/>
+            <column name="cron_expression" type="VARCHAR(100)" remarks="CRON表达式"/>
+            <column name="interval_seconds" type="INTEGER" remarks="间隔秒数"/>
+            <column name="batch_size" type="INTEGER" defaultValueNumeric="1000" remarks="批处理大小"/>
+            <column name="skip_error" type="SMALLINT" defaultValueNumeric="0" remarks="是否跳过错误行"/>
+            <column name="status" type="SMALLINT" defaultValueNumeric="1" remarks="状态(0-禁用 1-启用)"/>
+            <column name="remark" type="VARCHAR(500)" remarks="备注"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间"/>
+            <column name="create_by" type="BIGINT" remarks="创建人"/>
+            <column name="update_by" type="BIGINT" remarks="更新人"/>
+            <column name="deleted" type="SMALLINT" defaultValueNumeric="0" remarks="删除标志"/>
+        </createTable>
+        <addUniqueConstraint columnNames="task_code" constraintName="uk_etl_task_code" tableName="etl_task"/>
+        <createIndex indexName="idx_etl_task_source" tableName="etl_task">
+            <column name="source_datasource_id"/>
+        </createIndex>
+        <createIndex indexName="idx_etl_task_target" tableName="etl_task">
+            <column name="target_datasource_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ETL任务执行日志表 -->
+    <changeSet id="015-create-etl-task-log" author="dabai">
+        <createTable tableName="etl_task_log" remarks="ETL任务执行日志表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="task_id" type="BIGINT" remarks="任务ID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exec_status" type="VARCHAR(20)" remarks="执行状态(RUNNING/SUCCESS/FAILED/STOPPED)"/>
+            <column name="start_time" type="VARCHAR(30)" remarks="开始时间"/>
+            <column name="end_time" type="VARCHAR(30)" remarks="结束时间"/>
+            <column name="read_count" type="BIGINT" defaultValueNumeric="0" remarks="读取记录数"/>
+            <column name="write_count" type="BIGINT" defaultValueNumeric="0" remarks="写入记录数"/>
+            <column name="skip_count" type="BIGINT" defaultValueNumeric="0" remarks="跳过记录数"/>
+            <column name="error_message" type="TEXT" remarks="错误信息"/>
+            <column name="exec_detail" type="TEXT" remarks="执行详情JSON"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间"/>
+            <column name="create_by" type="BIGINT" remarks="创建人"/>
+            <column name="update_by" type="BIGINT" remarks="更新人"/>
+            <column name="deleted" type="SMALLINT" defaultValueNumeric="0" remarks="删除标志"/>
+        </createTable>
+        <createIndex indexName="idx_etl_log_task" tableName="etl_task_log">
+            <column name="task_id"/>
+        </createIndex>
+        <createIndex indexName="idx_etl_log_status" tableName="etl_task_log">
+            <column name="exec_status"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ETL字段映射配置表 -->
+    <changeSet id="015-create-etl-datasource-mapping" author="dabai">
+        <createTable tableName="etl_datasource_mapping" remarks="ETL字段映射配置表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="task_id" type="BIGINT" remarks="任务ID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_field" type="VARCHAR(100)" remarks="源字段名"/>
+            <column name="source_field_type" type="VARCHAR(50)" remarks="源字段类型"/>
+            <column name="target_field" type="VARCHAR(100)" remarks="目标字段名"/>
+            <column name="target_field_type" type="VARCHAR(50)" remarks="目标字段类型"/>
+            <column name="transform_type" type="VARCHAR(20)" defaultValue="NONE" remarks="转换类型(NONE/FUNC/EXPR/DICT)"/>
+            <column name="transform_rule" type="TEXT" remarks="转换规则"/>
+            <column name="default_value" type="VARCHAR(200)" remarks="默认值"/>
+            <column name="is_primary_key" type="SMALLINT" defaultValueNumeric="0" remarks="是否主键(0-否 1-是)"/>
+            <column name="sort_order" type="INTEGER" defaultValueNumeric="0" remarks="排序号"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间"/>
+            <column name="create_by" type="BIGINT" remarks="创建人"/>
+            <column name="update_by" type="BIGINT" remarks="更新人"/>
+            <column name="deleted" type="SMALLINT" defaultValueNumeric="0" remarks="删除标志"/>
+        </createTable>
+        <createIndex indexName="idx_etl_mapping_task" tableName="etl_datasource_mapping">
+            <column name="task_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

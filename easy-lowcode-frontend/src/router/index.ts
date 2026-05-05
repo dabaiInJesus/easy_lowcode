@@ -88,7 +88,43 @@ const router = createRouter({
             },
           ],
         },
+        {
+          path: 'etl',
+          meta: { title: 'ETL管理' },
+          children: [
+            {
+              path: 'task',
+              name: 'etlTaskManagement',
+              component: () => import('../views/etl/EtlTaskManagement.vue'),
+              meta: { title: 'ETL任务' },
+            },
+          ],
+        },
+        {
+          path: 'dashboard',
+          meta: { title: '数据大屏' },
+          children: [
+            {
+              path: 'manage',
+              name: 'dashboardManagement',
+              component: () => import('../views/dashboard/DashboardManagement.vue'),
+              meta: { title: '大屏管理' },
+            },
+          ],
+        },
       ],
+    },
+    {
+      path: '/dashboard/design/:id',
+      name: 'dashboardDesigner',
+      component: () => import('../views/dashboard/DashboardDesigner.vue'),
+      meta: { requiresAuth: true, title: '大屏设计' },
+    },
+    {
+      path: '/dashboard/view/:id',
+      name: 'dashboardView',
+      component: () => import('../views/dashboard/DashboardView.vue'),
+      meta: { requiresAuth: true, title: '大屏预览' },
     },
   ],
 })

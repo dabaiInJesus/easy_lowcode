@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="017-create-ai-config" author="dabai">
+        <createTable tableName="ai_config" remarks="AI供应商配置表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="provider" type="VARCHAR(50)" remarks="供应商编码(openai/dashscope/deepseek/ollama/minimax)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="display_name" type="VARCHAR(100)" remarks="显示名称"/>
+            <column name="base_url" type="VARCHAR(500)" remarks="API基础URL"/>
+            <column name="api_key" type="VARCHAR(500)" remarks="API Key(加密存储)"/>
+            <column name="secret_key" type="VARCHAR(500)" remarks="额外密钥(加密存储)"/>
+            <column name="model" type="VARCHAR(100)" remarks="模型名称"/>
+            <column name="is_default" type="SMALLINT" defaultValueNumeric="0" remarks="是否默认(0-否 1-是)"/>
+            <column name="status" type="SMALLINT" defaultValueNumeric="1" remarks="状态(0-禁用 1-启用)"/>
+            <column name="sort_order" type="INTEGER" defaultValueNumeric="0" remarks="排序号"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间"/>
+            <column name="create_by" type="BIGINT" remarks="创建人"/>
+            <column name="update_by" type="BIGINT" remarks="更新人"/>
+            <column name="deleted" type="SMALLINT" defaultValueNumeric="0" remarks="删除标志"/>
+        </createTable>
+        <addUniqueConstraint columnNames="provider" constraintName="uk_ai_provider" tableName="ai_config"/>
+    </changeSet>
+</databaseChangeLog>

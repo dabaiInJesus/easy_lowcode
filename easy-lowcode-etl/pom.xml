@@ -20,6 +20,10 @@
             <groupId>com.dabai</groupId>
             <artifactId>easy-lowcode-database</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.dabai</groupId>
+            <artifactId>easy-lowcode-collector</artifactId>
+        </dependency>
 
         <!-- Spring Batch -->
         <dependency>

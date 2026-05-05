@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- 数据大屏配置表 -->
+    <changeSet id="014-create-dashboard-config" author="dabai">
+        <createTable tableName="dashboard_config" remarks="数据大屏配置表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="dashboard_name" type="VARCHAR(100)" remarks="大屏名称">
+                <constraints nullable="false"/>
+            </column>
+            <column name="dashboard_code" type="VARCHAR(50)" remarks="大屏编码（唯一）">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="dashboard_type" type="VARCHAR(20)" defaultValue="SCREEN" remarks="类型(SCREEN-大屏/REPORT-报表/ANALYSIS-分析)"/>
+            <column name="width" type="INT" defaultValueNumeric="1920" remarks="画布宽度"/>
+            <column name="height" type="INT" defaultValueNumeric="1080" remarks="画布高度"/>
+            <column name="background_color" type="VARCHAR(20)" defaultValue="#0f1729" remarks="背景颜色"/>
+            <column name="background_image" type="VARCHAR(255)" remarks="背景图片URL"/>
+            <column name="layout_config" type="TEXT" remarks="布局配置JSON（组件位置、大小等）"/>
+            <column name="global_style" type="TEXT" remarks="全局样式配置JSON"/>
+            <column name="refresh_interval" type="INT" defaultValueNumeric="0" remarks="自动刷新间隔(秒,0不刷新)"/>
+            <column name="status" type="INT" defaultValueNumeric="0" remarks="状态(0-草稿 1-发布 2-下架)"/>
+            <column name="remark" type="VARCHAR(500)" remarks="备注"/>
+            <column name="sort" type="INT" defaultValueNumeric="0" remarks="排序号"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间">
+                <constraints nullable="false"/>
+            </column>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间">
+                <constraints nullable="false"/>
+            </column>
+            <column name="create_by" type="BIGINT" remarks="创建人"/>
+            <column name="update_by" type="BIGINT" remarks="更新人"/>
+            <column name="deleted" type="INT" defaultValueNumeric="0" remarks="删除标志"/>
+        </createTable>
+
+        <addUniqueConstraint columnNames="dashboard_code" constraintName="uk_dashboard_code" tableName="dashboard_config"/>
+        
+        <comment>数据大屏配置表，用于管理大屏的整体配置</comment>
+    </changeSet>
+
+    <!-- 图表组件配置表 -->
+    <changeSet id="014-create-chart-config" author="dabai">
+        <createTable tableName="dashboard_chart" remarks="图表组件配置表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="dashboard_id" type="BIGINT" remarks="所属大屏ID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="chart_name" type="VARCHAR(100)" remarks="图表名称"/>
+            <column name="chart_code" type="VARCHAR(50)" remarks="图表编码"/>
+            <column name="chart_type" type="VARCHAR(30)" remarks="图表类型(bar/line/pie/scatter/map/radar/table/number/flip/iframe/text)"/>
+            <column name="title" type="VARCHAR(100)" remarks="图表标题"/>
+            <column name="data_source_type" type="VARCHAR(20)" remarks="数据源类型(DATASOURCE/API/STATIC/SQL)"/>
+            <column name="datasource_id" type="BIGINT" remarks="数据源ID"/>
+            <column name="query_sql" type="TEXT" remarks="查询SQL"/>
+            <column name="api_path" type="VARCHAR(200)" remarks="API路径"/>
+            <column name="api_method" type="VARCHAR(10)" defaultValue="GET" remarks="API方法"/>
+            <column name="static_data" type="TEXT" remarks="静态数据JSON"/>
+            <column name="data_mapping" type="TEXT" remarks="数据字段映射JSON（x轴/y轴/系列等）"/>
+            <column name="chart_option" type="TEXT" remarks="ECharts配置项JSON"/>
+            <column name="style_config" type="TEXT" remarks="样式配置JSON（位置、大小、颜色等）"/>
+            <column name="refresh_interval" type="INT" defaultValueNumeric="0" remarks="刷新间隔(秒,0不刷新)"/>
+            <column name="sort" type="INT" defaultValueNumeric="0" remarks="排序号"/>
+            <column name="status" type="INT" defaultValueNumeric="1" remarks="状态(0-禁用 1-启用)"/>
+            <column name="remark" type="VARCHAR(500)" remarks="备注"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间">
+                <constraints nullable="false"/>
+            </column>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间">
+                <constraints nullable="false"/>
+            </column>
+            <column name="create_by" type="BIGINT" remarks="创建人"/>
+            <column name="update_by" type="BIGINT" remarks="更新人"/>
+            <column name="deleted" type="INT" defaultValueNumeric="0" remarks="删除标志"/>
+        </createTable>
+
+        <createIndex indexName="idx_chart_dashboard" tableName="dashboard_chart">
+            <column name="dashboard_id"/>
+        </createIndex>
+        
+        <comment>图表组件配置表，用于配置大屏中的每个图表组件</comment>
+    </changeSet>
+
+</databaseChangeLog>

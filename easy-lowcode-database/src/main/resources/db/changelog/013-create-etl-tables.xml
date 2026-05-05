@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ETL任务配置表 -->
+    <changeSet id="013-create-etl-job-config" author="dabai">
+        <createTable tableName="etl_job_config" remarks="ETL任务配置表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="job_name" type="VARCHAR(100)" remarks="任务名称">
+                <constraints nullable="false"/>
+            </column>
+            <column name="job_code" type="VARCHAR(50)" remarks="任务编码（唯一）">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="source_datasource_id" type="BIGINT" remarks="源数据源ID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_query" type="TEXT" remarks="源数据查询SQL"/>
+            <column name="source_table" type="VARCHAR(100)" remarks="源数据表名（备选）"/>
+            <column name="target_datasource_id" type="BIGINT" remarks="目标数据源ID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_table" type="VARCHAR(100)" remarks="目标数据表名">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_write_mode" type="VARCHAR(20)" defaultValue="INSERT" remarks="写入模式(INSERT/REPLACE/MERGE/TRUNCATE_INSERT)"/>
+            <column name="column_mapping" type="TEXT" remarks="字段映射JSON（源字段->目标字段）"/>
+            <column name="transform_config" type="TEXT" remarks="数据转换配置JSON"/>
+            <column name="batch_size" type="INT" defaultValueNumeric="1000" remarks="每批处理条数"/>
+            <column name="cron_expression" type="VARCHAR(100)" remarks="定时调度Cron表达式"/>
+            <column name="job_type" type="VARCHAR(20)" defaultValue="ONCE" remarks="任务类型(ONCE-一次性/CRON-定时/REAL_TIME-实时)"/>
+            <column name="status" type="INT" defaultValueNumeric="0" remarks="状态(0-草稿 1-启用 2-暂停)"/>
+            <column name="remark" type="VARCHAR(500)" remarks="备注"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间">
+                <constraints nullable="false"/>
+            </column>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间">
+                <constraints nullable="false"/>
+            </column>
+            <column name="create_by" type="BIGINT" remarks="创建人"/>
+            <column name="update_by" type="BIGINT" remarks="更新人"/>
+            <column name="deleted" type="INT" defaultValueNumeric="0" remarks="删除标志"/>
+        </createTable>
+
+        <addUniqueConstraint columnNames="job_code" constraintName="uk_etl_job_code" tableName="etl_job_config"/>
+        <createIndex indexName="idx_etl_source_ds" tableName="etl_job_config">
+            <column name="source_datasource_id"/>
+        </createIndex>
+        <createIndex indexName="idx_etl_target_ds" tableName="etl_job_config">
+            <column name="target_datasource_id"/>
+        </createIndex>
+        
+        <comment>ETL任务配置表，用于配置数据抽取、转换、加载任务</comment>
+    </changeSet>
+
+    <!-- ETL任务执行日志表 -->
+    <changeSet id="013-create-etl-task-log" author="dabai">
+        <createTable tableName="etl_task_log" remarks="ETL任务执行日志表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="job_id" type="BIGINT" remarks="任务配置ID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="batch_id" type="VARCHAR(50)" remarks="批次ID（每次执行生成唯一ID）"/>
+            <column name="execution_status" type="VARCHAR(20)" remarks="执行状态(PENDING/RUNNING/SUCCESS/FAILED)"/>
+            <column name="start_time" type="TIMESTAMP" remarks="开始时间"/>
+            <column name="end_time" type="TIMESTAMP" remarks="结束时间"/>
+            <column name="total_rows" type="INT" defaultValueNumeric="0" remarks="总数据条数"/>
+            <column name="success_rows" type="INT" defaultValueNumeric="0" remarks="成功条数"/>
+            <column name="fail_rows" type="INT" defaultValueNumeric="0" remarks="失败条数"/>
+            <column name="error_message" type="TEXT" remarks="错误信息"/>
+            <column name="execution_detail" type="TEXT" remarks="执行详情JSON"/>
+            <column name="trigger_type" type="VARCHAR(20)" defaultValue="MANUAL" remarks="触发方式(MANUAL-手动/CRON-定时/API-接口触发)"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_etl_log_job" tableName="etl_task_log">
+            <column name="job_id"/>
+        </createIndex>
+        <createIndex indexName="idx_etl_log_batch" tableName="etl_task_log">
+            <column name="batch_id"/>
+        </createIndex>
+        <createIndex indexName="idx_etl_log_status" tableName="etl_task_log">
+            <column name="execution_status"/>
+        </createIndex>
+
+        <comment>ETL任务执行日志表，记录每次任务执行的详细情况</comment>
+    </changeSet>
+
+</databaseChangeLog>
