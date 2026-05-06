@@ -52,6 +52,11 @@
 
     <!-- ETL任务执行日志表 -->
     <changeSet id="015-create-etl-task-log" author="dabai">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="etl_task_log"/>
+            </not>
+        </preConditions>
         <createTable tableName="etl_task_log" remarks="ETL任务执行日志表">
             <column name="id" type="BIGINT" remarks="主键ID">
                 <constraints primaryKey="true" nullable="false"/>

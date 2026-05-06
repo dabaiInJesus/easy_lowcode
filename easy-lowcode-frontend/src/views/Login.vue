@@ -60,10 +60,11 @@ import { useRouter } from 'vue-router'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage } from 'element-plus'
 import { login } from '@/api/auth'
-import { useUserStore } from '@/stores'
+import { useUserStore, useMenuStore } from '@/stores'
 
 const router = useRouter()
 const userStore = useUserStore()
+const menuStore = useMenuStore()
 const loginFormRef = ref<FormInstance>()
 const loading = ref(false)
 
@@ -94,6 +95,9 @@ const handleLogin = async () => {
         
         // 响应拦截器已经解包，res 就是 { token: 'xxx' }
         userStore.setToken(res.token)
+        
+        // 加载菜单
+        await menuStore.loadMenus()
         
         ElMessage.success('登录成功')
         

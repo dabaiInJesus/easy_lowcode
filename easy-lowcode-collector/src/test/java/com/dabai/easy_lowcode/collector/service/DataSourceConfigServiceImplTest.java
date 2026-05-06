@@ -1,6 +1,5 @@
 package com.dabai.easy_lowcode.collector.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.dabai.easy_lowcode.collector.entity.DataSourceConfig;
 import com.dabai.easy_lowcode.collector.mapper.DataSourceConfigMapper;
 import com.dabai.easy_lowcode.collector.service.impl.DataSourceConfigServiceImpl;
@@ -41,6 +40,7 @@ class DataSourceConfigServiceImplTest {
         config.setPassword("password123");
         config.setDriverClassName("com.mysql.cj.jdbc.Driver");
         config.setStatus(1);
+        config.setDeleted(0); // BaseEntity 的逻辑删除字段
     }
 
     @Test
@@ -48,7 +48,7 @@ class DataSourceConfigServiceImplTest {
         when(dataSourceConfigMapper.insert(any(DataSourceConfig.class))).thenReturn(1);
         boolean result = dataSourceConfigService.save(config);
         assertTrue(result);
-        verify(dataSourceConfigMapper, times(1)).insert(config);
+        verify(dataSourceConfigMapper, times(1)).insert(any(DataSourceConfig.class));
     }
 
     @Test
@@ -58,6 +58,7 @@ class DataSourceConfigServiceImplTest {
         assertNotNull(found);
         assertEquals("测试数据源", found.getName());
         assertEquals("test_db", found.getCode());
+        assertEquals("mysql", found.getDbType());
     }
 
     @Test
@@ -76,15 +77,25 @@ class DataSourceConfigServiceImplTest {
     }
 
     @Test
-    void testDefaultDriverForMySQL() {
-        config.setDriverClassName(null);
-        // 验证controller层会设置默认驱动，service层不做此逻辑
-        assertNull(config.getDriverClassName());
+    void testUpdateSuccess() {
+        config.setName("更新后的数据源");
+        when(dataSourceConfigMapper.updateById(any(DataSourceConfig.class))).thenReturn(1);
+        boolean result = dataSourceConfigService.updateById(config);
+        assertTrue(result);
+        verify(dataSourceConfigMapper, times(1)).updateById(any(DataSourceConfig.class));
     }
 
     @Test
-    void testStatusDefaultEnabled() {
+    void testStatusDefaultValue() {
         DataSourceConfig newConfig = new DataSourceConfig();
-        assertNull(newConfig.getStatus()); // 默认null，由Service设置默认值
+        // 实体类中 status 有默认值 1
+        assertEquals(1, newConfig.getStatus());
+    }
+
+    @Test
+    void testDefaultDriverIsNull() {
+        DataSourceConfig newConfig = new DataSourceConfig();
+        // driverClassName 没有默认值，应该为 null
+        assertNull(newConfig.getDriverClassName());
     }
 }

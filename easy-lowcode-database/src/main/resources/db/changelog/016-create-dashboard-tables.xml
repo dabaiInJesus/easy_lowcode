@@ -7,6 +7,11 @@
 
     <!-- 数据大屏配置表（新版，匹配Dashboard实体） -->
     <changeSet id="016-create-dashboard" author="dabai">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="dashboard"/>
+            </not>
+        </preConditions>
         <createTable tableName="dashboard" remarks="数据大屏配置表">
             <column name="id" type="BIGINT" remarks="主键ID">
                 <constraints primaryKey="true" nullable="false"/>
@@ -38,11 +43,15 @@
             <column name="update_by" type="BIGINT" remarks="更新人"/>
             <column name="deleted" type="SMALLINT" defaultValueNumeric="0" remarks="删除标志"/>
         </createTable>
-        <addUniqueConstraint columnNames="code" constraintName="uk_dashboard_code" tableName="dashboard"/>
     </changeSet>
 
     <!-- 大屏图表配置表 -->
     <changeSet id="016-create-dashboard-chart" author="dabai">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="dashboard_chart"/>
+            </not>
+        </preConditions>
         <createTable tableName="dashboard_chart" remarks="大屏图表配置表">
             <column name="id" type="BIGINT" remarks="主键ID">
                 <constraints primaryKey="true" nullable="false"/>
@@ -83,6 +92,11 @@
 
     <!-- 图表数据源配置表 -->
     <changeSet id="016-create-chart-datasource" author="dabai">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="dashboard_chart_datasource"/>
+            </not>
+        </preConditions>
         <createTable tableName="dashboard_chart_datasource" remarks="图表数据源配置表">
             <column name="id" type="BIGINT" remarks="主键ID">
                 <constraints primaryKey="true" nullable="false"/>

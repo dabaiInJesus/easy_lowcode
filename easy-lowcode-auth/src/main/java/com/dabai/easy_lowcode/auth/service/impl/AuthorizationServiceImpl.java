@@ -120,9 +120,11 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     
     @Override
     public List<Map<String, Object>> getMenuTree() {
-        // 获取所有菜单
+        // 获取所有菜单（只查询目录和菜单类型，排除按钮）
         LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
-        wrapper.orderByAsc(SysMenu::getSort);
+        wrapper.in(SysMenu::getMenuType, 1) // 1-目录/菜单
+               .eq(SysMenu::getVisible, 1) // 只显示可见菜单
+               .orderByAsc(SysMenu::getSort);
         List<SysMenu> allMenus = menuMapper.selectList(wrapper);
         
         // 构建树形结构

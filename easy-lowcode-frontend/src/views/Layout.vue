@@ -17,64 +17,41 @@
         :default-active="activeMenu"
         :collapse="isCollapse"
         router
+        unique-opened
         background-color="#304156"
         text-color="#bfcbd9"
         active-text-color="#409EFF"
       >
-        <el-menu-item index="/home">
-          <el-icon><House /></el-icon>
-          <template #title>首页</template>
-        </el-menu-item>
-        
-        <el-sub-menu index="system">
-          <template #title>
-            <el-icon><Setting /></el-icon>
-            <span>系统管理</span>
-          </template>
-          <el-menu-item index="/system/user">
-            <el-icon><User /></el-icon>
-            <template #title>用户管理</template>
+        <!-- 动态菜单 -->
+        <template v-for="menu in menuStore.visibleMenus" :key="menu.id">
+          <!-- 有子菜单 -->
+          <el-sub-menu v-if="menu.children && menu.children.length > 0" :index="menu.path">
+            <template #title>
+              <el-icon v-if="menu.icon">
+                <component :is="menu.icon" />
+              </el-icon>
+              <span>{{ menu.menuName }}</span>
+            </template>
+            <el-menu-item 
+              v-for="child in menu.children" 
+              :key="child.id" 
+              :index="child.path"
+            >
+              <el-icon v-if="child.icon">
+                <component :is="child.icon" />
+              </el-icon>
+              <template #title>{{ child.menuName }}</template>
+            </el-menu-item>
+          </el-sub-menu>
+          
+          <!-- 无子菜单 -->
+          <el-menu-item v-else :index="menu.path">
+            <el-icon v-if="menu.icon">
+              <component :is="menu.icon" />
+            </el-icon>
+            <template #title>{{ menu.menuName }}</template>
           </el-menu-item>
-          <el-menu-item index="/system/role">
-            <el-icon><UserFilled /></el-icon>
-            <template #title>角色管理</template>
-          </el-menu-item>
-          <el-menu-item index="/system/menu">
-            <el-icon><Menu /></el-icon>
-            <template #title>菜单管理</template>
-          </el-menu-item>
-          <el-menu-item index="/system/dept">
-            <el-icon><OfficeBuilding /></el-icon>
-            <template #title>部门管理</template>
-          </el-menu-item>
-          <el-menu-item index="/system/auth">
-            <el-icon><Key /></el-icon>
-            <template #title>授权管理</template>
-          </el-menu-item>
-          <el-menu-item index="/system/app">
-            <el-icon><Monitor /></el-icon>
-            <template #title>应用管理</template>
-          </el-menu-item>
-        </el-sub-menu>
-        
-        <el-sub-menu index="resource">
-          <template #title>
-            <el-icon><Collection /></el-icon>
-            <span>资源配置</span>
-          </template>
-          <el-menu-item index="/resource/datasource">
-            <el-icon><Connection /></el-icon>
-            <template #title>数据源管理</template>
-          </el-menu-item>
-          <el-menu-item index="/resource/table">
-            <el-icon><Document /></el-icon>
-            <template #title>表资源注册</template>
-          </el-menu-item>
-          <el-menu-item index="/resource/api">
-            <el-icon><Document /></el-icon>
-            <template #title>API管理</template>
-          </el-menu-item>
-        </el-sub-menu>
+        </template>
       </el-menu>
     </el-aside>
 
@@ -120,22 +97,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useUserStore } from '@/stores'
+import { useUserStore, useMenuStore } from '@/stores'
 import { ElMessageBox } from 'element-plus'
 import {
   House,
-  Setting,
-  User,
-  UserFilled,
-  Menu,
-  OfficeBuilding,
-  Key,
-  Monitor,
-  Collection,
-  Connection,
-  Document,
   DArrowLeft,
   DArrowRight,
 } from '@element-plus/icons-vue'
@@ -143,10 +110,20 @@ import {
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+const menuStore = useMenuStore()
 
 const isCollapse = ref(false)
 
 const activeMenu = computed(() => route.path)
+
+// 组件挂载时加载菜单
+onMounted(async () => {
+  try {
+    await menuStore.loadMenus()
+  } catch (error) {
+    console.error('加载菜单失败:', error)
+  }
+})
 
 // 面包屑导航
 interface BreadcrumbItem {
@@ -187,6 +164,7 @@ const handleCommand = async (command: string) => {
       type: 'warning',
     })
     userStore.clearUser()
+    menuStore.clearMenus()
     router.push('/login')
   } else if (command === 'profile') {
     // TODO: 跳转到个人中心
