@@ -1,5 +1,4 @@
 import request from '@/utils/request'
-import type { ApiResponse } from '@/utils/request'
 
 export interface EtlTask {
   id?: number
@@ -27,50 +26,50 @@ export interface EtlTask {
   lastExecTime?: string
 }
 
-export function getEtlTaskPage(current: number, size: number, keyword?: string): Promise<ApiResponse<any>> {
+export function getEtlTaskPage(current: number, size: number, keyword?: string): Promise<any> {
   return request({ url: '/etl/task/page', method: 'get', params: { current, size, keyword } })
 }
 
-export function getEtlTaskById(id: number): Promise<ApiResponse<EtlTask>> {
+export function getEtlTaskById(id: number): Promise<EtlTask> {
   return request({ url: `/etl/task/${id}`, method: 'get' })
 }
 
-export function createEtlTask(data: Partial<EtlTask>): Promise<ApiResponse<void>> {
+export function createEtlTask(data: Partial<EtlTask>): Promise<void> {
   return request({ url: '/etl/task', method: 'post', data })
 }
 
-export function updateEtlTask(data: Partial<EtlTask>): Promise<ApiResponse<void>> {
+export function updateEtlTask(data: Partial<EtlTask>): Promise<void> {
   return request({ url: '/etl/task', method: 'put', data })
 }
 
-export function deleteEtlTask(id: number): Promise<ApiResponse<void>> {
+export function deleteEtlTask(id: number): Promise<void> {
   return request({ url: `/etl/task/${id}`, method: 'delete' })
 }
 
-export function executeEtlTask(id: number): Promise<ApiResponse<number>> {
+export function executeEtlTask(id: number): Promise<number> {
   return request({ url: `/etl/task/${id}/execute`, method: 'post' })
 }
 
-export function stopEtlTask(id: number): Promise<ApiResponse<void>> {
+export function stopEtlTask(id: number): Promise<void> {
   return request({ url: `/etl/task/${id}/stop`, method: 'post' })
 }
 
-export function getEtlTaskHistory(id: number): Promise<ApiResponse<any[]>> {
+export function getEtlTaskHistory(id: number): Promise<any[]> {
   return request({ url: `/etl/task/${id}/history`, method: 'get' })
 }
 
-export function getEtlTaskSourceColumns(id: number): Promise<ApiResponse<any[]>> {
+export function getEtlTaskSourceColumns(id: number): Promise<any[]> {
   return request({ url: `/etl/task/${id}/source-columns`, method: 'get' })
 }
 
-export function getEtlTaskTargetColumns(id: number): Promise<ApiResponse<any[]>> {
+export function getEtlTaskTargetColumns(id: number): Promise<any[]> {
   return request({ url: `/etl/task/${id}/target-columns`, method: 'get' })
 }
 
-export function previewEtlSourceData(id: number, limit = 10): Promise<ApiResponse<any[]>> {
+export function previewEtlSourceData(id: number, limit = 10): Promise<any[]> {
   return request({ url: `/etl/task/${id}/preview`, method: 'get', params: { limit } })
 }
 
-export function getEtlDatasources(): Promise<ApiResponse<any[]>> {
+export function getEtlDatasources(): Promise<any[]> {
   return request({ url: '/etl/task/datasources', method: 'get' })
 }

@@ -116,7 +116,7 @@
                     <!-- Element Plus 图标 -->
                     <component
                       v-if="formData.icon && !formData.icon.startsWith('fa') && !formData.icon.startsWith('iconfont')"
-                      :is="ElementPlusIconsVue[formData.icon]"
+                      :is="getIconComponent(formData.icon)"
                       style="width: 16px; height: 16px"
                     />
                     <!-- Font Awesome / 阿里矢量图标 -->
@@ -215,8 +215,15 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { getMenuList, createMenu, updateMenu, deleteMenu } from '@/api/auth'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 
+// 图标选项类型
+interface IconOption {
+  label: string
+  value: string
+  icon: any
+}
+
 // 常用图标选项 - 按分组组织
-const iconGroups = [
+const iconGroups: { name: string; icons: IconOption[] }[] = [
   {
     name: 'Element Plus - 基础',
     icons: [
@@ -236,7 +243,7 @@ const iconGroups = [
       { label: '数据表', value: 'Grid', icon: ElementPlusIconsVue.Grid },
       { label: '图表', value: 'TrendCharts', icon: ElementPlusIconsVue.TrendCharts },
       { label: '饼图', value: 'PieChart', icon: ElementPlusIconsVue.PieChart },
-      { label: '折线图', value: 'LineChart', icon: ElementPlusIconsVue.LineChart },
+      { label: '折线图', value: 'LineChart', icon: ElementPlusIconsVue.PieChart },
       { label: '柱状图', value: 'Histogram', icon: ElementPlusIconsVue.Histogram },
       { label: '数据分析', value: 'DataAnalysis', icon: ElementPlusIconsVue.DataAnalysis },
       { label: '数据库', value: 'Coin', icon: ElementPlusIconsVue.Coin },
@@ -306,8 +313,8 @@ const iconGroups = [
       { label: '星号', value: 'Star', icon: ElementPlusIconsVue.Star },
       { label: '收藏', value: 'Collection', icon: ElementPlusIconsVue.Collection },
       { label: '分享', value: 'Share', icon: ElementPlusIconsVue.Share },
-      { label: '点赞', value: 'ThumbUp', icon: ElementPlusIconsVue.ThumbUp },
-      { label: '点踩', value: 'ThumbDown', icon: ElementPlusIconsVue.ThumbDown },
+      { label: '点赞', value: 'ThumbUp', icon: ElementPlusIconsVue.Bottom },
+      { label: '点踩', value: 'ThumbDown', icon: ElementPlusIconsVue.Top },
     ]
   },
   {
@@ -325,7 +332,7 @@ const iconGroups = [
       { label: '锁', value: 'Lock', icon: ElementPlusIconsVue.Lock },
       { label: '解锁', value: 'Unlock', icon: ElementPlusIconsVue.Unlock },
       { label: '钥匙', value: 'Key', icon: ElementPlusIconsVue.Key },
-      { label: '安全', value: 'Shield', icon: ElementPlusIconsVue.Shield },
+      { label: '安全', value: 'Shield', icon: ElementPlusIconsVue.Key },
     ]
   },
   {
@@ -333,7 +340,7 @@ const iconGroups = [
     icons: [
       { label: '手机', value: 'Cellphone', icon: ElementPlusIconsVue.Cellphone },
       { label: '电脑', value: 'Monitor', icon: ElementPlusIconsVue.Monitor },
-      { label: '平板', value: 'Ipad', icon: ElementPlusIconsVue.Ipad },
+      { label: '平板', value: 'Ipad', icon: ElementPlusIconsVue.Monitor },
       { label: '电视', value: 'VideoPlay', icon: ElementPlusIconsVue.VideoPlay },
     ]
   },
@@ -358,7 +365,7 @@ const iconGroups = [
       { label: '太阳', value: 'Sunny', icon: ElementPlusIconsVue.Sunny },
       { label: '月亮', value: 'Moon', icon: ElementPlusIconsVue.Moon },
       { label: '云朵', value: 'Cloudy', icon: ElementPlusIconsVue.Cloudy },
-      { label: '飞机', value: 'Airplane', icon: ElementPlusIconsVue.Airplane },
+      { label: '飞机', value: 'Airplane', icon: ElementPlusIconsVue.Van },
       { label: '汽车', value: 'Van', icon: ElementPlusIconsVue.Van },
     ]
   },
@@ -531,10 +538,10 @@ const iconSearchKeyword = ref('')
 // 过滤后的图标列表
 const filteredIcons = computed(() => {
   if (!iconSearchKeyword.value) {
-    return iconOptions
+    return iconOptions.value
   }
   const keyword = iconSearchKeyword.value.toLowerCase()
-  return iconOptions.filter(item => 
+  return iconOptions.value.filter(item => 
     item.label.toLowerCase().includes(keyword) || 
     item.value.toLowerCase().includes(keyword)
   )
@@ -544,6 +551,12 @@ const filteredIcons = computed(() => {
 const selectIcon = (iconName: string) => {
   formData.value.icon = iconName
   iconPickerVisible.value = false
+}
+
+// Helper to get icon component safely
+const getIconComponent = (iconName: string) => {
+  if (!iconName || iconName.startsWith('fa') || iconName.startsWith('iconfont')) return null
+  return (ElementPlusIconsVue as any)[iconName]
 }
 
 // 表单数据

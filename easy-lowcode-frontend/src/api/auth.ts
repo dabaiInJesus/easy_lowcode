@@ -1,5 +1,4 @@
 import request from '@/utils/request'
-import type { ApiResponse } from '@/utils/request'
 
 export interface LoginParams {
   username: string
@@ -209,7 +208,7 @@ export function deleteRole(id: number) {
 /**
  * 获取部门列表
  */
-export function getDeptList(): Promise<ApiResponse<any>> {
+export function getDeptList(): Promise<any> {
   return request({
     url: '/auth/dept/list',
     method: 'get',

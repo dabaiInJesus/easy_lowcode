@@ -1,5 +1,4 @@
 import request from '@/utils/request'
-import type { ApiResponse } from '@/utils/request'
 
 export interface ApiManagement {
   id?: string | number
@@ -29,7 +28,7 @@ export function getApiPage(params: {
   apiName?: string
   apiType?: string
   status?: number
-}): Promise<ApiResponse<any>> {
+}): Promise<any> {
   return request({
     url: '/collector/api-management/page',
     method: 'get',
@@ -40,7 +39,7 @@ export function getApiPage(params: {
 /**
  * 获取API详情
  */
-export function getApiById(id: number | string): Promise<ApiResponse<ApiManagement>> {
+export function getApiById(id: number | string): Promise<ApiManagement> {
   return request({
     url: `/collector/api-management/${id}`,
     method: 'get',
@@ -50,7 +49,7 @@ export function getApiById(id: number | string): Promise<ApiResponse<ApiManageme
 /**
  * 注册外部接口API
  */
-export function registerExternalApi(data: ApiManagement): Promise<ApiResponse<void>> {
+export function registerExternalApi(data: ApiManagement): Promise<void> {
   return request({
     url: '/collector/api-management/register-external',
     method: 'post',
@@ -61,7 +60,7 @@ export function registerExternalApi(data: ApiManagement): Promise<ApiResponse<vo
 /**
  * 更新API信息
  */
-export function updateApi(id: number | string, data: ApiManagement): Promise<ApiResponse<void>> {
+export function updateApi(id: number | string, data: ApiManagement): Promise<void> {
   return request({
     url: `/collector/api-management/${id}`,
     method: 'put',
@@ -72,7 +71,7 @@ export function updateApi(id: number | string, data: ApiManagement): Promise<Api
 /**
  * 删除API
  */
-export function deleteApi(id: number | string): Promise<ApiResponse<void>> {
+export function deleteApi(id: number | string): Promise<void> {
   return request({
     url: `/collector/api-management/${id}`,
     method: 'delete',
@@ -82,7 +81,7 @@ export function deleteApi(id: number | string): Promise<ApiResponse<void>> {
 /**
  * 批量删除API
  */
-export function batchDeleteApi(ids: (number | string)[]): Promise<ApiResponse<void>> {
+export function batchDeleteApi(ids: (number | string)[]): Promise<void> {
   return request({
     url: '/collector/api-management/batch',
     method: 'delete',
@@ -93,7 +92,7 @@ export function batchDeleteApi(ids: (number | string)[]): Promise<ApiResponse<vo
 /**
  * 启用/禁用API
  */
-export function updateApiStatus(id: number | string, status: number): Promise<ApiResponse<void>> {
+export function updateApiStatus(id: number | string, status: number): Promise<void> {
   return request({
     url: `/collector/api-management/${id}/status`,
     method: 'put',

@@ -1,5 +1,4 @@
 import request from '@/utils/request'
-import type { ApiResponse } from '@/utils/request'
 
 export interface DataSourceConfig {
   id?: number
@@ -17,7 +16,7 @@ export interface DataSourceConfig {
 /**
  * 分页查询数据源列表
  */
-export function getDataSourcePage(current: number, size: number, keyword?: string): Promise<ApiResponse<any>> {
+export function getDataSourcePage(current: number, size: number, keyword?: string): Promise<any> {
   return request({
     url: '/collector/datasource/page',
     method: 'get',
@@ -28,7 +27,7 @@ export function getDataSourcePage(current: number, size: number, keyword?: strin
 /**
  * 获取数据源详情
  */
-export function getDataSourceById(id: number): Promise<ApiResponse<DataSourceConfig>> {
+export function getDataSourceById(id: number): Promise<DataSourceConfig> {
   return request({
     url: `/collector/datasource/${id}`,
     method: 'get',
@@ -38,7 +37,7 @@ export function getDataSourceById(id: number): Promise<ApiResponse<DataSourceCon
 /**
  * 创建数据源
  */
-export function createDataSource(data: Partial<DataSourceConfig>): Promise<ApiResponse<void>> {
+export function createDataSource(data: Partial<DataSourceConfig>): Promise<void> {
   return request({
     url: '/collector/datasource',
     method: 'post',
@@ -49,7 +48,7 @@ export function createDataSource(data: Partial<DataSourceConfig>): Promise<ApiRe
 /**
  * 更新数据源
  */
-export function updateDataSource(data: Partial<DataSourceConfig>): Promise<ApiResponse<void>> {
+export function updateDataSource(data: Partial<DataSourceConfig>): Promise<void> {
   return request({
     url: '/collector/datasource',
     method: 'put',
@@ -60,7 +59,7 @@ export function updateDataSource(data: Partial<DataSourceConfig>): Promise<ApiRe
 /**
  * 删除数据源
  */
-export function deleteDataSource(id: number): Promise<ApiResponse<void>> {
+export function deleteDataSource(id: number): Promise<void> {
   return request({
     url: `/collector/datasource/${id}`,
     method: 'delete',
@@ -70,7 +69,7 @@ export function deleteDataSource(id: number): Promise<ApiResponse<void>> {
 /**
  * 测试连接
  */
-export function testConnection(data: Partial<DataSourceConfig>): Promise<ApiResponse<boolean>> {
+export function testConnection(data: Partial<DataSourceConfig>): Promise<boolean> {
   return request({
     url: '/collector/datasource/test-connection',
     method: 'post',
@@ -81,7 +80,7 @@ export function testConnection(data: Partial<DataSourceConfig>): Promise<ApiResp
 /**
  * 扫描表列表
  */
-export function scanTables(datasourceId: number): Promise<ApiResponse<any[]>> {
+export function scanTables(datasourceId: number): Promise<any[]> {
   return request({
     url: `/collector/datasource/${datasourceId}/tables`,
     method: 'get',
@@ -91,7 +90,7 @@ export function scanTables(datasourceId: number): Promise<ApiResponse<any[]>> {
 /**
  * 获取表结构
  */
-export function getTableColumns(datasourceId: number, tableName: string): Promise<ApiResponse<any[]>> {
+export function getTableColumns(datasourceId: number, tableName: string): Promise<any[]> {
   return request({
     url: `/collector/datasource/${datasourceId}/table/${tableName}/columns`,
     method: 'get',

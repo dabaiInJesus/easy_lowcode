@@ -1,4 +1,4 @@
-package com.dabai.easy_lowcode.common.interceptor;
+package com.dabai.easy_lowcode.collector.interceptor;
 
 import com.dabai.easy_lowcode.collector.entity.ApiManagement;
 import com.dabai.easy_lowcode.collector.mapper.ApiManagementMapper;

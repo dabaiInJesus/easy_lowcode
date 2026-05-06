@@ -136,11 +136,6 @@ const handleCreate = () => {
   Object.assign(formData, { name: '', code: '', title: '', description: '', width: 1920, height: 1080, backgroundColor: '#0a1628', refreshInterval: 0, category: '', tags: '', status: 0 })
 }
 
-const handleEdit = (row: Dashboard) => {
-  isEdit.value = true
-  Object.assign(formData, row)
-  dialogVisible.value = true
-}
 
 const handleDesign = (row: Dashboard) => {
   router.push({ name: 'dashboardDesigner', params: { id: row.id } })

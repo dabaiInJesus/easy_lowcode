@@ -29,11 +29,11 @@
           </template>
         </el-table-column>
         <el-table-column prop="scheduleType" label="调度" width="80">
-          <template #default="{ row }"><el-tag size="small">{{ {MANUAL:'手动',CRON:'定时',INTERVAL:'间隔'}[row.scheduleType] || row.scheduleType }}</el-tag></template>
+          <template #default="{ row }"><el-tag size="small">{{ getScheduleTypeLabel(row.scheduleType) || row.scheduleType }}</el-tag></template>
         </el-table-column>
         <el-table-column prop="status" label="状态" width="80">
           <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">{{ row.status === 1 ? '启用' : '禁用' }}</el-tag>
+            <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">{{ (row.status === 1 ? '启用' : '禁用') }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="320" fixed="right">
@@ -196,8 +196,8 @@
         <el-table-column prop="id" label="日志ID" width="180" />
         <el-table-column prop="execStatus" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="{RUNNING:'warning',SUCCESS:'success',FAILED:'danger',STOPPED:'info'}[row.execStatus] || 'info'" size="small">
-              {{ {RUNNING:'运行中',SUCCESS:'成功',FAILED:'失败',STOPPED:'已停止'}[row.execStatus] || row.execStatus }}
+            <el-tag :type="getExecStatusTagType(row.execStatus)" size="small">
+              {{ getExecStatusLabel(row.execStatus) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -215,7 +215,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { getEtlTaskPage, createEtlTask, updateEtlTask, deleteEtlTask, executeEtlTask, getEtlTaskHistory, getEtlTaskSourceColumns, getEtlTaskTargetColumns, getEtlDatasources, type EtlTask } from '@/api/etl'
+import { getEtlTaskPage, createEtlTask, updateEtlTask, deleteEtlTask, executeEtlTask, getEtlTaskHistory, getEtlTaskSourceColumns, getEtlDatasources, type EtlTask } from '@/api/etl'
 import { getDataSourcePage } from '@/api/datasource'
 
 const searchForm = reactive({ keyword: '' })
@@ -376,6 +376,9 @@ const handleHistory = async (row: EtlTask) => {
 }
 
 const getWriteModeTag = (mode: string) => ({ INSERT: '', MERGE: 'warning', REPLACE: 'danger', TRUNCATE: 'danger' })[mode] || ''
+const getScheduleTypeLabel = (type: string) => ({ MANUAL: '手动', CRON: '定时', INTERVAL: '间隔' }[type] || type)
+const getExecStatusTagType = (status: string) => ({ RUNNING: 'warning', SUCCESS: 'success', FAILED: 'danger', STOPPED: 'info' }[status] || 'info')
+const getExecStatusLabel = (status: string) => ({ RUNNING: '运行中', SUCCESS: '成功', FAILED: '失败', STOPPED: '已停止' }[status] || status)
 
 onMounted(() => { loadData() })
 </script>

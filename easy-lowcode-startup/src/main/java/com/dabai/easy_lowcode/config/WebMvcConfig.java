@@ -1,6 +1,6 @@
-package com.dabai.easy_lowcode.auth.config;
+package com.dabai.easy_lowcode.config;
 
-import com.dabai.easy_lowcode.common.interceptor.RateLimitInterceptor;
+import com.dabai.easy_lowcode.collector.interceptor.RateLimitInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;

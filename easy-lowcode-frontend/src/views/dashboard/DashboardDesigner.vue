@@ -14,7 +14,7 @@
     </div>
     <div class="designer-body">
       <div class="designer-sidebar">
-        <el-menu :default-active="activeMenu" @select="(idx) => activeMenu = idx">
+        <el-menu :default-active="activeMenu" @select="(idx: string) => activeMenu = idx">
           <el-menu-item index="charts">
             <el-icon><PieChart /></el-icon>
             <span>图表列表</span>
@@ -116,7 +116,7 @@
             </div>
             <div class="chart-preview-body">
               <div v-if="chart.chartType === 'number'" class="number-value-preview">
-                {{ chartDataMap[chart.id]?.displayValue || '--' }}
+                {{ chartDataMap[chart.id!]?.displayValue || '--' }}
               </div>
               <div v-else-if="chart.chartType === 'text'" class="chart-text-preview">
                 {{ chart.querySql }}
@@ -283,7 +283,7 @@ const handleBack = () => { router.push({ name: 'dashboardManagement' }) }
 onMounted(() => { loadDashboard(); loadDatasources() })
 
 onUnmounted(() => {
-  previewChartInstances.forEach((instance, id) => {
+  previewChartInstances.forEach((instance: any, _id: any) => {
     const ro = (instance as any).__ro
     if (ro) ro.disconnect()
     instance.dispose()

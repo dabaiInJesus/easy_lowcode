@@ -1,5 +1,4 @@
 import request from '@/utils/request'
-import type { ApiResponse } from '@/utils/request'
 
 export interface Dashboard {
   id?: number
@@ -48,66 +47,66 @@ export interface DashboardChart {
   remark?: string
 }
 
-export function getDashboardPage(current: number, size: number, keyword?: string, status?: number): Promise<ApiResponse<any>> {
+export function getDashboardPage(current: number, size: number, keyword?: string, status?: number): Promise<any> {
   return request({ url: '/dashboard/page', method: 'get', params: { current, size, keyword, status } })
 }
 
-export function getDashboardList(status?: number): Promise<ApiResponse<Dashboard[]>> {
+export function getDashboardList(status?: number): Promise<Dashboard[]> {
   return request({ url: '/dashboard/list', method: 'get', params: { status } })
 }
 
-export function getDashboardById(id: number): Promise<ApiResponse<Dashboard>> {
+export function getDashboardById(id: number): Promise<Dashboard> {
   return request({ url: `/dashboard/${id}`, method: 'get' })
 }
 
-export function createDashboard(data: Partial<Dashboard>): Promise<ApiResponse<void>> {
+export function createDashboard(data: Partial<Dashboard>): Promise<void> {
   return request({ url: '/dashboard', method: 'post', data })
 }
 
-export function updateDashboard(data: Partial<Dashboard>): Promise<ApiResponse<void>> {
+export function updateDashboard(data: Partial<Dashboard>): Promise<void> {
   return request({ url: '/dashboard', method: 'put', data })
 }
 
-export function deleteDashboard(id: number): Promise<ApiResponse<void>> {
+export function deleteDashboard(id: number): Promise<void> {
   return request({ url: `/dashboard/${id}`, method: 'delete' })
 }
 
-export function publishDashboard(id: number): Promise<ApiResponse<void>> {
+export function publishDashboard(id: number): Promise<void> {
   return request({ url: `/dashboard/${id}/publish`, method: 'post' })
 }
 
-export function copyDashboard(id: number): Promise<ApiResponse<number>> {
+export function copyDashboard(id: number): Promise<number> {
   return request({ url: `/dashboard/${id}/copy`, method: 'post' })
 }
 
-export function offlineDashboard(id: number): Promise<ApiResponse<void>> {
+export function offlineDashboard(id: number): Promise<void> {
   return request({ url: `/dashboard/${id}/offline`, method: 'post' })
 }
 
-export function getDashboardCharts(dashboardId: number): Promise<ApiResponse<DashboardChart[]>> {
+export function getDashboardCharts(dashboardId: number): Promise<DashboardChart[]> {
   return request({ url: `/dashboard/${dashboardId}/charts`, method: 'get' })
 }
 
-export function addChart(data: Partial<DashboardChart>): Promise<ApiResponse<void>> {
+export function addChart(data: Partial<DashboardChart>): Promise<void> {
   return request({ url: '/dashboard/chart', method: 'post', data })
 }
 
-export function updateChart(data: Partial<DashboardChart>): Promise<ApiResponse<void>> {
+export function updateChart(data: Partial<DashboardChart>): Promise<void> {
   return request({ url: '/dashboard/chart', method: 'put', data })
 }
 
-export function removeChart(chartId: number): Promise<ApiResponse<void>> {
+export function removeChart(chartId: number): Promise<void> {
   return request({ url: `/dashboard/chart/${chartId}`, method: 'delete' })
 }
 
-export function updateChartPositions(charts: Partial<DashboardChart>[]): Promise<ApiResponse<void>> {
+export function updateChartPositions(charts: Partial<DashboardChart>[]): Promise<void> {
   return request({ url: '/dashboard/charts/positions', method: 'put', data: charts })
 }
 
-export function queryChartData(chartId: number, params?: Record<string, any>): Promise<ApiResponse<any[]>> {
+export function queryChartData(chartId: number, params?: Record<string, any>): Promise<any[]> {
   return request({ url: `/dashboard/chart/${chartId}/data`, method: 'get', params })
 }
 
-export function previewDashboard(id: number): Promise<ApiResponse<any>> {
+export function previewDashboard(id: number): Promise<any> {
   return request({ url: `/dashboard/${id}/preview`, method: 'get' })
 }

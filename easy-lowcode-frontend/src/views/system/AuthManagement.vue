@@ -110,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { TreeInstance } from 'element-plus'
 import {
@@ -284,7 +284,7 @@ const handleSubmitRoleAuth = async () => {
     // 获取选中的菜单ID（包括半选中状态）
     const checkedKeys = menuTreeRef.value.getCheckedKeys(false) as string[]
     const halfCheckedKeys = menuTreeRef.value.getHalfCheckedKeys() as string[]
-    const allCheckedKeys = [...checkedKeys, ...halfCheckedKeys]
+    const allCheckedKeys = ([...checkedKeys, ...halfCheckedKeys].map(Number))
     
     console.log('选中的菜单IDs:', allCheckedKeys)
     

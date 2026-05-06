@@ -163,7 +163,7 @@ onMounted(() => { loadData() })
 
 onUnmounted(() => {
   stopAutoRefresh()
-  chartInstances.forEach((instance, id) => {
+  chartInstances.forEach((instance: any, _id: any) => {
     const ro = (instance as any).__resizeObserver
     if (ro) ro.disconnect()
     const wr = (instance as any).__windowResize

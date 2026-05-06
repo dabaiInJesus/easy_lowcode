@@ -61,7 +61,7 @@ function buildBaseOption(
   }
 }
 
-function buildBarOption(title: string, data: any[], x: string, yFields: string[], group?: string) {
+function buildBarOption(_title: string, data: any[], x: string, yFields: string[], group?: string): any {
   const xData = data.map(d => String(d[x]))
   const colors = ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4']
 
@@ -94,7 +94,7 @@ function buildBarOption(title: string, data: any[], x: string, yFields: string[]
   }
 }
 
-function buildLineOption(title: string, data: any[], x: string, yFields: string[], group?: string) {
+function buildLineOption(_title: string, data: any[], x: string, yFields: string[], group?: string): any {
   const xData = data.map(d => String(d[x]))
   const colors = ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de']
 
@@ -129,7 +129,7 @@ function buildLineOption(title: string, data: any[], x: string, yFields: string[
   }
 }
 
-function buildPieOption(title: string, data: any[], nameField: string, valueField: string) {
+function buildPieOption(_title: string, data: any[], nameField: string, valueField: string): any {
   // 聚合相同 nameField 的数据
   const grouped = new Map<string, number>()
   data.forEach(d => {
@@ -163,7 +163,7 @@ function buildPieOption(title: string, data: any[], nameField: string, valueFiel
   }
 }
 
-function buildScatterOption(title: string, data: any[], xField: string, yField: string) {
+function buildScatterOption(_title: string, data: any[], xField: string, yField: string): any {
   return {
     tooltip: { trigger: 'item', formatter: (p: any) => `${p.data[0]}, ${p.data[1]}` },
     grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },

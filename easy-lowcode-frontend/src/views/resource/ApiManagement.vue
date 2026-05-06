@@ -193,7 +193,7 @@
                     <template #default="{ row }">
                       <el-autocomplete
                         v-model="row.value"
-                        :fetch-suggestions="(queryString, cb) => querySearchHeaderValue(row, queryString, cb)"
+                        :fetch-suggestions="(queryString: string, cb: any) => querySearchHeaderValue(row, queryString, cb)"
                         placeholder="例如：application/json"
                         size="small"
                         clearable

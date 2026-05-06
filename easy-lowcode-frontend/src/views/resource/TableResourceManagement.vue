@@ -111,7 +111,7 @@
               v-model="selectedDatasourceId"
               placeholder="请选择数据源"
               style="width: 100%"
-              @change="(val) => { console.log('选择的数据源ID:', val); handleDatasourceChange(); }"
+              @change="(val: any) => { console.log('选择的数据源ID:', val); handleDatasourceChange(); }"
             >
               <el-option
                 v-for="ds in datasourceList"
@@ -502,7 +502,7 @@ const filteredTableList = computed(() => {
 })
 
 // 监听数据源变化，自动扫描表
-watch(selectedDatasourceId, async (newVal, oldVal) => {
+watch(selectedDatasourceId, async (newVal: any, _oldVal: any) => {
   // 只在注册对话框打开且在第0步时才自动扫描
   if (!registerDialogVisible.value || currentStep.value !== 0) {
     return

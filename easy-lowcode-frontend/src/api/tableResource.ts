@@ -1,5 +1,4 @@
 import request from '@/utils/request'
-import type { ApiResponse } from '@/utils/request'
 
 export interface TableResource {
   id?: number
@@ -14,6 +13,14 @@ export interface TableResource {
   datasourceName?: string
 }
 
+// 分页结果类型
+export interface PageResult<T = any> {
+  records: T[]
+  total: number
+  current: number
+  size: number
+}
+
 /**
  * 分页查询表资源列表
  */
@@ -22,7 +29,7 @@ export function getTableResourcePage(
   size: number,
   datasourceId?: number,
   keyword?: string
-): Promise<ApiResponse<any>> {
+): Promise<PageResult<TableResource>> {
   return request({
     url: '/collector/table-resource/page',
     method: 'get',
@@ -33,7 +40,7 @@ export function getTableResourcePage(
 /**
  * 获取表资源详情
  */
-export function getTableResourceById(id: number): Promise<ApiResponse<TableResource>> {
+export function getTableResourceById(id: number): Promise<TableResource> {
   return request({
     url: `/collector/table-resource/${id}`,
     method: 'get',
@@ -43,7 +50,7 @@ export function getTableResourceById(id: number): Promise<ApiResponse<TableResou
 /**
  * 注册表资源
  */
-export function registerTableResource(data: Partial<TableResource>): Promise<ApiResponse<void>> {
+export function registerTableResource(data: Partial<TableResource>): Promise<void> {
   return request({
     url: '/collector/table-resource',
     method: 'post',
@@ -54,7 +61,7 @@ export function registerTableResource(data: Partial<TableResource>): Promise<Api
 /**
  * 更新表资源
  */
-export function updateTableResource(data: Partial<TableResource>): Promise<ApiResponse<void>> {
+export function updateTableResource(data: Partial<TableResource>): Promise<void> {
   return request({
     url: '/collector/table-resource',
     method: 'put',
@@ -65,7 +72,7 @@ export function updateTableResource(data: Partial<TableResource>): Promise<ApiRe
 /**
  * 删除表资源
  */
-export function deleteTableResource(id: number): Promise<ApiResponse<void>> {
+export function deleteTableResource(id: number): Promise<void> {
   return request({
     url: `/collector/table-resource/${id}`,
     method: 'delete',
@@ -75,7 +82,7 @@ export function deleteTableResource(id: number): Promise<ApiResponse<void>> {
 /**
  * 生成API接口
  */
-export function generateApi(id: number | string): Promise<ApiResponse<void>> {
+export function generateApi(id: number | string): Promise<void> {
   return request({
     url: `/collector/table-resource/${id}/generate-api`,
     method: 'post',
