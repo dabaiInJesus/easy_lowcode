@@ -103,14 +103,10 @@ export const useMenuStore = defineStore('menu', () => {
         routes.push(route)
       }
 
-      // 递归处理子菜单
-      if (menu.children && menu.children.length > 0) {
+      // 递归处理子菜单（如果当前菜单没有 path/component，但有 children）
+      if (menu.children && menu.children.length > 0 && (!menu.path || !menu.component)) {
         const childRoutes = generateRoutes(menu.children)
-        if (route.children) {
-          route.children.push(...childRoutes)
-        } else {
-          route.children = childRoutes
-        }
+        routes.push(...childRoutes)
       }
     })
 
