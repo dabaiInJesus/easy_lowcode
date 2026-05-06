@@ -102,7 +102,6 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUserStore, useMenuStore } from '@/stores'
 import { ElMessageBox } from 'element-plus'
 import {
-  House,
   DArrowLeft,
   DArrowRight,
 } from '@element-plus/icons-vue'
