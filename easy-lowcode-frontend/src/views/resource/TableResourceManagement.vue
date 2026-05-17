@@ -101,6 +101,7 @@
           <el-step title="选择数据源" />
           <el-step title="选择表" />
           <el-step title="配置接口" />
+          <el-step title="模板与展示" />
         </el-steps>
 
         <!-- 步骤1：选择数据源 -->
@@ -238,13 +239,35 @@
           </el-form-item>
         </el-form>
       </div>
+
+      <!-- 步骤4：模板与展示设置 -->
+      <div v-if="currentStep === 3" class="step-content">
+        <el-tabs v-model="advancedTab">
+          <el-tab-pane label="查询模板" name="templates">
+            <QueryTemplateEditor v-model="configData.queryTemplates" />
+          </el-tab-pane>
+          <el-tab-pane label="参数处理器" name="param">
+            <ProcessorChainEditor v-model="configData.parameterProcessors" type="param" />
+          </el-tab-pane>
+          <el-tab-pane label="结果处理器" name="result">
+            <ProcessorChainEditor v-model="configData.resultProcessors" type="result" />
+          </el-tab-pane>
+          <el-tab-pane label="展示设置" name="display">
+            <FieldDisplayConfig
+              :fields="tableColumns"
+              :display-settings="configData.displaySettings"
+              @update="onDisplayUpdate"
+            />
+          </el-tab-pane>
+        </el-tabs>
+      </div>
       </div>
 
       <template #footer>
         <el-button @click="registerDialogVisible = false">取消</el-button>
         <el-button v-if="currentStep > 0" @click="currentStep--">上一步</el-button>
         <el-button
-          v-if="currentStep < 2"
+          v-if="currentStep < 3"
           type="primary"
           @click="handleNextStep"
           :disabled="!canNextStep"
@@ -252,12 +275,12 @@
           下一步
         </el-button>
         <el-button
-          v-if="currentStep === 2"
+          v-if="currentStep === 3"
           type="primary"
           @click="handleSubmitRegister"
           :loading="submitLoading"
         >
-          确定
+          确定注册
         </el-button>
       </template>
     </el-dialog>
@@ -401,6 +424,11 @@ import {
   type TableResource,
 } from '@/api/tableResource'
 import { getDataSourcePage, scanTables, getTableColumns, type DataSourceConfig } from '@/api/datasource'
+import QueryTemplateEditor from './components/QueryTemplateEditor.vue'
+import ProcessorChainEditor from './components/ProcessorChainEditor.vue'
+import FieldDisplayConfig from './components/FieldDisplayConfig.vue'
+import { createDefaultConfigJson } from '@/types/tableResource'
+import type { ConfigJson } from '@/types/tableResource'
 
 // 搜索表单
 const searchForm = reactive({
@@ -447,6 +475,14 @@ const registerFormData = reactive<Partial<TableResource>>({
 
 const selectedMethods = ref<string[]>(['GET'])
 
+// 高级配置
+const advancedTab = ref('templates')
+const configData = reactive<ConfigJson>(createDefaultConfigJson([]))
+
+const onDisplayUpdate = (settings: any) => {
+  configData.displaySettings = settings
+}
+
 const registerFormRules: FormRules = {
   resourceCode: [{ required: true, message: '请输入资源编码', trigger: 'blur' }],
   apiPath: [{ required: true, message: '请输入API路径', trigger: 'blur' }],
@@ -483,6 +519,9 @@ const canNextStep = computed(() => {
   }
   if (currentStep.value === 1) {
     return !!selectedTable.value
+  }
+  if (currentStep.value === 2) {
+    return !!registerFormData.resourceCode
   }
   return true
 })
@@ -589,6 +628,10 @@ const handleRegister = async () => {
   await loadData()
   registerDialogVisible.value = true
   currentStep.value = 0
+  configData.queryTemplates = []
+  configData.parameterProcessors = []
+  configData.resultProcessors = []
+  advancedTab.value = 'templates'
 }
 
 // 数据源变化
@@ -687,6 +730,13 @@ const handleNextStep = async () => {
     // 加载表字段
     await loadTableColumns()
   }
+  if (currentStep.value === 2 && tableColumns.value.length > 0) {
+    // 初始化 configData（保留用户可能已做的修改）
+    const defaultConfig = createDefaultConfigJson([...tableColumns.value])
+    if (configData.queryTemplates.length === 0) {
+      Object.assign(configData, defaultConfig)
+    }
+  }
   currentStep.value++
 }
 
@@ -710,11 +760,20 @@ const handleSubmitRegister = async () => {
           fuzzyQuery: col.fuzzyQuery,
         }))
       
+      // 构建完整 configJson（包含字段 + 处理器 + 模板 + 展示设置）
+      const fullConfig = {
+        fields: fieldConfig,
+        parameterProcessors: configData.parameterProcessors || [],
+        resultProcessors: configData.resultProcessors || [],
+        queryTemplates: configData.queryTemplates || [],
+        displaySettings: configData.displaySettings || { pageSize: 20, stripe: true, border: false, fields: {} },
+      }
+      
       const data: Partial<TableResource> = {
         ...registerFormData,
         datasourceId: selectedDatasourceId.value,
         methods: selectedMethods.value.join(','),
-        configJson: JSON.stringify({ fields: fieldConfig }),
+        configJson: JSON.stringify(fullConfig),
       }
       
       await registerTableResource(data)
@@ -792,6 +851,10 @@ const handleRegisterDialogClose = () => {
     status: 1,
   })
   selectedMethods.value = ['GET']
+  configData.queryTemplates = []
+  configData.parameterProcessors = []
+  configData.resultProcessors = []
+  configData.displaySettings = { pageSize: 20, stripe: true, border: false, fields: {} }
 }
 
 // 编辑
