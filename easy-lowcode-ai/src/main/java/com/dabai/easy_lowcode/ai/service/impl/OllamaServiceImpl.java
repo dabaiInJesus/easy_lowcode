@@ -1,95 +1,114 @@
 package com.dabai.easy_lowcode.ai.service.impl;
 
-import cn.hutool.http.HttpRequest;
-import cn.hutool.http.HttpResponse;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.dabai.easy_lowcode.ai.dto.ChatRequest;
 import com.dabai.easy_lowcode.ai.dto.ChatResponse;
 import com.dabai.easy_lowcode.ai.enums.AiProvider;
 import com.dabai.easy_lowcode.ai.service.AiService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.SystemMessage;
+import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+
+import java.util.ArrayList;
 
 /**
  * Ollama 聊天服务实现
+ * 使用 Spring AI OllamaChatModel
  */
 @Slf4j
 @Service
-@ConditionalOnProperty(name = "ai.provider.default", havingValue = "ollama")
+@ConditionalOnProperty(name = "ai.ollama.enabled", havingValue = "true")
 public class OllamaServiceImpl implements AiService {
-    
-    @Value("${ai.ollama.base-url:http://localhost:11434}")
-    private String baseUrl;
-    
-    @Value("${ai.ollama.model:llama2}")
-    private String defaultModel;
-    
-    private static final String API_URL_SUFFIX = "/api/chat";
-    
+
+    private final ChatModel ollamaChatModel;
+    private final String defaultModel;
+
+    public OllamaServiceImpl(
+            @Qualifier("ollamaChatModel") ChatModel ollamaChatModel,
+            @Value("${ai.ollama.model:llama2}") String defaultModel) {
+        this.ollamaChatModel = ollamaChatModel;
+        this.defaultModel = defaultModel;
+    }
+
     @Override
     public ChatResponse chat(ChatRequest request) {
         log.info("调用 Ollama 接口，消息: {}", request.getMessage());
-        
+
         try {
-            // 构建请求体
-            JSONObject requestBody = new JSONObject();
-            requestBody.set("model", request.getModel() != null ? request.getModel() : defaultModel);
-            
-            // 添加消息
-            cn.hutool.json.JSONArray messages = new cn.hutool.json.JSONArray();
-            
-            // 添加系统提示词
-            if (request.getSystemPrompt() != null && !request.getSystemPrompt().isEmpty()) {
-                JSONObject systemMsg = new JSONObject();
-                systemMsg.set("role", "system");
-                systemMsg.set("content", request.getSystemPrompt());
-                messages.add(systemMsg);
-            }
-            
-            // 添加用户消息
-            JSONObject userMsg = new JSONObject();
-            userMsg.set("role", "user");
-            userMsg.set("content", request.getMessage());
-            messages.add(userMsg);
-            
-            requestBody.set("messages", messages);
-            
-            // 添加参数
-            requestBody.set("stream", false);
-            if (request.getTemperature() != null) {
-                requestBody.set("temperature", request.getTemperature());
-            }
-            
-            // 发送请求
-            String apiUrl = baseUrl + API_URL_SUFFIX;
-            HttpResponse response = HttpRequest.post(apiUrl)
-                    .header("Content-Type", "application/json")
-                    .body(requestBody.toString())
-                    .timeout(60000)
-                    .execute();
-            
-            if (!response.isOk()) {
-                throw new RuntimeException("Ollama API 调用失败: " + response.body());
-            }
-            
-            // 解析响应
-            JSONObject responseBody = JSONUtil.parseObj(response.body());
-            String content = responseBody.getJSONObject("message").getStr("content");
-            
-            // 构建响应
+            Prompt prompt = buildPrompt(request);
+            var response = ollamaChatModel.call(prompt);
+
             ChatResponse chatResponse = new ChatResponse();
-            chatResponse.setContent(content);
             chatResponse.setModel(defaultModel);
-            
+
+            // 提取内容
+            try {
+                var result = response.getClass().getMethod("getResult").invoke(response);
+                if (result != null) {
+                    var output = result.getClass().getMethod("getOutput").invoke(result);
+                    if (output != null) {
+                        var getText = output.getClass().getMethod("getTextContent");
+                        chatResponse.setContent((String) getText.invoke(output));
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("提取 Ollama 响应内容失败", e);
+                chatResponse.setContent("");
+            }
+
             log.info("Ollama 响应成功");
             return chatResponse;
-            
+
         } catch (Exception e) {
             log.error("Ollama 调用失败", e);
-            throw new RuntimeException("AI 服务调用失败: " + e.getMessage(), e);
+            throw new RuntimeException("Ollama 服务调用失败: " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public Flux<String> streamChat(ChatRequest request) {
+        log.info("调用 Ollama 流式接口，消息: {}", request.getMessage());
+
+        try {
+            Prompt prompt = buildPrompt(request);
+            return ollamaChatModel.stream(prompt)
+                    .map(chunk -> {
+                        try {
+                            return chunk.getChoices().get(0).getDelta().getContent();
+                        } catch (Exception e) {
+                            return "";
+                        }
+                    })
+                    .filter(content -> content != null && !content.isEmpty());
+        } catch (Exception e) {
+            log.error("Ollama 流式调用失败", e);
+            return Flux.error(new RuntimeException("Ollama 流式服务调用失败: " + e.getMessage(), e));
+        }
+    }
+
+    @Override
+    public AiProvider getProvider() {
+        return AiProvider.OLLAMA;
+    }
+
+    @Override
+    public boolean supportsStreaming() {
+        return true;
+    }
+
+    private Prompt buildPrompt(ChatRequest request) {
+        var messages = new ArrayList<Message>();
+        if (request.getSystemPrompt() != null && !request.getSystemPrompt().isEmpty()) {
+            messages.add(new SystemMessage(request.getSystemPrompt()));
+        }
+        messages.add(new UserMessage(request.getMessage()));
+        return new Prompt(messages);
     }
 }
