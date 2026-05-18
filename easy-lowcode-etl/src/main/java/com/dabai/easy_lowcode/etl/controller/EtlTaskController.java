@@ -8,6 +8,7 @@ import com.dabai.easy_lowcode.common.result.PageResult;
 import com.dabai.easy_lowcode.common.result.Result;
 import com.dabai.easy_lowcode.etl.entity.EtlTask;
 import com.dabai.easy_lowcode.etl.service.EtlTaskService;
+import com.dabai.easy_lowcode.etl.service.ScheduleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +27,7 @@ import java.util.Map;
 public class EtlTaskController {
 
     private final EtlTaskService etlTaskService;
+    private final ScheduleService scheduleService;
     private final DataSourceConfigMapper dataSourceConfigMapper;
 
     /**
@@ -112,8 +114,22 @@ public class EtlTaskController {
         if (task == null) {
             return Result.error("任务不存在");
         }
+        scheduleService.cancelTask(id);
         etlTaskService.removeById(id);
         return Result.success("删除成功");
+    }
+
+    /**
+     * 启停调度
+     */
+    @PutMapping("/{id}/schedule")
+    public Result<Void> toggleSchedule(@PathVariable Long id, @RequestParam boolean enabled) {
+        if (enabled) {
+            scheduleService.scheduleTask(id);
+        } else {
+            scheduleService.cancelTask(id);
+        }
+        return Result.success(enabled ? "调度已开启" : "调度已关闭");
     }
 
     /**

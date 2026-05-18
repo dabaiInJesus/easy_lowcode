@@ -36,7 +36,19 @@
             <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">{{ (row.status === 1 ? '启用' : '禁用') }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="320" fixed="right">
+        <el-table-column label="调度" width="100">
+          <template #default="{ row }">
+            <el-switch
+              v-if="row.scheduleType && row.scheduleType !== 'MANUAL'"
+              :model-value="row.status === 1"
+              @click.stop
+              @change="(val: boolean) => handleToggleSchedule(row, val)"
+              size="small"
+            />
+            <span v-else style="color:#909399;font-size:12px">手动</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="350" fixed="right">
           <template #default="{ row }">
             <el-button size="small" type="primary" @click="handleExecute(row)" :loading="execLoading === row.id">执行</el-button>
             <el-button size="small" @click="handleEdit(row)">编辑</el-button>
@@ -215,7 +227,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { getEtlTaskPage, createEtlTask, updateEtlTask, deleteEtlTask, executeEtlTask, getEtlTaskHistory, getEtlTaskSourceColumns, getEtlDatasources, type EtlTask } from '@/api/etl'
+import { getEtlTaskPage, createEtlTask, updateEtlTask, deleteEtlTask, executeEtlTask, getEtlTaskHistory, getEtlTaskSourceColumns, getEtlDatasources, toggleEtlTaskSchedule, type EtlTask } from '@/api/etl'
 import { getDataSourcePage } from '@/api/datasource'
 
 const searchForm = reactive({ keyword: '' })
@@ -309,6 +321,14 @@ const handleExecute = async (row: EtlTask) => {
     ElMessage.success('任务已提交执行')
   } catch (e: any) { ElMessage.error(e.message || '执行失败') }
   finally { execLoading.value = null }
+}
+
+const handleToggleSchedule = async (row: EtlTask, enabled: boolean) => {
+  try {
+    await toggleEtlTaskSchedule(row.id!, enabled)
+    ElMessage.success(enabled ? '调度已开启' : '调度已关闭')
+    loadData()
+  } catch (e: any) { ElMessage.error(e.message || '操作失败') }
 }
 
 const handleDsChange = (type: 'source' | 'target') => {

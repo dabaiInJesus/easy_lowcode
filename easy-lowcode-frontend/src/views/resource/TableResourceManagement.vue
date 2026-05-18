@@ -289,7 +289,9 @@
     <el-dialog
       v-model="editDialogVisible"
       title="编辑表资源"
-      width="600px"
+      width="900px"
+      top="8vh"
+      :close-on-click-modal="false"
       @close="handleEditDialogClose"
     >
       <el-form
@@ -298,21 +300,46 @@
         :rules="editFormRules"
         label-width="120px"
       >
-        <el-form-item label="表名">
-          <el-input v-model="editFormData.tableName" disabled />
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="表名">
+              <el-input v-model="editFormData.tableName" disabled />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="状态">
+              <el-radio-group v-model="editFormData.status">
+                <el-radio :value="1">启用</el-radio>
+                <el-radio :value="0">禁用</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+        </el-row>
         <el-form-item label="资源编码" prop="resourceCode">
           <el-input v-model="editFormData.resourceCode" />
         </el-form-item>
         <el-form-item label="API路径" prop="apiPath">
           <el-input v-model="editFormData.apiPath" />
         </el-form-item>
-        <el-form-item label="状态">
-          <el-radio-group v-model="editFormData.status">
-            <el-radio :value="1">启用</el-radio>
-            <el-radio :value="0">禁用</el-radio>
-          </el-radio-group>
-        </el-form-item>
+        <el-divider />
+        <el-tabs v-model="editAdvancedTab">
+          <el-tab-pane label="查询模板" name="templates">
+            <QueryTemplateEditor v-model="editConfigData.queryTemplates" />
+          </el-tab-pane>
+          <el-tab-pane label="参数处理器" name="param">
+            <ProcessorChainEditor v-model="editConfigData.parameterProcessors" type="param" />
+          </el-tab-pane>
+          <el-tab-pane label="结果处理器" name="result">
+            <ProcessorChainEditor v-model="editConfigData.resultProcessors" type="result" />
+          </el-tab-pane>
+          <el-tab-pane label="展示设置" name="display">
+            <FieldDisplayConfig
+              :fields="editTableColumns"
+              :display-settings="editConfigData.displaySettings"
+              @update="onEditDisplayUpdate"
+            />
+          </el-tab-pane>
+        </el-tabs>
       </el-form>
       <template #footer>
         <el-button @click="editDialogVisible = false">取消</el-button>
@@ -492,10 +519,18 @@ const registerFormRules: FormRules = {
 const editDialogVisible = ref(false)
 const editFormRef = ref<FormInstance>()
 const editFormData = reactive<Partial<TableResource>>({})
+const editAdvancedTab = ref('templates')
+const editConfigData = reactive<ConfigJson>(createDefaultConfigJson([]))
+const editTableColumns = ref<any[]>([])
+const editColumnsLoading = ref(false)
 
 const editFormRules: FormRules = {
   resourceCode: [{ required: true, message: '请输入资源编码', trigger: 'blur' }],
   apiPath: [{ required: true, message: '请输入API路径', trigger: 'blur' }],
+}
+
+const onEditDisplayUpdate = (settings: any) => {
+  editConfigData.displaySettings = settings
 }
 
 // 生成API对话框
@@ -858,9 +893,52 @@ const handleRegisterDialogClose = () => {
 }
 
 // 编辑
-const handleEdit = (row: TableResource) => {
+const handleEdit = async (row: TableResource) => {
   editDialogVisible.value = true
+  editAdvancedTab.value = 'templates'
   Object.assign(editFormData, row)
+
+  // 解析 configJson
+  if (row.configJson) {
+    try {
+      const parsed = JSON.parse(row.configJson)
+      editConfigData.fields = parsed.fields || []
+      editConfigData.parameterProcessors = parsed.parameterProcessors || []
+      editConfigData.resultProcessors = parsed.resultProcessors || []
+      editConfigData.queryTemplates = parsed.queryTemplates || []
+      editConfigData.displaySettings = parsed.displaySettings || { pageSize: 20, stripe: true, border: false, fields: {} }
+      editTableColumns.value = (parsed.fields || []).map((f: any) => ({ ...f }))
+    } catch {
+      const defaultConfig = createDefaultConfigJson([])
+      Object.assign(editConfigData, defaultConfig)
+      editTableColumns.value = []
+    }
+  } else {
+    const defaultConfig = createDefaultConfigJson([])
+    Object.assign(editConfigData, defaultConfig)
+    editTableColumns.value = []
+  }
+
+  // 加载表字段
+  if (row.datasourceId && row.tableName) {
+    editColumnsLoading.value = true
+    try {
+      const res = await getTableColumns(row.datasourceId, row.tableName)
+      const cols = (res || []).map((col: any) => ({
+        ...col,
+        exactQuery: col.columnKey === 'PRI',
+        fuzzyQuery: false,
+      }))
+      // 合并已有的显示配置
+      const existingFieldNames = new Set(editTableColumns.value.map((f: any) => f.columnName))
+      const newCols = cols.filter((c: any) => !existingFieldNames.has(c.columnName))
+      editTableColumns.value = [...editTableColumns.value, ...newCols]
+    } catch {
+      // ignore
+    } finally {
+      editColumnsLoading.value = false
+    }
+  }
 }
 
 // 提交编辑
@@ -872,7 +950,18 @@ const handleSubmitEdit = async () => {
     
     submitLoading.value = true
     try {
-      await updateTableResource(editFormData)
+      const fullConfig = {
+        fields: editTableColumns.value,
+        parameterProcessors: editConfigData.parameterProcessors || [],
+        resultProcessors: editConfigData.resultProcessors || [],
+        queryTemplates: editConfigData.queryTemplates || [],
+        displaySettings: editConfigData.displaySettings || { pageSize: 20, stripe: true, border: false, fields: {} },
+      }
+      const data = {
+        ...editFormData,
+        configJson: JSON.stringify(fullConfig),
+      }
+      await updateTableResource(data)
       ElMessage.success('更新成功')
       editDialogVisible.value = false
       loadData()
@@ -888,6 +977,9 @@ const handleSubmitEdit = async () => {
 const handleEditDialogClose = () => {
   editFormRef.value?.resetFields()
   Object.assign(editFormData, {})
+  editTableColumns.value = []
+  const defaultConfig = createDefaultConfigJson([])
+  Object.assign(editConfigData, defaultConfig)
 }
 
 // 删除

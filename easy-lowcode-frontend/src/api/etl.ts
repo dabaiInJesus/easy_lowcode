@@ -70,6 +70,10 @@ export function previewEtlSourceData(id: number, limit = 10): Promise<any[]> {
   return request({ url: `/etl/task/${id}/preview`, method: 'get', params: { limit } })
 }
 
+export function toggleEtlTaskSchedule(id: number, enabled: boolean): Promise<void> {
+  return request({ url: `/etl/task/${id}/schedule`, method: 'put', params: { enabled } })
+}
+
 export function getEtlDatasources(): Promise<any[]> {
   return request({ url: '/etl/task/datasources', method: 'get' })
 }

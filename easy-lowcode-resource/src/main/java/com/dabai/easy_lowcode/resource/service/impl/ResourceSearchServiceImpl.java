@@ -6,6 +6,13 @@ import com.dabai.easy_lowcode.collector.mapper.DataSourceConfigMapper;
 import com.dabai.easy_lowcode.collector.mapper.TableResourceMapper;
 import com.dabai.easy_lowcode.common.exception.BusinessException;
 import com.dabai.easy_lowcode.common.util.EncryptUtil;
+import com.dabai.easy_lowcode.resource.model.ConfigJson;
+import com.dabai.easy_lowcode.resource.model.ConfigParser;
+import com.dabai.easy_lowcode.resource.model.DisplayFieldSetting;
+import com.dabai.easy_lowcode.resource.model.DisplaySettings;
+import com.dabai.easy_lowcode.resource.processor.ProcessorChain;
+import com.dabai.easy_lowcode.resource.processor.ProcessorContext;
+import com.dabai.easy_lowcode.resource.processor.ProcessorRegistry;
 import com.dabai.easy_lowcode.resource.service.DynamicDataService;
 import com.dabai.easy_lowcode.resource.service.ResourceSearchService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,6 +37,7 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
     private final TableResourceMapper tableResourceMapper;
     private final DataSourceConfigMapper dataSourceConfigMapper;
     private final DynamicDataService dynamicDataService;
+    private final ProcessorRegistry processorRegistry;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /** 字段白名单缓存 */
@@ -161,6 +169,8 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
                 }
             }
 
+            applyResultPipeline(resourceCode, records);
+
             SearchResult result = new SearchResult(total, page, pageSize, records);
             result.setSourceResource(resourceCode);
             return result;
@@ -197,7 +207,10 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
                         for (int i = 1; i <= metaData.getColumnCount(); i++) {
                             row.put(metaData.getColumnName(i), rs.getObject(i));
                         }
-                        return row;
+                        List<Map<String, Object>> list = new ArrayList<>();
+                        list.add(row);
+                        applyResultPipeline(resourceCode, list);
+                        return list.isEmpty() ? null : list.get(0);
                     }
                 }
             }
@@ -357,6 +370,9 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
                 }
             }
 
+            applyResultPipeline(joinConfig.getLeftResource(), records);
+            applyResultPipeline(joinConfig.getRightResource(), records);
+
             SearchResult result = new SearchResult(total, page, pageSize, records);
             result.setSourceResources(Arrays.asList(joinConfig.getLeftResource(), joinConfig.getRightResource()));
             return result;
@@ -454,6 +470,43 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
     }
 
     // ==================== 私有辅助方法 ====================
+
+    private void applyResultPipeline(String resourceCode, List<Map<String, Object>> records) {
+        TableResource tableResource = tableResourceMapper.selectByResourceCode(resourceCode);
+        if (tableResource == null || tableResource.getConfigJson() == null) return;
+
+        ConfigJson config = ConfigParser.parse(tableResource.getConfigJson());
+
+        if (config.getResultProcessors() != null && !config.getResultProcessors().isEmpty()) {
+            ProcessorChain<List<Map<String, Object>>> chain = processorRegistry.buildResultChain(config.getResultProcessors());
+            ProcessorContext context = ProcessorContext.builder()
+                    .tableResource(tableResource)
+                    .build();
+            context.getExtendedProps().put("resourceCode", resourceCode);
+            chain.execute(records, context);
+        }
+
+        if (config.getDisplaySettings() != null) {
+            DisplaySettings ds = config.getDisplaySettings();
+            for (Map<String, Object> record : records) {
+                for (Map.Entry<String, Object> e : record.entrySet()) {
+                    DisplayFieldSetting dfs = ds.getFields().get(e.getKey().toLowerCase());
+                    if (dfs == null) continue;
+                    // date format
+                    if (dfs.getFormat() != null && e.getValue() instanceof java.util.Date) {
+                        e.setValue(new java.text.SimpleDateFormat(dfs.getFormat()).format((java.util.Date) e.getValue()));
+                    }
+                    // enum mapping
+                    if (dfs.getEnumMapping() != null && e.getValue() != null) {
+                        String mapped = dfs.getEnumMapping().get(e.getValue().toString());
+                        if (mapped != null) e.setValue(mapped);
+                    }
+                }
+                // hide nulls
+                record.values().removeIf(v -> v == null);
+            }
+        }
+    }
 
     private Connection getConnection(DataSourceConfig dataSource) throws Exception {
         String password;

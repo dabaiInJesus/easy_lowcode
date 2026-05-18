@@ -10,25 +10,24 @@ import com.dabai.easy_lowcode.common.util.EncryptUtil;
 import com.dabai.easy_lowcode.etl.entity.EtlTask;
 import com.dabai.easy_lowcode.etl.entity.EtlTaskLog;
 import com.dabai.easy_lowcode.etl.mapper.EtlTaskMapper;
+import com.dabai.easy_lowcode.etl.model.TransformRule;
 import com.dabai.easy_lowcode.etl.service.EtlTaskLogService;
 import com.dabai.easy_lowcode.etl.service.EtlTaskService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
-/**
- * ETL任务服务实现
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -36,11 +35,14 @@ public class EtlTaskServiceImpl extends ServiceImpl<EtlTaskMapper, EtlTask> impl
 
     private final EtlTaskLogService etlTaskLogService;
     private final DataSourceConfigMapper dataSourceConfigMapper;
+    private final com.dabai.easy_lowcode.etl.service.ScheduleService scheduleService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private final ConcurrentHashMap<Long, Future<?>> runningTasks = new ConcurrentHashMap<>();
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean createTask(EtlTask task) {
-        // 验证必填字段
         if (task.getTaskName() == null || task.getTaskName().trim().isEmpty()) {
             throw new BusinessException("任务名称不能为空");
         }
@@ -57,154 +59,145 @@ public class EtlTaskServiceImpl extends ServiceImpl<EtlTaskMapper, EtlTask> impl
             throw new BusinessException("目标表名不能为空");
         }
 
-        // 验证数据源存在
-        if (dataSourceConfigMapper.selectById(task.getSourceDatasourceId()) == null) {
-            throw new BusinessException("源数据源不存在");
-        }
-        if (dataSourceConfigMapper.selectById(task.getTargetDatasourceId()) == null) {
-            throw new BusinessException("目标数据源不存在");
-        }
+        DataSourceConfig sourceDs = dataSourceConfigMapper.selectById(task.getSourceDatasourceId());
+        if (sourceDs == null) throw new BusinessException("源数据源不存在");
+        DataSourceConfig targetDs = dataSourceConfigMapper.selectById(task.getTargetDatasourceId());
+        if (targetDs == null) throw new BusinessException("目标数据源不存在");
 
-        // TABLE模式需要源表名
         if ("TABLE".equals(task.getReadMode()) && (task.getSourceTable() == null || task.getSourceTable().trim().isEmpty())) {
-            throw new BusinessException("全表读取模式需要指定源表名");
-        }
-        // SQL模式需要SQL语句
-        if ("SQL".equals(task.getReadMode()) && (task.getSourceSql() == null || task.getSourceSql().trim().isEmpty())) {
-            throw new BusinessException("自定义SQL模式需要输入SQL语句");
+            throw new BusinessException("TABLE模式下源表名不能为空");
         }
 
-        // 检查编码唯一性
-        LambdaQueryWrapper<EtlTask> checkWrapper = new LambdaQueryWrapper<>();
-        checkWrapper.eq(EtlTask::getTaskCode, task.getTaskCode());
-        if (this.count(checkWrapper) > 0) {
-            throw new BusinessException("任务编码已存在: " + task.getTaskCode());
-        }
+        Long count = baseMapper.selectCount(new LambdaQueryWrapper<EtlTask>()
+                .eq(EtlTask::getTaskCode, task.getTaskCode()));
+        if (count > 0) throw new BusinessException("任务编码已存在: " + task.getTaskCode());
 
-        // 设置默认值
+        if (task.getReadMode() == null) task.setReadMode("TABLE");
+        if (task.getWriteMode() == null) task.setWriteMode("INSERT");
+        if (task.getScheduleType() == null) task.setScheduleType("MANUAL");
         if (task.getBatchSize() == null) task.setBatchSize(1000);
         if (task.getStatus() == null) task.setStatus(1);
-        if (task.getScheduleType() == null) task.setScheduleType("MANUAL");
-        if (task.getWriteMode() == null) task.setWriteMode("INSERT");
-        if (task.getReadMode() == null) task.setReadMode("TABLE");
+        if (task.getSkipError() == null) task.setSkipError(0);
 
-        return this.save(task);
+        boolean saved = save(task);
+        if (saved && task.getStatus() == 1 && !"MANUAL".equals(task.getScheduleType())) {
+            scheduleService.scheduleTask(task.getId());
+        }
+        return saved;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean updateTask(EtlTask task) {
-        EtlTask existing = this.getById(task.getId());
-        if (existing == null) {
-            throw new BusinessException("任务不存在");
+        LambdaUpdateWrapper<EtlTask> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.eq(EtlTask::getId, task.getId());
+
+        if (task.getTaskCode() != null) {
+            Long count = baseMapper.selectCount(new LambdaQueryWrapper<EtlTask>()
+                    .eq(EtlTask::getTaskCode, task.getTaskCode())
+                    .ne(EtlTask::getId, task.getId()));
+            if (count > 0) throw new BusinessException("任务编码已存在: " + task.getTaskCode());
         }
 
-        // 如果修改了编码，检查唯一性
-        if (task.getTaskCode() != null && !task.getTaskCode().equals(existing.getTaskCode())) {
-            LambdaQueryWrapper<EtlTask> checkWrapper = new LambdaQueryWrapper<>();
-            checkWrapper.eq(EtlTask::getTaskCode, task.getTaskCode());
-            checkWrapper.ne(EtlTask::getId, task.getId());
-            if (this.count(checkWrapper) > 0) {
-                throw new BusinessException("任务编码已存在: " + task.getTaskCode());
+        if (task.getTaskName() != null) wrapper.set(EtlTask::getTaskName, task.getTaskName());
+        if (task.getTaskCode() != null) wrapper.set(EtlTask::getTaskCode, task.getTaskCode());
+        if (task.getSourceDatasourceId() != null) wrapper.set(EtlTask::getSourceDatasourceId, task.getSourceDatasourceId());
+        if (task.getSourceTable() != null) wrapper.set(EtlTask::getSourceTable, task.getSourceTable());
+        if (task.getSourceSql() != null) wrapper.set(EtlTask::getSourceSql, task.getSourceSql());
+        if (task.getReadMode() != null) wrapper.set(EtlTask::getReadMode, task.getReadMode());
+        if (task.getTargetDatasourceId() != null) wrapper.set(EtlTask::getTargetDatasourceId, task.getTargetDatasourceId());
+        if (task.getTargetTable() != null) wrapper.set(EtlTask::getTargetTable, task.getTargetTable());
+        if (task.getWriteMode() != null) wrapper.set(EtlTask::getWriteMode, task.getWriteMode());
+        if (task.getFieldMapping() != null) wrapper.set(EtlTask::getFieldMapping, task.getFieldMapping());
+        if (task.getTransformRules() != null) wrapper.set(EtlTask::getTransformRules, task.getTransformRules());
+        if (task.getScheduleType() != null) wrapper.set(EtlTask::getScheduleType, task.getScheduleType());
+        if (task.getCronExpression() != null) wrapper.set(EtlTask::getCronExpression, task.getCronExpression());
+        if (task.getIntervalSeconds() != null) wrapper.set(EtlTask::getIntervalSeconds, task.getIntervalSeconds());
+        if (task.getBatchSize() != null) wrapper.set(EtlTask::getBatchSize, task.getBatchSize());
+        if (task.getSkipError() != null) wrapper.set(EtlTask::getSkipError, task.getSkipError());
+        if (task.getStatus() != null) wrapper.set(EtlTask::getStatus, task.getStatus());
+        if (task.getRemark() != null) wrapper.set(EtlTask::getRemark, task.getRemark());
+
+        boolean updated = update(wrapper);
+        if (updated) {
+            if (task.getStatus() != null && task.getStatus() != 1) {
+                scheduleService.cancelTask(task.getId());
+            } else if (task.getScheduleType() != null || task.getStatus() != null) {
+                scheduleService.refresh();
             }
         }
-
-        LambdaUpdateWrapper<EtlTask> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.eq(EtlTask::getId, task.getId());
-
-        if (task.getTaskName() != null) updateWrapper.set(EtlTask::getTaskName, task.getTaskName());
-        if (task.getTaskCode() != null) updateWrapper.set(EtlTask::getTaskCode, task.getTaskCode());
-        if (task.getSourceDatasourceId() != null) updateWrapper.set(EtlTask::getSourceDatasourceId, task.getSourceDatasourceId());
-        if (task.getSourceTable() != null) updateWrapper.set(EtlTask::getSourceTable, task.getSourceTable());
-        if (task.getSourceSql() != null) updateWrapper.set(EtlTask::getSourceSql, task.getSourceSql());
-        if (task.getReadMode() != null) updateWrapper.set(EtlTask::getReadMode, task.getReadMode());
-        if (task.getTargetDatasourceId() != null) updateWrapper.set(EtlTask::getTargetDatasourceId, task.getTargetDatasourceId());
-        if (task.getTargetTable() != null) updateWrapper.set(EtlTask::getTargetTable, task.getTargetTable());
-        if (task.getWriteMode() != null) updateWrapper.set(EtlTask::getWriteMode, task.getWriteMode());
-        if (task.getFieldMapping() != null) updateWrapper.set(EtlTask::getFieldMapping, task.getFieldMapping());
-        if (task.getTransformRules() != null) updateWrapper.set(EtlTask::getTransformRules, task.getTransformRules());
-        if (task.getScheduleType() != null) updateWrapper.set(EtlTask::getScheduleType, task.getScheduleType());
-        if (task.getCronExpression() != null) updateWrapper.set(EtlTask::getCronExpression, task.getCronExpression());
-        if (task.getIntervalSeconds() != null) updateWrapper.set(EtlTask::getIntervalSeconds, task.getIntervalSeconds());
-        if (task.getBatchSize() != null) updateWrapper.set(EtlTask::getBatchSize, task.getBatchSize());
-        if (task.getSkipError() != null) updateWrapper.set(EtlTask::getSkipError, task.getSkipError());
-        if (task.getRemark() != null) updateWrapper.set(EtlTask::getRemark, task.getRemark());
-        // status 允许设置为0
-        updateWrapper.set(EtlTask::getStatus, task.getStatus());
-
-        return this.update(updateWrapper);
+        return updated;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long executeTask(Long taskId) {
-        EtlTask task = this.getById(taskId);
-        if (task == null) {
-            throw new BusinessException("任务不存在");
-        }
-        if (task.getStatus() == null || task.getStatus() != 1) {
-            throw new BusinessException("任务已禁用，无法执行");
-        }
+        EtlTask task = baseMapper.selectById(taskId);
+        if (task == null) throw new BusinessException("任务不存在，ID: " + taskId);
+        if (task.getStatus() != 1) throw new BusinessException("任务未启用，无法执行");
 
-        // 检查源、目标数据源
         DataSourceConfig sourceDs = dataSourceConfigMapper.selectById(task.getSourceDatasourceId());
         DataSourceConfig targetDs = dataSourceConfigMapper.selectById(task.getTargetDatasourceId());
-        if (sourceDs == null) throw new BusinessException("源数据源不存在");
-        if (targetDs == null) throw new BusinessException("目标数据源不存在");
+        if (sourceDs == null || targetDs == null) throw new BusinessException("数据源不存在");
 
-        // 创建执行日志
-        EtlTaskLog taskLog = new EtlTaskLog();
-        taskLog.setTaskId(taskId);
-        taskLog.setExecStatus("RUNNING");
-        taskLog.setStartTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
-        etlTaskLogService.recordLog(taskLog);
-        Long logId = taskLog.getId();
+        EtlTaskLog logRecord = new EtlTaskLog();
+        logRecord.setTaskId(taskId);
+        logRecord.setExecStatus("RUNNING");
+        logRecord.setStartTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date()));
+        logRecord.setReadCount(0L);
+        logRecord.setWriteCount(0L);
+        logRecord.setSkipCount(0L);
+        etlTaskLogService.recordLog(logRecord);
 
-        // 异步执行ETL
-        asyncExecuteEtl(task, sourceDs, targetDs, logId);
-
-        return logId;
+        asyncExecuteEtl(task, sourceDs, targetDs, logRecord.getId());
+        return logRecord.getId();
     }
 
-    /**
-     * 异步执行ETL
-     */
     @Async("etlExecutor")
     public void asyncExecuteEtl(EtlTask task, DataSourceConfig sourceDs, DataSourceConfig targetDs, Long logId) {
+        Future<?> future = null;
         try {
-            executeEtl(task, sourceDs, targetDs, logId);
+            future = runTask(task, sourceDs, targetDs, logId);
+            runningTasks.put(task.getId(), future);
+            future.get();
+        } catch (java.util.concurrent.CancellationException e) {
+            log.warn("ETL任务被中断: taskId={}", task.getId());
+            etlTaskLogService.updateLastLogStatus(task.getId(), "STOPPED");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("ETL任务被中断: taskId={}", task.getId());
+            etlTaskLogService.updateLastLogStatus(task.getId(), "STOPPED");
         } catch (Exception e) {
             log.error("ETL任务执行异常: taskId={}", task.getId(), e);
-            etlTaskLogService.updateStatus(logId, "FAILED", e.getMessage());
+            etlTaskLogService.updateLastLogStatus(task.getId(), "FAILED");
+        } finally {
+            runningTasks.remove(task.getId());
         }
     }
 
-    /**
-     * 执行ETL核心逻辑
-     */
+    private Future<?> runTask(EtlTask task, DataSourceConfig sourceDs, DataSourceConfig targetDs, Long logId) {
+        return java.util.concurrent.Executors.newSingleThreadExecutor().submit(() -> {
+            executeEtl(task, sourceDs, targetDs, logId);
+        });
+    }
+
     private void executeEtl(EtlTask task, DataSourceConfig sourceDs, DataSourceConfig targetDs, Long logId) {
         Connection sourceConn = null;
         Connection targetConn = null;
         Statement sourceStmt = null;
-        Statement targetStmt = null;
         ResultSet rs = null;
 
         try {
-            // 解密密码
             String sourcePwd = decryptPwd(sourceDs.getPassword());
             String targetPwd = decryptPwd(targetDs.getPassword());
 
-            // 连接源数据源
             Class.forName(sourceDs.getDriverClassName());
             sourceConn = DriverManager.getConnection(sourceDs.getUrl(), sourceDs.getUsername(), sourcePwd);
-            sourceStmt = sourceConn.createStatement();
 
-            // 连接目标数据源
             Class.forName(targetDs.getDriverClassName());
             targetConn = DriverManager.getConnection(targetDs.getUrl(), targetDs.getUsername(), targetPwd);
-            targetStmt = targetConn.createStatement();
+            targetConn.setAutoCommit(false);
 
-            // 构建源查询SQL
             String sourceQuery;
             if ("SQL".equals(task.getReadMode()) && task.getSourceSql() != null) {
                 sourceQuery = task.getSourceSql();
@@ -213,34 +206,43 @@ public class EtlTaskServiceImpl extends ServiceImpl<EtlTaskMapper, EtlTask> impl
             }
 
             log.info("ETL执行查询: {}", sourceQuery);
+            sourceStmt = sourceConn.createStatement();
             rs = sourceStmt.executeQuery(sourceQuery);
 
-            // 获取列信息
             int columnCount = rs.getMetaData().getColumnCount();
-            List<String> columnNames = new ArrayList<>();
+            List<String> sourceColumns = new ArrayList<>();
             for (int i = 1; i <= columnCount; i++) {
-                columnNames.add(rs.getMetaData().getColumnName(i));
+                sourceColumns.add(rs.getMetaData().getColumnName(i));
             }
 
-            // 解析字段映射
-            Map<String, String> fieldMap = parseFieldMapping(task.getFieldMapping(), columnNames);
+            Map<String, String> fieldMap = parseFieldMapping(task.getFieldMapping(), sourceColumns);
+            List<TransformRule> rules = parseTransformRules(task.getTransformRules());
 
-            // 分批处理
-            List<List<Object>> batch = new ArrayList<>();
+            List<String> targetColumns = fieldMap.values().stream()
+                    .filter(Objects::nonNull).distinct().collect(Collectors.toList());
+            if (targetColumns.isEmpty()) targetColumns = sourceColumns;
+
+            List<Object[]> batch = new ArrayList<>();
             long readCount = 0;
             long writeCount = 0;
             long skipCount = 0;
             int batchSize = task.getBatchSize() != null ? task.getBatchSize() : 1000;
+            String dbType = targetDs.getDbType();
 
             while (rs.next()) {
                 readCount++;
-                List<Object> row = new ArrayList<>();
+                Object[] row = new Object[targetColumns.size()];
                 boolean skipRow = false;
 
-                for (String colName : columnNames) {
-                    Object value = rs.getObject(colName);
-                    // 应用转换规则（简化版，实际应解析transformRules）
-                    row.add(value);
+                for (int i = 0; i < targetColumns.size(); i++) {
+                    String targetCol = targetColumns.get(i);
+                    String sourceCol = fieldMap.entrySet().stream()
+                            .filter(e -> e.getValue().equals(targetCol))
+                            .map(Map.Entry::getKey)
+                            .findFirst().orElse(targetCol);
+                    Object value = rs.getObject(sourceCol);
+                    value = applyTransforms(sourceCol, targetCol, value, rules);
+                    row[i] = value;
                 }
 
                 if (!skipRow) {
@@ -249,41 +251,132 @@ public class EtlTaskServiceImpl extends ServiceImpl<EtlTaskMapper, EtlTask> impl
                     skipCount++;
                 }
 
-                // 达到批次大小，写入目标
                 if (batch.size() >= batchSize) {
-                    writeCount += batchWrite(targetStmt, task.getTargetTable(), columnNames, batch, task.getWriteMode());
+                    writeCount += batchWrite(targetConn, task.getTargetTable(), targetColumns, batch, task.getWriteMode(), dbType);
                     batch.clear();
                 }
             }
 
-            // 写入剩余数据
             if (!batch.isEmpty()) {
-                writeCount += batchWrite(targetStmt, task.getTargetTable(), columnNames, batch, task.getWriteMode());
+                writeCount += batchWrite(targetConn, task.getTargetTable(), targetColumns, batch, task.getWriteMode(), dbType);
             }
 
             log.info("ETL执行完成: 读取={}, 写入={}, 跳过={}", readCount, writeCount, skipCount);
 
-            // 更新日志
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            LambdaUpdateWrapper<EtlTaskLog> logUpdate = new LambdaUpdateWrapper<>();
-            logUpdate.eq(EtlTaskLog::getId, logId)
-                     .set(EtlTaskLog::getExecStatus, "SUCCESS")
-                     .set(EtlTaskLog::getEndTime, sdf.format(new Date()))
-                     .set(EtlTaskLog::getReadCount, readCount)
-                     .set(EtlTaskLog::getWriteCount, writeCount)
-                     .set(EtlTaskLog::getSkipCount, skipCount);
-            etlTaskLogService.update(logUpdate);
+            String now = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date());
+            etlTaskLogService.updateLog(logId, "SUCCESS", now, readCount, writeCount, skipCount);
 
         } catch (Exception e) {
             log.error("ETL执行出错", e);
+            if (targetConn != null) {
+                try { targetConn.rollback(); } catch (Exception ignored) {}
+            }
             throw new RuntimeException("ETL执行失败: " + e.getMessage(), e);
         } finally {
             closeQuietly(rs);
             closeQuietly(sourceStmt);
-            closeQuietly(targetStmt);
             closeQuietly(sourceConn);
-            closeQuietly(targetConn);
+            if (targetConn != null) {
+                try { targetConn.setAutoCommit(true); } catch (Exception ignored) {}
+                try { targetConn.close(); } catch (Exception ignored) {}
+            }
         }
+    }
+
+    private long batchWrite(Connection conn, String targetTable, List<String> targetColumns,
+                            List<Object[]> batch, String writeMode, String dbType) throws Exception {
+        if ("TRUNCATE".equalsIgnoreCase(writeMode)) {
+            try (Statement stmt = conn.createStatement()) {
+                stmt.execute("TRUNCATE TABLE " + targetTable);
+            }
+        }
+
+        String cols = targetColumns.stream().map(c -> escapeIdentifier(c)).collect(Collectors.joining(", "));
+        String placeholders = targetColumns.stream().map(c -> "?").collect(Collectors.joining(", "));
+        String baseSql = "INSERT INTO " + targetTable + " (" + cols + ") VALUES (" + placeholders + ")";
+
+        String sql;
+        switch (writeMode.toUpperCase()) {
+            case "MERGE":
+                sql = buildMergeSql(targetTable, targetColumns, dbType);
+                break;
+            case "REPLACE":
+                sql = buildReplaceSql(targetTable, targetColumns, dbType);
+                break;
+            default:
+                sql = baseSql;
+        }
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            long count = 0;
+            for (Object[] row : batch) {
+                for (int i = 0; i < row.length; i++) {
+                    pstmt.setObject(i + 1, row[i]);
+                }
+                pstmt.addBatch();
+                count++;
+
+                if (count % 500 == 0) {
+                    pstmt.executeBatch();
+                    conn.commit();
+                }
+            }
+            pstmt.executeBatch();
+            conn.commit();
+            return count;
+        }
+    }
+
+    private String buildMergeSql(String table, List<String> columns, String dbType) {
+        String cols = columns.stream().map(c -> escapeIdentifier(c)).collect(Collectors.joining(", "));
+        String placeholders = columns.stream().map(c -> "?").collect(Collectors.joining(", "));
+        String updates = columns.stream()
+                .map(c -> escapeIdentifier(c) + " = EXCLUDED." + escapeIdentifier(c))
+                .collect(Collectors.joining(", "));
+        String pk = columns.isEmpty() ? "id" : escapeIdentifier(columns.get(0));
+
+        String db = dbType.toLowerCase();
+        if (db.contains("postgresql") || db.contains("kingbase") || db.contains("opengauss")
+                || db.contains("highgo") || db.contains("gbase")) {
+            return "INSERT INTO " + table + " (" + cols + ") VALUES (" + placeholders + ")"
+                    + " ON CONFLICT (" + pk + ") DO UPDATE SET " + updates;
+        } else if (db.contains("mysql") || db.contains("tidb") || db.contains("oceanbase")) {
+            return "INSERT INTO " + table + " (" + cols + ") VALUES (" + placeholders + ")"
+                    + " ON DUPLICATE KEY UPDATE " + updates.replace("EXCLUDED.", "VALUES(")
+                            .replace(", ", ", VALUES(") + ")";
+        } else if (db.contains("oracle") || db.contains("dm")) {
+            String mergeSql = "MERGE INTO " + table + " t USING (SELECT " + placeholders
+                    + " FROM DUAL) s ON (t." + pk + " = s." + pk + ") WHEN MATCHED THEN UPDATE SET ";
+            mergeSql += updates.replace("EXCLUDED.", "s.");
+            mergeSql += " WHEN NOT MATCHED THEN INSERT (" + cols + ") VALUES (" + placeholders + ")";
+            return mergeSql;
+        } else if (db.contains("sqlserver")) {
+            String mergeSql = "MERGE INTO " + table + " AS t USING (SELECT " + placeholders
+                    + ") AS s ON (t." + pk + " = s." + pk + ") WHEN MATCHED THEN UPDATE SET ";
+            mergeSql += updates.replace("EXCLUDED.", "s.");
+            mergeSql += " WHEN NOT MATCHED THEN INSERT (" + cols + ") VALUES (" + placeholders + ")";
+            return mergeSql;
+        }
+        return "INSERT INTO " + table + " (" + cols + ") VALUES (" + placeholders + ")"
+                + " ON CONFLICT (" + pk + ") DO UPDATE SET " + updates;
+    }
+
+    private String buildReplaceSql(String table, List<String> columns, String dbType) {
+        String cols = columns.stream().map(c -> escapeIdentifier(c)).collect(Collectors.joining(", "));
+        String placeholders = columns.stream().map(c -> "?").collect(Collectors.joining(", "));
+
+        String db = dbType.toLowerCase();
+        if (db.contains("mysql") || db.contains("tidb") || db.contains("oceanbase")) {
+            return "REPLACE INTO " + table + " (" + cols + ") VALUES (" + placeholders + ")";
+        }
+        return "INSERT INTO " + table + " (" + cols + ") VALUES (" + placeholders + ")"
+                + " ON CONFLICT (id) DO UPDATE SET "
+                + columns.stream().map(c -> escapeIdentifier(c) + " = EXCLUDED." + escapeIdentifier(c))
+                        .collect(Collectors.joining(", "));
+    }
+
+    private String escapeIdentifier(String id) {
+        return "\"" + id.replace("\"", "\"\"") + "\"";
     }
 
     private String decryptPwd(String encrypted) {
@@ -298,74 +391,96 @@ public class EtlTaskServiceImpl extends ServiceImpl<EtlTaskMapper, EtlTask> impl
         Map<String, String> map = new LinkedHashMap<>();
         if (fieldMappingJson != null && !fieldMappingJson.isEmpty()) {
             try {
-                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-                List<Map<String, String>> mappings = mapper.readValue(fieldMappingJson,
-                    mapper.getTypeFactory().constructCollectionType(List.class, Map.class));
+                List<Map<String, String>> mappings = objectMapper.readValue(fieldMappingJson,
+                        objectMapper.getTypeFactory().constructCollectionType(List.class, Map.class));
                 for (Map<String, String> m : mappings) {
                     map.put(m.get("source"), m.get("target"));
                 }
             } catch (Exception e) {
                 log.warn("解析字段映射失败，使用全量字段映射: {}", e.getMessage());
-                for (String col : sourceColumns) {
-                    map.put(col, col);
-                }
+                for (String col : sourceColumns) map.put(col, col);
             }
         } else {
-            for (String col : sourceColumns) {
-                map.put(col, col);
-            }
+            for (String col : sourceColumns) map.put(col, col);
         }
         return map;
     }
 
-    private long batchWrite(Statement stmt, String targetTable, List<String> columnNames,
-                            List<List<Object>> batch, String writeMode) throws Exception {
-        StringBuilder sql = new StringBuilder();
-        if ("TRUNCATE".equalsIgnoreCase(writeMode)) {
-            stmt.execute("TRUNCATE TABLE " + targetTable);
+    private List<TransformRule> parseTransformRules(String transformRulesJson) {
+        List<TransformRule> rules = new ArrayList<>();
+        if (transformRulesJson == null || transformRulesJson.isBlank()) return rules;
+        try {
+            rules = objectMapper.readValue(transformRulesJson, new TypeReference<List<TransformRule>>() {});
+        } catch (Exception e) {
+            log.warn("解析转换规则失败: {}", e.getMessage());
         }
+        return rules;
+    }
 
-        // 构建批量INSERT
-        StringBuilder columns = new StringBuilder();
-        StringBuilder values = new StringBuilder();
-        for (int i = 0; i < columnNames.size(); i++) {
-            if (i > 0) {
-                columns.append(", ");
-                values.append(", ");
-            }
-            columns.append(columnNames.get(i));
-            values.append("?");
-        }
+    private Object applyTransforms(String sourceField, String targetField, Object value, List<TransformRule> rules) {
+        for (TransformRule rule : rules) {
+            boolean matchesSource = rule.getSourceField() != null && rule.getSourceField().equals(sourceField);
+            boolean matchesTarget = rule.getTargetField() != null && rule.getTargetField().equals(targetField);
+            if (!matchesSource && !matchesTarget) continue;
+            if (rule.getTransformType() == null || "NONE".equals(rule.getTransformType())) continue;
 
-        // 使用逐行INSERT + 批量提交
-        long count = 0;
-        for (List<Object> row : batch) {
-            StringBuilder rowSql = new StringBuilder();
-            rowSql.append("INSERT INTO ").append(targetTable)
-                  .append(" (").append(columns).append(") VALUES (");
-            for (int i = 0; i < row.size(); i++) {
-                if (i > 0) rowSql.append(", ");
-                Object val = row.get(i);
-                if (val == null) {
-                    rowSql.append("NULL");
-                } else if (val instanceof Number) {
-                    rowSql.append(val);
-                } else {
-                    rowSql.append("'").append(val.toString().replace("'", "''")).append("'");
-                }
+            switch (rule.getTransformType().toUpperCase()) {
+                case "UPPER":
+                    if (value instanceof String) return ((String) value).toUpperCase();
+                    break;
+                case "LOWER":
+                    if (value instanceof String) return ((String) value).toLowerCase();
+                    break;
+                case "TRIM":
+                    if (value instanceof String) return ((String) value).trim();
+                    break;
+                case "DEFAULT":
+                    if (value == null || (value instanceof String && ((String) value).isEmpty())) {
+                        return rule.getDefaultValue();
+                    }
+                    break;
+                case "CONCAT":
+                    if (rule.getExpression() != null) {
+                        String expr = rule.getExpression()
+                                .replace("${value}", value != null ? value.toString() : "");
+                        return expr;
+                    }
+                    break;
+                case "SUBSTRING":
+                    if (value instanceof String && rule.getExpression() != null) {
+                        String[] parts = rule.getExpression().split(",");
+                        int start = parts.length > 0 ? Integer.parseInt(parts[0].trim()) : 0;
+                        int len = parts.length > 1 ? Integer.parseInt(parts[1].trim()) : ((String) value).length();
+                        String s = (String) value;
+                        return s.substring(Math.min(start, s.length()), Math.min(start + len, s.length()));
+                    }
+                    break;
+                case "DATE_FORMAT":
+                    if (value instanceof java.util.Date && rule.getExpression() != null) {
+                        try {
+                            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(rule.getExpression());
+                            return sdf.format((java.util.Date) value);
+                        } catch (Exception ignored) {}
+                    }
+                    break;
             }
-            rowSql.append(")");
-            stmt.execute(rowSql.toString());
-            count++;
         }
-        return count;
+        return value;
     }
 
     @Override
     public boolean stopTask(Long taskId) {
-        // 实际项目中应该通过JobExecution ID来停止
-        log.warn("停止任务功能需要结合Spring Batch的JobOperator实现: taskId={}", taskId);
-        return true;
+        Future<?> future = runningTasks.get(taskId);
+        if (future != null && !future.isDone()) {
+            boolean cancelled = future.cancel(true);
+            if (cancelled) {
+                log.info("ETL任务已停止: taskId={}", taskId);
+                etlTaskLogService.updateLastLogStatus(taskId, "STOPPED");
+            }
+            return cancelled;
+        }
+        log.warn("未找到运行中的ETL任务: taskId={}", taskId);
+        return false;
     }
 
     @Override
@@ -380,114 +495,95 @@ public class EtlTaskServiceImpl extends ServiceImpl<EtlTaskMapper, EtlTask> impl
 
     private boolean testConnection(Long datasourceId) {
         DataSourceConfig ds = dataSourceConfigMapper.selectById(datasourceId);
-        if (ds == null) return false;
-        try {
-            String pwd = decryptPwd(ds.getPassword());
-            Class.forName(ds.getDriverClassName());
-            Connection conn = DriverManager.getConnection(ds.getUrl(), ds.getUsername(), pwd);
-            conn.close();
-            return true;
+        if (ds == null) throw new BusinessException("数据源不存在");
+        try (Connection conn = getConnection(ds)) {
+            return conn.isValid(5);
         } catch (Exception e) {
-            log.error("数据源连接测试失败: id={}", datasourceId, e);
-            return false;
+            throw new BusinessException("连接测试失败: " + e.getMessage());
         }
     }
 
     @Override
     public List<Map<String, Object>> scanSourceColumns(Long datasourceId, String tableName) {
-        return scanColumns(datasourceId, tableName);
+        DataSourceConfig ds = dataSourceConfigMapper.selectById(datasourceId);
+        if (ds == null) throw new BusinessException("数据源不存在");
+        return scanColumns(ds, tableName);
     }
 
     @Override
     public List<Map<String, Object>> scanTargetColumns(Long datasourceId, String tableName) {
-        return scanColumns(datasourceId, tableName);
-    }
-
-    private List<Map<String, Object>> scanColumns(Long datasourceId, String tableName) {
         DataSourceConfig ds = dataSourceConfigMapper.selectById(datasourceId);
         if (ds == null) throw new BusinessException("数据源不存在");
+        return scanColumns(ds, tableName);
+    }
+
+    private List<Map<String, Object>> scanColumns(DataSourceConfig ds, String tableName) {
         List<Map<String, Object>> columns = new ArrayList<>();
-        try {
-            String pwd = decryptPwd(ds.getPassword());
-            Connection conn = DriverManager.getConnection(ds.getUrl(), ds.getUsername(), pwd);
-            // 通用列查询（简化版）
-            String sql = "SELECT * FROM " + tableName + " WHERE 1=0";
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
-            java.sql.ResultSetMetaData meta = rs.getMetaData();
+        try (Connection conn = getConnection(ds);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM " + tableName + " WHERE 1=0")) {
+            ResultSetMetaData meta = rs.getMetaData();
             for (int i = 1; i <= meta.getColumnCount(); i++) {
-                Map<String, Object> col = new HashMap<>();
+                Map<String, Object> col = new LinkedHashMap<>();
                 col.put("columnName", meta.getColumnName(i));
                 col.put("dataType", meta.getColumnTypeName(i));
                 col.put("nullable", meta.isNullable(i));
                 columns.add(col);
             }
-            rs.close();
-            stmt.close();
-            conn.close();
         } catch (Exception e) {
-            log.error("扫描表结构失败", e);
-            throw new BusinessException("扫描表结构失败: " + e.getMessage());
+            log.error("扫描表字段失败: {}", e.getMessage());
+            throw new BusinessException("扫描表字段失败: " + e.getMessage());
         }
         return columns;
     }
 
     @Override
     public List<Map<String, Object>> previewSourceData(Long taskId, int limit) {
-        EtlTask task = this.getById(taskId);
+        EtlTask task = baseMapper.selectById(taskId);
         if (task == null) throw new BusinessException("任务不存在");
+        if (limit <= 0 || limit > 100) limit = 10;
         DataSourceConfig ds = dataSourceConfigMapper.selectById(task.getSourceDatasourceId());
-        if (ds == null) throw new BusinessException("源数据源不存在");
-
-        List<Map<String, Object>> result = new ArrayList<>();
-        try {
-            String pwd = decryptPwd(ds.getPassword());
-            Connection conn = DriverManager.getConnection(ds.getUrl(), ds.getUsername(), pwd);
-            String sql;
-            if ("SQL".equals(task.getReadMode()) && task.getSourceSql() != null) {
-                sql = "SELECT * FROM (" + task.getSourceSql() + ") t LIMIT " + limit;
-            } else {
-                sql = "SELECT * FROM " + task.getSourceTable() + " LIMIT " + limit;
-            }
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
-            java.sql.ResultSetMetaData meta = rs.getMetaData();
+        try (Connection conn = getConnection(ds);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(
+                     "SELECT * FROM " + task.getSourceTable() + " LIMIT " + limit)) {
+            List<Map<String, Object>> data = new ArrayList<>();
+            ResultSetMetaData meta = rs.getMetaData();
+            int colCount = meta.getColumnCount();
             while (rs.next()) {
                 Map<String, Object> row = new LinkedHashMap<>();
-                for (int i = 1; i <= meta.getColumnCount(); i++) {
+                for (int i = 1; i <= colCount; i++) {
                     row.put(meta.getColumnName(i), rs.getObject(i));
                 }
-                result.add(row);
+                data.add(row);
             }
-            rs.close();
-            stmt.close();
-            conn.close();
+            return data;
         } catch (Exception e) {
-            log.error("预览数据失败", e);
             throw new BusinessException("预览数据失败: " + e.getMessage());
         }
-        return result;
     }
 
     @Override
     public List<Map<String, Object>> getTaskHistory(Long taskId) {
-        List<EtlTaskLog> logs = etlTaskLogService.lambdaQuery()
-                .eq(EtlTaskLog::getTaskId, taskId)
-                .orderByDesc(EtlTaskLog::getCreateTime)
-                .last("LIMIT 20")
-                .list();
+        List<EtlTaskLog> logs = etlTaskLogService.getLogsByTaskId(taskId, 20);
         return logs.stream().map(log -> {
-            Map<String, Object> m = new LinkedHashMap<>();
-            m.put("id", log.getId());
-            m.put("execStatus", log.getExecStatus());
-            m.put("startTime", log.getStartTime());
-            m.put("endTime", log.getEndTime());
-            m.put("readCount", log.getReadCount());
-            m.put("writeCount", log.getWriteCount());
-            m.put("skipCount", log.getSkipCount());
-            m.put("errorMessage", log.getErrorMessage());
-            return m;
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", log.getId());
+            map.put("execStatus", log.getExecStatus());
+            map.put("startTime", log.getStartTime());
+            map.put("endTime", log.getEndTime());
+            map.put("readCount", log.getReadCount());
+            map.put("writeCount", log.getWriteCount());
+            map.put("skipCount", log.getSkipCount());
+            map.put("errorMessage", log.getErrorMessage());
+            return map;
         }).collect(Collectors.toList());
+    }
+
+    private Connection getConnection(DataSourceConfig ds) throws Exception {
+        String pwd = decryptPwd(ds.getPassword());
+        Class.forName(ds.getDriverClassName());
+        return DriverManager.getConnection(ds.getUrl(), ds.getUsername(), pwd);
     }
 
     private void closeQuietly(AutoCloseable resource) {

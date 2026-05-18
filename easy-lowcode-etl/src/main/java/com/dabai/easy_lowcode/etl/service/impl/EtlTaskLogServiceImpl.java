@@ -1,5 +1,6 @@
 package com.dabai.easy_lowcode.etl.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.dabai.easy_lowcode.etl.entity.EtlTaskLog;
@@ -8,6 +9,7 @@ import com.dabai.easy_lowcode.etl.service.EtlTaskLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import java.util.List;
 
 /**
  * ETL任务日志服务实现
@@ -32,5 +34,36 @@ public class EtlTaskLogServiceImpl extends ServiceImpl<EtlTaskLogMapper, EtlTask
             wrapper.set(EtlTaskLog::getErrorMessage, errorMessage);
         }
         return this.update(wrapper);
+    }
+
+    @Override
+    public boolean updateLog(Long logId, String status, String endTime, Long readCount, Long writeCount, Long skipCount) {
+        LambdaUpdateWrapper<EtlTaskLog> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.eq(EtlTaskLog::getId, logId)
+               .set(EtlTaskLog::getExecStatus, status)
+               .set(EtlTaskLog::getEndTime, endTime)
+               .set(EtlTaskLog::getReadCount, readCount)
+               .set(EtlTaskLog::getWriteCount, writeCount)
+               .set(EtlTaskLog::getSkipCount, skipCount);
+        return this.update(wrapper);
+    }
+
+    @Override
+    public boolean updateLastLogStatus(Long taskId, String status) {
+        LambdaUpdateWrapper<EtlTaskLog> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.eq(EtlTaskLog::getTaskId, taskId)
+               .eq(EtlTaskLog::getExecStatus, "RUNNING")
+               .set(EtlTaskLog::getExecStatus, status)
+               .set(EtlTaskLog::getEndTime, new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date()));
+        return this.update(wrapper);
+    }
+
+    @Override
+    public List<EtlTaskLog> getLogsByTaskId(Long taskId, int limit) {
+        LambdaQueryWrapper<EtlTaskLog> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(EtlTaskLog::getTaskId, taskId)
+               .orderByDesc(EtlTaskLog::getCreateTime)
+               .last("LIMIT " + limit);
+        return this.list(wrapper);
     }
 }
