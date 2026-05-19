@@ -30,8 +30,10 @@ public class AiServiceFactory {
         log.info("初始化 AI 服务工厂，注册服务数量: {}", aiServices.size());
         for (AiService service : aiServices) {
             AiProvider provider = service.getProvider();
+            serviceCache.put(provider, service);
             log.info("注册 AI 服务: {} -> {}", provider.getCode(), service.getClass().getSimpleName());
         }
+        log.info("AI 服务缓存初始化完成，共缓存 {} 个服务", serviceCache.size());
     }
 
     /**

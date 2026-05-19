@@ -6,15 +6,18 @@ import com.dabai.easy_lowcode.ai.enums.AiProvider;
 import com.dabai.easy_lowcode.ai.factory.AiServiceFactory;
 import com.dabai.easy_lowcode.ai.service.AiService;
 import com.dabai.easy_lowcode.common.result.Result;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -25,6 +28,7 @@ import java.util.concurrent.Executors;
 @RestController
 @RequestMapping("/api/ai")
 @RequiredArgsConstructor
+@Validated
 public class AiController {
 
     private final AiServiceFactory aiServiceFactory;
@@ -36,7 +40,7 @@ public class AiController {
      * 聊天对话（使用默认 AI 服务）
      */
     @PostMapping("/chat")
-    public Result<ChatResponse> chat(@RequestBody ChatRequest request) {
+    public Result<ChatResponse> chat(@RequestBody @Validated ChatRequest request) {
         log.info("收到聊天请求: {}", request.getMessage());
 
         AiService aiService = aiServiceFactory.getDefaultService();
@@ -54,7 +58,7 @@ public class AiController {
     @PostMapping("/chat/{provider}")
     public Result<ChatResponse> chatWithProvider(
             @PathVariable String provider,
-            @RequestBody ChatRequest request) {
+            @RequestBody @Validated ChatRequest request) {
         log.info("收到聊天请求，厂商: {}, 消息: {}", provider, request.getMessage());
 
         AiProvider aiProvider = AiProvider.fromCode(provider);
@@ -67,7 +71,7 @@ public class AiController {
      * 简单文本对话
      */
     @PostMapping("/simple-chat")
-    public Result<String> simpleChat(@RequestBody Map<String, String> request) {
+    public Result<String> simpleChat(@RequestBody @Validated Map<String, @NotBlank String> request) {
         String message = request.get("message");
 
         AiService aiService = aiServiceFactory.getDefaultService();
@@ -85,8 +89,13 @@ public class AiController {
      * SSE 流式聊天（使用默认 AI 服务）
      */
     @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter streamChat(@RequestBody ChatRequest request) {
+    public SseEmitter streamChat(@RequestBody @Validated ChatRequest request) {
+        long startTime = System.currentTimeMillis();
         SseEmitter emitter = new SseEmitter(300_000L);
+
+        log.info("SSE 流式聊天开始，消息长度: {}, 是否有systemPrompt: {}",
+                request.getMessage() != null ? request.getMessage().length() : 0,
+                request.getSystemPrompt() != null);
 
         AiService aiService = aiServiceFactory.getDefaultService();
         if (aiService == null) {
@@ -99,7 +108,26 @@ public class AiController {
             return emitter;
         }
 
+        // 注册超时回调
+        emitter.onTimeout(() -> {
+            long elapsed = System.currentTimeMillis() - startTime;
+            log.warn("SSE 流式聊天超时，历时: {}ms");
+        });
+
+        // 注册完成回调
+        emitter.onCompletion(() -> {
+            long elapsed = System.currentTimeMillis() - startTime;
+            log.info("SSE 流式聊天完成，历时: {}ms", elapsed);
+        });
+
+        // 注册异常回调
+        emitter.onError(e -> {
+            long elapsed = System.currentTimeMillis() - startTime;
+            log.error("SSE 流式聊天异常，历时: {}ms, 错误: {}", elapsed, e.getMessage());
+        });
+
         if (!aiService.supportsStreaming()) {
+            // 非流式服务：模拟打字效果
             executor.execute(() -> {
                 try {
                     ChatResponse response = aiService.chat(request);
@@ -122,6 +150,7 @@ public class AiController {
             return emitter;
         }
 
+        // 流式服务：真正SSE
         executor.execute(() -> {
             try {
                 aiService.streamChat(request)
@@ -159,10 +188,6 @@ public class AiController {
                 emitter.completeWithError(e);
             }
         });
-
-        emitter.onCompletion(() -> log.debug("SSE 流式聊天完成"));
-        emitter.onTimeout(emitter::complete);
-        emitter.onError(e -> log.error("SSE 流式聊天异常", e));
 
         return emitter;
     }

@@ -2,6 +2,7 @@ package com.dabai.easy_lowcode.ai.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.dabai.easy_lowcode.ai.config.AiConfigRefresher;
 import com.dabai.easy_lowcode.ai.entity.AiConfig;
 import com.dabai.easy_lowcode.ai.mapper.AiConfigMapper;
 import com.dabai.easy_lowcode.common.result.PageResult;
@@ -9,6 +10,7 @@ import com.dabai.easy_lowcode.common.result.Result;
 import com.dabai.easy_lowcode.common.util.EncryptUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +25,7 @@ import java.util.List;
 public class AiConfigController {
 
     private final AiConfigMapper aiConfigMapper;
+    private final AiConfigRefresher aiConfigRefresher;
 
     @GetMapping("/page")
     public Result<PageResult<AiConfig>> page(
@@ -41,6 +44,7 @@ public class AiConfigController {
     }
 
     @PostMapping
+    @Transactional
     public Result<Void> save(@RequestBody AiConfig config) {
         if (config.getApiKey() != null && !config.getApiKey().contains("****")) {
             try { config.setApiKey(EncryptUtil.encrypt(config.getApiKey())); } catch (Exception e) {
@@ -57,26 +61,32 @@ public class AiConfigController {
                     .set(AiConfig::getIsDefault, 0).eq(AiConfig::getIsDefault, 1));
         }
         aiConfigMapper.insert(config);
+        // 刷新运行时配置
+        aiConfigRefresher.refreshConfig(config);
         return Result.success("配置已保存");
     }
 
     @PutMapping
+    @Transactional
     public Result<Void> update(@RequestBody AiConfig config) {
+        AiConfig existing = aiConfigMapper.selectById(config.getId());
         if (config.getApiKey() != null && !config.getApiKey().contains("****")) {
             try { config.setApiKey(EncryptUtil.encrypt(config.getApiKey())); } catch (Exception e) {
                 log.warn("API Key加密失败: {}", e.getMessage());
             }
-        } else { config.setApiKey(null); }
+        } else { config.setApiKey(existing != null ? existing.getApiKey() : null); }
         if (config.getSecretKey() != null && !config.getSecretKey().contains("****")) {
             try { config.setSecretKey(EncryptUtil.encrypt(config.getSecretKey())); } catch (Exception e) {
                 log.warn("Secret Key加密失败: {}", e.getMessage());
             }
-        } else { config.setSecretKey(null); }
+        } else { config.setSecretKey(existing != null ? existing.getSecretKey() : null); }
         if (config.getIsDefault() == 1) {
             aiConfigMapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<AiConfig>()
                     .set(AiConfig::getIsDefault, 0).eq(AiConfig::getIsDefault, 1));
         }
         aiConfigMapper.updateById(config);
+        // 刷新运行时配置
+        aiConfigRefresher.refreshConfig(config);
         return Result.success("配置已更新");
     }
 

@@ -4,6 +4,7 @@ import com.dabai.easy_lowcode.ai.dto.ChatRequest;
 import com.dabai.easy_lowcode.ai.dto.ChatResponse;
 import com.dabai.easy_lowcode.ai.enums.AiProvider;
 import com.dabai.easy_lowcode.ai.service.AiService;
+import com.dabai.easy_lowcode.ai.util.AiCallLogger;
 import com.dabai.easy_lowcode.ai.util.ChatResponseUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.Message;
@@ -40,14 +41,22 @@ public class DeepSeekServiceImpl implements AiService {
 
     @Override
     public ChatResponse chat(ChatRequest request) {
-        log.info("调用 DeepSeek 接口，消息: {}", request.getMessage());
+        long start = System.currentTimeMillis();
+        AiCallLogger.logRequest(AiProvider.DEEPSEEK, defaultModel, request.getMessage(), request.getSystemPrompt());
 
         try {
             Prompt prompt = buildPrompt(request);
             org.springframework.ai.chat.model.ChatResponse response = deepSeekChatModel.call(prompt);
-            return ChatResponseUtil.toDto(response, defaultModel);
+            ChatResponse chatResponse = ChatResponseUtil.toDto(response, defaultModel);
+
+            long elapsed = System.currentTimeMillis() - start;
+            AiCallLogger.logResponse(AiProvider.DEEPSEEK, defaultModel, elapsed,
+                    chatResponse.getContent() != null ? chatResponse.getContent().length() : 0, true);
+            return chatResponse;
 
         } catch (Exception e) {
+            long elapsed = System.currentTimeMillis() - start;
+            AiCallLogger.logResponse(AiProvider.DEEPSEEK, defaultModel, elapsed, 0, false);
             log.error("DeepSeek 调用失败", e);
             throw new RuntimeException("DeepSeek 服务调用失败: " + e.getMessage(), e);
         }
@@ -55,15 +64,25 @@ public class DeepSeekServiceImpl implements AiService {
 
     @Override
     public Flux<String> streamChat(ChatRequest request) {
-        log.info("调用 DeepSeek 流式接口，消息: {}", request.getMessage());
+        long start = System.currentTimeMillis();
+        AiCallLogger.logStreamStart(AiProvider.DEEPSEEK, defaultModel, request.getMessage());
+        final long[] chunkCount = {0};
 
         try {
             Prompt prompt = buildPrompt(request);
             return deepSeekChatModel.stream(prompt)
-                    .map(chunk -> ChatResponseUtil.extractText(chunk))
-                    .filter(content -> content != null && !content.isEmpty());
+                    .map(chunk -> {
+                        chunkCount[0]++;
+                        return ChatResponseUtil.extractText(chunk);
+                    })
+                    .filter(content -> content != null && !content.isEmpty())
+                    .doOnComplete(() -> AiCallLogger.logStreamEnd(AiProvider.DEEPSEEK,
+                            System.currentTimeMillis() - start, (int) chunkCount[0], true))
+                    .doOnError(e -> AiCallLogger.logStreamEnd(AiProvider.DEEPSEEK,
+                            System.currentTimeMillis() - start, (int) chunkCount[0], false));
 
         } catch (Exception e) {
+            AiCallLogger.logStreamEnd(AiProvider.DEEPSEEK, System.currentTimeMillis() - start, 0, false);
             log.error("DeepSeek 流式调用失败", e);
             return Flux.error(new RuntimeException("DeepSeek 流式服务调用失败: " + e.getMessage(), e));
         }

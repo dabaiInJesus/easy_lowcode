@@ -4,9 +4,13 @@ import com.dabai.easy_lowcode.common.result.Result;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.annotation.ResponseStatus;
+
+import java.util.stream.Collectors;
 
 /**
  * AI 模块全局异常处理器
@@ -19,6 +23,15 @@ public class AiExceptionHandler {
     public Result<Void> handleIllegalArgument(IllegalArgumentException e) {
         log.warn("参数错误: {}", e.getMessage());
         return Result.error(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public Result<Void> handleValidation(MethodArgumentNotValidException e) {
+        String detail = e.getBindingResult().getFieldErrors().stream()
+                .map(FieldError::getDefaultMessage)
+                .collect(Collectors.joining("; "));
+        log.warn("参数校验失败: {}", detail);
+        return Result.error(HttpStatus.BAD_REQUEST.value(), "参数校验失败: " + detail);
     }
 
     @ExceptionHandler(IllegalStateException.class)
