@@ -4,6 +4,7 @@ import com.dabai.easy_lowcode.ai.dto.ChatRequest;
 import com.dabai.easy_lowcode.ai.dto.ChatResponse;
 import com.dabai.easy_lowcode.ai.enums.AiProvider;
 import com.dabai.easy_lowcode.ai.service.AiService;
+import com.dabai.easy_lowcode.ai.util.ChatResponseUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -43,8 +44,8 @@ public class DeepSeekServiceImpl implements AiService {
 
         try {
             Prompt prompt = buildPrompt(request);
-            var response = deepSeekChatModel.call(prompt);
-            return toChatResponse(response, defaultModel);
+            org.springframework.ai.chat.model.ChatResponse response = deepSeekChatModel.call(prompt);
+            return ChatResponseUtil.toDto(response, defaultModel);
 
         } catch (Exception e) {
             log.error("DeepSeek 调用失败", e);
@@ -59,13 +60,7 @@ public class DeepSeekServiceImpl implements AiService {
         try {
             Prompt prompt = buildPrompt(request);
             return deepSeekChatModel.stream(prompt)
-                    .map(chunk -> {
-                        try {
-                            return chunk.getChoices().get(0).getDelta().getContent();
-                        } catch (Exception e) {
-                            return "";
-                        }
-                    })
+                    .map(chunk -> ChatResponseUtil.extractText(chunk))
                     .filter(content -> content != null && !content.isEmpty());
 
         } catch (Exception e) {
@@ -91,24 +86,5 @@ public class DeepSeekServiceImpl implements AiService {
         }
         messages.add(new UserMessage(request.getMessage()));
         return new Prompt(messages);
-    }
-
-    private ChatResponse toChatResponse(Object response, String model) {
-        ChatResponse chatResponse = new ChatResponse();
-        chatResponse.setModel(model);
-        try {
-            var result = response.getClass().getMethod("getResult").invoke(response);
-            if (result != null) {
-                var output = result.getClass().getMethod("getOutput").invoke(result);
-                if (output != null) {
-                    var getText = output.getClass().getMethod("getTextContent");
-                    chatResponse.setContent((String) getText.invoke(output));
-                }
-            }
-        } catch (Exception e) {
-            log.warn("解析 DeepSeek 响应内容失败", e);
-            chatResponse.setContent("");
-        }
-        return chatResponse;
     }
 }

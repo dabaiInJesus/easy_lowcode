@@ -1,10 +1,10 @@
 package com.dabai.easy_lowcode.ai.service.impl;
 
-import com.alibaba.cloud.ai.model.ChatCompletion;
 import com.dabai.easy_lowcode.ai.dto.ChatRequest;
 import com.dabai.easy_lowcode.ai.dto.ChatResponse;
 import com.dabai.easy_lowcode.ai.enums.AiProvider;
 import com.dabai.easy_lowcode.ai.service.AiService;
+import com.dabai.easy_lowcode.ai.util.ChatResponseUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -44,22 +44,9 @@ public class DashScopeServiceImpl implements AiService {
 
         try {
             Prompt prompt = buildPrompt(request);
-            ChatCompletion response = (ChatCompletion) dashScopeChatModel.call(prompt);
+            org.springframework.ai.chat.model.ChatResponse response = dashScopeChatModel.call(prompt);
 
-            ChatResponse chatResponse = new ChatResponse();
-            chatResponse.setContent(response.getOutput().getTextContent());
-            chatResponse.setModel(response.getModel());
-
-            // 解析 usage
-            if (response.getUsage() != null) {
-                ChatResponse.Usage usageInfo = new ChatResponse.Usage();
-                usageInfo.setPromptTokens(response.getUsage().getInputTokens());
-                usageInfo.setCompletionTokens(response.getUsage().getOutputTokens());
-                usageInfo.setTotalTokens(
-                        response.getUsage().getInputTokens() + response.getUsage().getOutputTokens());
-                chatResponse.setUsage(usageInfo);
-            }
-
+            ChatResponse chatResponse = ChatResponseUtil.toDto(response, "dashscope");
             log.info("通义千问响应成功");
             return chatResponse;
 
@@ -77,13 +64,7 @@ public class DashScopeServiceImpl implements AiService {
         try {
             Prompt prompt = buildPrompt(request);
             return dashScopeChatModel.stream(prompt)
-                    .map(chunk -> {
-                        try {
-                            return chunk.getChoices().get(0).getDelta().getContent();
-                        } catch (Exception e) {
-                            return "";
-                        }
-                    })
+                    .map(chunk -> ChatResponseUtil.extractText(chunk))
                     .filter(content -> content != null && !content.isEmpty());
 
         } catch (Exception e) {

@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.ollama.api.OllamaApi;
+import org.springframework.ai.ollama.api.OllamaChatOptions;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.beans.factory.annotation.Value;
@@ -75,10 +76,12 @@ public class AiModelConfig {
             @Value("${ai.ollama.base-url:http://localhost:11434}") String baseUrl,
             @Value("${ai.ollama.model:llama2}") String model) {
         log.info("初始化 Ollama ChatModel, baseUrl={}, model={}", baseUrl, model);
-        OllamaApi ollamaApi = new OllamaApi(baseUrl);
+        OllamaApi ollamaApi = OllamaApi.builder()
+                .baseUrl(baseUrl)
+                .build();
         return OllamaChatModel.builder()
                 .ollamaApi(ollamaApi)
-                .defaultOptions(OllamaApi.Options.builder()
+                .defaultOptions(OllamaChatOptions.builder()
                         .model(model)
                         .build())
                 .build();

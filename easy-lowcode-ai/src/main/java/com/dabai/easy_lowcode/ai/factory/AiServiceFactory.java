@@ -22,7 +22,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AiServiceFactory {
 
     private final List<AiService> aiServices;
-    private final Map<String, AiService> aiServicesByName;
 
     private final Map<AiProvider, AiService> serviceCache = new ConcurrentHashMap<>();
 
