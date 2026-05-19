@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 资源检索控制器
@@ -144,6 +145,58 @@ public class ResourceSearchController {
         SearchResult result = searchService.multiFullTextSearch(
                 request.getResourceCodes(), request.getKeyword(), request.getParams());
         return Result.success(result);
+    }
+
+    // ==================== 数据导出 ====================
+
+    /**
+     * 导出搜索结果为CSV
+     */
+    @PostMapping("/export/{resourceCode}")
+    public void exportCSV(
+            @PathVariable String resourceCode,
+            @RequestBody SearchParams params,
+            jakarta.servlet.http.HttpServletResponse response) {
+        try {
+            params.setPage(1);
+            params.setPageSize(10000);
+            SearchResult result = searchService.singleSearch(resourceCode, params);
+            List<Map<String, Object>> records = result.getRecords();
+
+            response.setContentType("text/csv;charset=UTF-8");
+            response.setHeader("Content-Disposition", "attachment;filename=" + resourceCode + "_export.csv");
+
+            jakarta.servlet.ServletOutputStream out = response.getOutputStream();
+            out.write('\uFEFF');
+            if (!records.isEmpty()) {
+                Set<String> headers = new java.util.LinkedHashSet<>();
+                for (Map<String, Object> record : records) {
+                    headers.addAll(record.keySet());
+                }
+                out.write((String.join(",", headers) + "\n").getBytes("UTF-8"));
+                for (Map<String, Object> record : records) {
+                    List<String> row = new java.util.ArrayList<>();
+                    for (String h : headers) {
+                        Object val = record.get(h);
+                        if (val == null) {
+                            row.add("");
+                        } else {
+                            String s = val.toString().replace("\"", "\"\"");
+                            if (s.contains(",") || s.contains("\"") || s.contains("\n")) {
+                                row.add("\"" + s + "\"");
+                            } else {
+                                row.add(s);
+                            }
+                        }
+                    }
+                    out.write((String.join(",", row) + "\n").getBytes("UTF-8"));
+                }
+            }
+            out.flush();
+            out.close();
+        } catch (Exception e) {
+            log.error("导出CSV失败", e);
+        }
     }
 
     // ==================== 辅助接口 ====================

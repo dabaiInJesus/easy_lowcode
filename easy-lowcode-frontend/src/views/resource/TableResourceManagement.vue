@@ -63,12 +63,11 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="300" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" type="primary" @click="handleGenerateApi(row)">
-              生成API
-            </el-button>
+            <el-button size="small" type="primary" @click="handleGenerateApi(row)">生成API</el-button>
             <el-button size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-button size="small" @click="handleExport(row)">导出</el-button>
             <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
@@ -448,6 +447,7 @@ import {
   updateTableResource,
   deleteTableResource,
   generateApi,
+  exportResourceDataCsv,
   type TableResource,
 } from '@/api/tableResource'
 import { getDataSourcePage, scanTables, getTableColumns, type DataSourceConfig } from '@/api/datasource'
@@ -1032,6 +1032,16 @@ const handleGenerateApi = async (row: TableResource) => {
   
   // 显示对话框
   generateApiDialogVisible.value = true
+}
+
+// 导出CSV
+const handleExport = async (row: TableResource) => {
+  try {
+    await exportResourceDataCsv(row.resourceCode || '', {})
+    ElMessage.success('导出成功')
+  } catch (e: any) {
+    ElMessage.error(e.message || '导出失败')
+  }
 }
 
 // 确认生成API

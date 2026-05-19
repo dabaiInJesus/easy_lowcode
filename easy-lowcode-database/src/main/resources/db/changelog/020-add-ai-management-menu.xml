@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="020-add-ai-management-menu" author="dabai">
+        <sql>
+            INSERT INTO sys_menu (id, parent_id, menu_name, menu_code, menu_type, path, component, perms, icon, sort, visible, deleted, create_time, update_time, create_by, update_by)
+            SELECT 
+                COALESCE((SELECT MAX(id) FROM sys_menu), 0) + 1,
+                0,
+                'AI智能',
+                'ai_management',
+                1,
+                '/ai',
+                'Layout',
+                NULL,
+                'Cpu',
+                4,
+                1,
+                0,
+                NOW(),
+                NOW(),
+                1,
+                1
+            WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_code = 'ai_management');
+        </sql>
+        <sql>
+            INSERT INTO sys_menu (id, parent_id, menu_name, menu_code, menu_type, path, component, perms, icon, sort, visible, deleted, create_time, update_time, create_by, update_by)
+            SELECT 
+                COALESCE((SELECT MAX(id) FROM sys_menu), 0) + 1,
+                (SELECT id FROM sys_menu WHERE menu_code = 'ai_management' LIMIT 1),
+                'AI对话',
+                'ai_chat',
+                2,
+                '/ai/chat',
+                'ai/ChatView',
+                'ai:chat:list',
+                'ChatLineRound',
+                1,
+                1,
+                0,
+                NOW(),
+                NOW(),
+                1,
+                1
+            WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_code = 'ai_chat');
+        </sql>
+        <sql>
+            INSERT INTO sys_menu (id, parent_id, menu_name, menu_code, menu_type, path, component, perms, icon, sort, visible, deleted, create_time, update_time, create_by, update_by)
+            SELECT 
+                COALESCE((SELECT MAX(id) FROM sys_menu), 0) + 1,
+                (SELECT id FROM sys_menu WHERE menu_code = 'ai_management' LIMIT 1),
+                'AI配置',
+                'ai_config',
+                2,
+                '/ai/config',
+                'ai/AiConfigManagement',
+                'ai:config:list',
+                'Setting',
+                2,
+                1,
+                0,
+                NOW(),
+                NOW(),
+                1,
+                1
+            WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_code = 'ai_config');
+        </sql>
+        <sql>
+            INSERT INTO sys_role_menu (role_id, menu_id)
+            SELECT 1, id FROM sys_menu 
+            WHERE menu_code IN ('ai_management', 'ai_chat', 'ai_config')
+            AND NOT EXISTS (SELECT 1 FROM sys_role_menu WHERE role_id = 1 AND menu_id = sys_menu.id);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

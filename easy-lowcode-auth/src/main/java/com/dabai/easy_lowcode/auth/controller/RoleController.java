@@ -6,6 +6,7 @@ import com.dabai.easy_lowcode.auth.service.SysRoleService;
 import com.dabai.easy_lowcode.common.result.Result;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.List;
 public class RoleController {
     
     private final SysRoleService roleService;
+    private final JdbcTemplate jdbcTemplate;
     
     /**
      * 获取角色列表
@@ -83,8 +85,12 @@ public class RoleController {
      */
     @DeleteMapping("/{id}")
     public Result<Void> deleteRole(@PathVariable Long id) {
-        // TODO: 检查是否有用户关联该角色
-        
+        Integer userCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM sys_user_role WHERE role_id = ?", Integer.class, id);
+        if (userCount != null && userCount > 0) {
+            return Result.error("该角色下有 " + userCount + " 个用户关联，请先移除用户关联后再删除");
+        }
+
         roleService.removeById(id);
         return Result.success();
     }

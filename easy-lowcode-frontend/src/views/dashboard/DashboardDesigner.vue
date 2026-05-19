@@ -24,7 +24,7 @@
             <span>添加图表</span>
           </el-menu-item>
           <el-menu-item index="ai">
-            <el-icon><Magic /></el-icon>
+            <el-icon><PieChart /></el-icon>
             <span>🤖 AI 生成</span>
           </el-menu-item>
           <el-menu-item index="settings">
@@ -202,7 +202,7 @@ import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
-import { PieChart, Plus, Setting, Magic } from '@element-plus/icons-vue'
+import { PieChart, Plus, Setting } from '@element-plus/icons-vue'
 import { getDashboardById, getDashboardCharts, addChart as apiAddChart, removeChart as apiRemoveChart, queryChartData, type Dashboard, type DashboardChart } from '@/api/dashboard'
 import { getEtlDatasources } from '@/api/etl'
 import { buildChartOption } from '@/utils/chartRenderer'

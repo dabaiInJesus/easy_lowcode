@@ -39,4 +39,14 @@ public interface SysResourceService extends IService<SysResource> {
      * @return 资源列表
      */
     List<SysResource> getResourcesByRoleId(Long roleId);
+
+    /**
+     * 为角色分配资源
+     */
+    void assignResourcesToRole(Long roleId, List<Long> resourceIds);
+
+    /**
+     * 获取角色的资源ID列表
+     */
+    List<Long> getRoleResourceIds(Long roleId);
 }

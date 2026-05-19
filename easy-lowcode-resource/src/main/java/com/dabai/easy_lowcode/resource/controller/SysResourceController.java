@@ -131,8 +131,33 @@ public class SysResourceController {
     }
     
     /**
+     * 根据角色ID获取资源列表
+     */
+    @GetMapping("/role/{roleId}")
+    public Result<List<SysResource>> getByRoleId(@PathVariable Long roleId) {
+        List<SysResource> resources = resourceService.getResourcesByRoleId(roleId);
+        return Result.success(resources);
+    }
+
+    /**
+     * 获取角色已分配的资源ID列表
+     */
+    @GetMapping("/role/{roleId}/ids")
+    public Result<List<Long>> getRoleResourceIds(@PathVariable Long roleId) {
+        return Result.success(resourceService.getRoleResourceIds(roleId));
+    }
+
+    /**
+     * 为角色分配资源
+     */
+    @PostMapping("/role/{roleId}")
+    public Result<Void> assignResources(@PathVariable Long roleId, @RequestBody List<Long> resourceIds) {
+        resourceService.assignResourcesToRole(roleId, resourceIds);
+        return Result.success("分配成功");
+    }
+
+    /**
      * 根据资源编码查询数据（动态API）
-     * 支持 _template 参数指定查询模板
      */
     @GetMapping("/data/{resourceCode}")
     public Result<List<Map<String, Object>>> getDataByResourceCode(

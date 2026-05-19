@@ -10,6 +10,7 @@ import com.dabai.easy_lowcode.common.result.Result;
 import com.dabai.easy_lowcode.common.util.EncryptUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.Map;
 public class DataSourceConfigController {
     
     private final DataSourceConfigService dataSourceConfigService;
+    private final JdbcTemplate jdbcTemplate;
     
     /**
      * 分页查询数据源列表
@@ -204,10 +206,13 @@ public class DataSourceConfigController {
         if (config == null) {
             return Result.error("数据源不存在");
         }
-        
-        // TODO: 检查是否有表资源引用此数据源
-        // 如果有引用的表资源，应该提示用户先删除或修改这些表资源
-        
+
+        Integer tableCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM collector_table_resource WHERE datasource_id = ?", Integer.class, id);
+        if (tableCount != null && tableCount > 0) {
+            return Result.error("该数据源下有 " + tableCount + " 个表资源引用，请先删除关联的表资源后再删除");
+        }
+
         try {
             dataSourceConfigService.removeById(id);
             log.info("删除数据源成功: {}", id);

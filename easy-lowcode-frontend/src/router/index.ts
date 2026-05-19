@@ -89,6 +89,24 @@ const router = createRouter({
           ],
         },
         {
+          path: 'ai',
+          meta: { title: 'AI智能' },
+          children: [
+            {
+              path: 'chat',
+              name: 'aiChat',
+              component: () => import('../views/ai/ChatView.vue'),
+              meta: { title: 'AI对话' },
+            },
+            {
+              path: 'config',
+              name: 'aiConfig',
+              component: () => import('../views/ai/AiConfigManagement.vue'),
+              meta: { title: 'AI配置' },
+            },
+          ],
+        },
+        {
           path: 'etl',
           meta: { title: 'ETL管理' },
           children: [

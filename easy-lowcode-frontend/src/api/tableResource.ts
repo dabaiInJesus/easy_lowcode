@@ -88,3 +88,19 @@ export function generateApi(id: number | string): Promise<void> {
     method: 'post',
   })
 }
+
+export function exportResourceDataCsv(resourceCode: string, params: Record<string, any>): Promise<void> {
+  return request({
+    url: `/resource/search/export/${resourceCode}`,
+    method: 'post',
+    data: params,
+    responseType: 'blob',
+  }).then(blob => {
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${resourceCode}_export.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  })
+}

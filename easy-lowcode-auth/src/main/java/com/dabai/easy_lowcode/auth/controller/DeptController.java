@@ -6,6 +6,7 @@ import com.dabai.easy_lowcode.auth.service.SysDeptService;
 import com.dabai.easy_lowcode.common.result.Result;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.List;
 public class DeptController {
     
     private final SysDeptService deptService;
+    private final JdbcTemplate jdbcTemplate;
     
     /**
      * 获取部门树形列表
@@ -88,16 +90,19 @@ public class DeptController {
      */
     @DeleteMapping("/{id}")
     public Result<Void> deleteDept(@PathVariable Long id) {
-        // 检查是否有子部门
         LambdaQueryWrapper<SysDept> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysDept::getParentId, id);
-        long count = deptService.count(wrapper);
-        if (count > 0) {
+        long childCount = deptService.count(wrapper);
+        if (childCount > 0) {
             return Result.error("该部门下有子部门，无法删除");
         }
-        
-        // TODO: 检查是否有用户关联该部门
-        
+
+        Integer userCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM sys_user WHERE dept_id = ?", Integer.class, id);
+        if (userCount != null && userCount > 0) {
+            return Result.error("该部门下有 " + userCount + " 个用户关联，请先移除用户关联后再删除");
+        }
+
         deptService.removeById(id);
         return Result.success();
     }
