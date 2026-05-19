@@ -237,19 +237,13 @@ public class TableResourceController {
         
         log.info("找到表资源: ID={}, 表名={}", id, resource.getTableName());
         
-        try {
-            // 物理删除：使用自定义Mapper方法
-            int count = tableResourceMapper.physicalDeleteById(id);
-            if (count > 0) {
-                log.info("物理删除表资源成功: {}, 表名: {}", id, resource.getTableName());
-                return Result.success("删除成功");
-            } else {
-                log.error("物理删除表资源失败，返回0: {}", id);
-                return Result.error("删除失败");
-            }
-        } catch (Exception e) {
-            log.error("物理删除表资源异常，ID: " + id, e);
-            return Result.error("删除失败: " + e.getMessage());
+        boolean removed = tableResourceService.removeById(id);
+        if (removed) {
+            log.info("删除表资源成功: {}, 表名: {}", id, resource.getTableName());
+            return Result.success("删除成功");
+        } else {
+            log.error("删除表资源失败: {}", id);
+            return Result.error("删除失败");
         }
     }
     
@@ -314,15 +308,9 @@ public class TableResourceController {
             return Result.error("请选择要删除的资源");
         }
         
-        try {
-            // 物理删除：使用自定义Mapper方法
-            int count = tableResourceMapper.physicalDeleteBatchIds(ids);
-            log.info("物理批量删除表资源成功，数量: {}", count);
-            return Result.success("批量删除成功");
-        } catch (Exception e) {
-            log.error("物理批量删除表资源失败", e);
-            return Result.error("批量删除失败: " + e.getMessage());
-        }
+        boolean removed = tableResourceService.removeBatchByIds(ids);
+        log.info("批量删除表资源完成: {}", ids);
+        return Result.success("批量删除成功");
     }
     
     /**

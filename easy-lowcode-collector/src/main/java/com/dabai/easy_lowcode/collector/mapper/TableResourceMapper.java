@@ -3,8 +3,6 @@ package com.dabai.easy_lowcode.collector.mapper;
 import com.dabai.easy_lowcode.database.mapper.BaseMapper;
 import com.dabai.easy_lowcode.collector.entity.TableResource;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-
 import java.util.List;
 
 /**
@@ -18,13 +16,4 @@ public interface TableResourceMapper extends BaseMapper<TableResource> {
      */
     TableResource selectByResourceCode(String resourceCode);
     
-    /**
-     * 物理删除表资源（绕过逻辑删除）
-     */
-    int physicalDeleteById(@Param("id") Long id);
-    
-    /**
-     * 物理批量删除表资源（绕过逻辑删除）
-     */
-    int physicalDeleteBatchIds(@Param("ids") List<Long> ids);
 }

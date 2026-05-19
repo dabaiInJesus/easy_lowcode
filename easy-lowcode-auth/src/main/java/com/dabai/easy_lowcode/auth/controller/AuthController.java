@@ -8,6 +8,8 @@ import com.dabai.easy_lowcode.auth.service.SysUserService;
 import com.dabai.easy_lowcode.common.result.PageResult;
 import com.dabai.easy_lowcode.common.result.Result;
 import com.dabai.easy_lowcode.common.util.EncryptUtil;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -33,7 +35,7 @@ public class AuthController {
      * 用户登录
      */
     @PostMapping("/login")
-    public Result<Map<String, Object>> login(@RequestBody LoginRequest request) {
+    public Result<Map<String, Object>> login(@Valid @RequestBody LoginRequest request) {
         String token = userService.login(request.getUsername(), request.getPassword());
         
         Map<String, Object> data = new HashMap<>();
@@ -213,7 +215,9 @@ public class AuthController {
      */
     @lombok.Data
     public static class LoginRequest {
+        @NotBlank(message = "用户名不能为空")
         private String username;
+        @NotBlank(message = "密码不能为空")
         private String password;
     }
     

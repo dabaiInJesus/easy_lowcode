@@ -22,9 +22,10 @@ import org.springframework.stereotype.Service;
 
 import java.sql.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import com.dabai.easy_lowcode.common.util.SimpleCache;
 
 /**
  * 资源检索服务实现
@@ -40,14 +41,11 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
     private final ProcessorRegistry processorRegistry;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    /** 字段白名单缓存 */
-    private final Map<Long, Set<String>> columnCache = new ConcurrentHashMap<>();
-    private final Map<Long, List<FieldConfig>> fieldConfigCache = new ConcurrentHashMap<>();
+    private final SimpleCache<Long, Set<String>> columnCache = new SimpleCache<>(100);
+    private final SimpleCache<Long, List<FieldConfig>> fieldConfigCache = new SimpleCache<>(100);
     
-    /** SQL注入检测正则 */
-    private static final Pattern SQL_INJECTION_PATTERN = Pattern.compile(
-            ".*(union|select|insert|update|delete|drop|create|alter|exec|execute|script|<|>).*",
-            Pattern.CASE_INSENSITIVE);
+    /** SQL标识符安全检测 */
+    private static final Pattern SAFE_IDENTIFIER = Pattern.compile("^[a-zA-Z_][a-zA-Z0-9_]*$");
 
     // ==================== 单资源检索实现 ====================
 
@@ -63,6 +61,7 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
             throw new BusinessException("数据源不存在");
         }
 
+        validateTableName(tableResource.getTableName());
         try (Connection conn = getConnection(dataSource)) {
             Set<String> allowedColumns = getAllowedColumns(tableResource, conn);
             List<FieldConfig> fields = getTableFields(tableResource, conn);
@@ -193,6 +192,7 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
             throw new BusinessException("数据源不存在");
         }
 
+        validateTableName(tableResource.getTableName());
         try (Connection conn = getConnection(dataSource)) {
             // 获取主键列名
             String primaryKey = getPrimaryKeyColumn(tableResource.getTableName(), conn);
@@ -277,11 +277,20 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
             throw new BusinessException("目前仅支持同数据源的关联查询");
         }
 
+        validateTableName(leftResource.getTableName());
+        validateTableName(rightResource.getTableName());
         try (Connection conn = getConnection(leftDs)) {
             Set<String> leftColumns = getAllowedColumns(leftResource, conn);
             Set<String> rightColumns = getAllowedColumns(rightResource, conn);
 
-            // 构建关联查询
+            // 验证关联字段在白名单中
+            if (!leftColumns.contains(joinConfig.getLeftField().toLowerCase())) {
+                throw new BusinessException("非法关联字段: " + joinConfig.getLeftField());
+            }
+            if (!rightColumns.contains(joinConfig.getRightField().toLowerCase())) {
+                throw new BusinessException("非法关联字段: " + joinConfig.getRightField());
+            }
+
             String leftAlias = "a";
             String rightAlias = "b";
             
@@ -450,8 +459,9 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
         }
 
         // 先检查缓存
-        if (fieldConfigCache.containsKey(tableResource.getId())) {
-            return fieldConfigCache.get(tableResource.getId());
+        List<FieldConfig> cachedFields = fieldConfigCache.get(tableResource.getId());
+        if (cachedFields != null) {
+            return cachedFields;
         }
 
         DataSourceConfig dataSource = dataSourceConfigMapper.selectById(tableResource.getDatasourceId());
@@ -470,6 +480,12 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
     }
 
     // ==================== 私有辅助方法 ====================
+
+    private static void validateTableName(String tableName) {
+        if (!SAFE_IDENTIFIER.matcher(tableName).matches()) {
+            throw new BusinessException("非法表名: " + tableName);
+        }
+    }
 
     private void applyResultPipeline(String resourceCode, List<Map<String, Object>> records) {
         TableResource tableResource = tableResourceMapper.selectByResourceCode(resourceCode);
@@ -517,8 +533,9 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
     }
 
     private Set<String> getAllowedColumns(TableResource tableResource, Connection conn) {
-        if (columnCache.containsKey(tableResource.getId())) {
-            return columnCache.get(tableResource.getId());
+        Set<String> cached = columnCache.get(tableResource.getId());
+        if (cached != null) {
+            return cached;
         }
 
         Set<String> columns = new HashSet<>();
@@ -547,6 +564,7 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
         }
 
         // 从表结构扫描
+        validateTableName(tableResource.getTableName());
         try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery("SELECT * FROM " + tableResource.getTableName() + " WHERE 1=0")) {
             ResultSetMetaData metaData = rs.getMetaData();
@@ -563,30 +581,31 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
 
     private List<FieldConfig> getTableFields(TableResource tableResource, Connection conn) {
         List<FieldConfig> fields = new ArrayList<>();
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(
-                     "SELECT COLUMN_NAME, DATA_TYPE, COLUMN_COMMENT FROM INFORMATION_SCHEMA.COLUMNS " +
-                     "WHERE TABLE_NAME = '" + tableResource.getTableName() + "'")) {
-            while (rs.next()) {
-                FieldConfig field = new FieldConfig();
-                field.setColumnName(rs.getString("COLUMN_NAME"));
-                field.setComment(rs.getString("COLUMN_COMMENT"));
-                field.setFieldLabel(rs.getString("COLUMN_COMMENT"));
-                
-                String dataType = rs.getString("DATA_TYPE").toLowerCase();
-                if (dataType.contains("int") || dataType.contains("decimal") || dataType.contains("float") || dataType.contains("double") || dataType.contains("numeric")) {
-                    field.setFieldType("number");
-                } else if (dataType.contains("date") || dataType.contains("time")) {
-                    field.setFieldType("date");
-                } else if (dataType.contains("bit") || dataType.contains("bool")) {
-                    field.setFieldType("boolean");
-                } else {
-                    field.setFieldType("string");
+        String sql = "SELECT COLUMN_NAME, DATA_TYPE, COLUMN_COMMENT FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, tableResource.getTableName());
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    FieldConfig field = new FieldConfig();
+                    field.setColumnName(rs.getString("COLUMN_NAME"));
+                    field.setComment(rs.getString("COLUMN_COMMENT"));
+                    field.setFieldLabel(rs.getString("COLUMN_COMMENT"));
+
+                    String dataType = rs.getString("DATA_TYPE").toLowerCase();
+                    if (dataType.contains("int") || dataType.contains("decimal") || dataType.contains("float") || dataType.contains("double") || dataType.contains("numeric")) {
+                        field.setFieldType("number");
+                    } else if (dataType.contains("date") || dataType.contains("time")) {
+                        field.setFieldType("date");
+                    } else if (dataType.contains("bit") || dataType.contains("bool")) {
+                        field.setFieldType("boolean");
+                    } else {
+                        field.setFieldType("string");
+                    }
+
+                    field.setSearchable("string".equals(field.getFieldType()));
+                    field.setSortable(true);
+                    fields.add(field);
                 }
-                
-                field.setSearchable("string".equals(field.getFieldType()));
-                field.setSortable(true);
-                fields.add(field);
             }
         } catch (Exception e) {
             log.warn("获取表字段信息失败: {}", e.getMessage());
@@ -594,13 +613,14 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
         return fields;
     }
 
-    private String getPrimaryKeyColumn(String tableName, Connection conn) throws SQLException {
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(
-                     "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE " +
-                     "WHERE TABLE_NAME = '" + tableName + "' AND CONSTRAINT_NAME LIKE '%PRIMARY'")) {
-            if (rs.next()) {
-                return rs.getString("COLUMN_NAME");
+    private String getPrimaryKeyColumn(String tableName, Connection conn) {
+        String sql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE TABLE_NAME = ? AND CONSTRAINT_NAME LIKE '%PRIMARY'";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, tableName);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("COLUMN_NAME");
+                }
             }
         } catch (Exception e) {
             log.warn("获取主键失败: {}", e.getMessage());

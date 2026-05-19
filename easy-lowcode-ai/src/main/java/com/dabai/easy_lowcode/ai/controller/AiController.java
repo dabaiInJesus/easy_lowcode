@@ -92,35 +92,36 @@ public class AiController {
         if (aiService == null) {
             try {
                 emitter.send(SseEmitter.event().name("error").data("AI 服务未配置"));
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                log.warn("SSE发送失败: {}", e.getMessage());
+            }
             emitter.complete();
             return emitter;
         }
 
         if (!aiService.supportsStreaming()) {
-            // 降级：非流式服务，先完整调用再逐字发送模拟流式
             executor.execute(() -> {
                 try {
                     ChatResponse response = aiService.chat(request);
                     String content = response.getContent();
-                    // 模拟流式：每个字符作为一个 chunk
                     for (char c : content.toCharArray()) {
                         emitter.send(SseEmitter.event().name("message").data(String.valueOf(c)));
-                        Thread.sleep(10); // 模拟打字效果
+                        Thread.sleep(10);
                     }
                     emitter.send(SseEmitter.event().name("done").data("[DONE]"));
                     emitter.complete();
                 } catch (Exception e) {
                     try {
                         emitter.send(SseEmitter.event().name("error").data(e.getMessage()));
-                    } catch (Exception ignored) {}
+                    } catch (Exception ex) {
+                        log.warn("SSE发送错误消息失败: {}", ex.getMessage());
+                    }
                     emitter.completeWithError(e);
                 }
             });
             return emitter;
         }
 
-        // 真正的流式调用
         executor.execute(() -> {
             try {
                 aiService.streamChat(request)
@@ -128,6 +129,7 @@ public class AiController {
                             try {
                                 emitter.send(SseEmitter.event().name("message").data(chunk));
                             } catch (Exception e) {
+                                log.warn("SSE发送chunk失败: {}", e.getMessage());
                                 emitter.completeWithError(e);
                             }
                         })
@@ -135,19 +137,25 @@ public class AiController {
                             try {
                                 emitter.send(SseEmitter.event().name("done").data("[DONE]"));
                                 emitter.complete();
-                            } catch (Exception ignored) {}
+                            } catch (Exception e) {
+                                log.warn("SSE发送done失败: {}", e.getMessage());
+                            }
                         })
                         .doOnError(e -> {
                             try {
                                 emitter.send(SseEmitter.event().name("error").data(e.getMessage()));
-                            } catch (Exception ignored) {}
+                            } catch (Exception ex) {
+                                log.warn("SSE发送error失败: {}", ex.getMessage());
+                            }
                             emitter.completeWithError(e);
                         })
                         .subscribe();
             } catch (Exception e) {
                 try {
                     emitter.send(SseEmitter.event().name("error").data(e.getMessage()));
-                } catch (Exception ignored) {}
+                } catch (Exception ex) {
+                    log.warn("SSE发送外层错误失败: {}", ex.getMessage());
+                }
                 emitter.completeWithError(e);
             }
         });

@@ -6,7 +6,6 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
-
 /**
  * API管理 Mapper
  */
@@ -18,13 +17,4 @@ public interface ApiManagementMapper extends BaseMapper<ApiManagement> {
      */
     ApiManagement selectByPathAndMethod(@Param("apiPath") String apiPath, @Param("apiMethod") String apiMethod);
     
-    /**
-     * 物理删除API（绕过逻辑删除）
-     */
-    int physicalDeleteById(@Param("id") Long id);
-    
-    /**
-     * 物理批量删除API（绕过逻辑删除）
-     */
-    int physicalDeleteBatchIds(@Param("ids") List<Long> ids);
 }

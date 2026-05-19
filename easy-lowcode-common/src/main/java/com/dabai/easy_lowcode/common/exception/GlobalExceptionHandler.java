@@ -23,13 +23,24 @@ public class GlobalExceptionHandler {
         return Result.error(e.getCode(), e.getMessage());
     }
     
-    /**
-     * 参数校验异常
-     */
-    @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class})
-    public Result<Void> handleValidException(Exception e) {
-        log.error("参数校验异常: {}", e.getMessage());
-        return Result.error(400, "参数校验失败");
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public Result<Void> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
+        String msg = e.getBindingResult().getFieldErrors().stream()
+                .map(f -> f.getField() + ": " + f.getDefaultMessage())
+                .reduce((a, b) -> a + "; " + b)
+                .orElse("参数校验失败");
+        log.warn("参数校验异常: {}", msg);
+        return Result.error(400, msg);
+    }
+
+    @ExceptionHandler(BindException.class)
+    public Result<Void> handleBindException(BindException e) {
+        String msg = e.getFieldErrors().stream()
+                .map(f -> f.getField() + ": " + f.getDefaultMessage())
+                .reduce((a, b) -> a + "; " + b)
+                .orElse("参数绑定失败");
+        log.warn("参数绑定异常: {}", msg);
+        return Result.error(400, msg);
     }
     
     /**

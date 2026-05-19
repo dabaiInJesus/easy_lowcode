@@ -26,6 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -39,6 +40,14 @@ public class EtlTaskServiceImpl extends ServiceImpl<EtlTaskMapper, EtlTask> impl
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final ConcurrentHashMap<Long, Future<?>> runningTasks = new ConcurrentHashMap<>();
+
+    private static final Pattern SAFE_TABLE_NAME = Pattern.compile("^[a-zA-Z_][a-zA-Z0-9_]*$");
+
+    private static void validateTableName(String tableName) {
+        if (!SAFE_TABLE_NAME.matcher(tableName).matches()) {
+            throw new BusinessException("非法表名: " + tableName);
+        }
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -202,6 +211,7 @@ public class EtlTaskServiceImpl extends ServiceImpl<EtlTaskMapper, EtlTask> impl
             if ("SQL".equals(task.getReadMode()) && task.getSourceSql() != null) {
                 sourceQuery = task.getSourceSql();
             } else {
+                validateTableName(task.getSourceTable());
                 sourceQuery = "SELECT * FROM " + task.getSourceTable();
             }
 
@@ -269,7 +279,9 @@ public class EtlTaskServiceImpl extends ServiceImpl<EtlTaskMapper, EtlTask> impl
         } catch (Exception e) {
             log.error("ETL执行出错", e);
             if (targetConn != null) {
-                try { targetConn.rollback(); } catch (Exception ignored) {}
+                try { targetConn.rollback(); } catch (Exception ex) {
+                    log.warn("ETL回滚失败: {}", ex.getMessage());
+                }
             }
             throw new RuntimeException("ETL执行失败: " + e.getMessage(), e);
         } finally {
@@ -277,14 +289,19 @@ public class EtlTaskServiceImpl extends ServiceImpl<EtlTaskMapper, EtlTask> impl
             closeQuietly(sourceStmt);
             closeQuietly(sourceConn);
             if (targetConn != null) {
-                try { targetConn.setAutoCommit(true); } catch (Exception ignored) {}
-                try { targetConn.close(); } catch (Exception ignored) {}
+                try { targetConn.setAutoCommit(true); } catch (Exception ex) {
+                    log.warn("重置autoCommit失败: {}", ex.getMessage());
+                }
+                try { targetConn.close(); } catch (Exception ex) {
+                    log.warn("关闭目标连接失败: {}", ex.getMessage());
+                }
             }
         }
     }
 
     private long batchWrite(Connection conn, String targetTable, List<String> targetColumns,
                             List<Object[]> batch, String writeMode, String dbType) throws Exception {
+        validateTableName(targetTable);
         if ("TRUNCATE".equalsIgnoreCase(writeMode)) {
             try (Statement stmt = conn.createStatement()) {
                 stmt.execute("TRUNCATE TABLE " + targetTable);
@@ -519,6 +536,7 @@ public class EtlTaskServiceImpl extends ServiceImpl<EtlTaskMapper, EtlTask> impl
 
     private List<Map<String, Object>> scanColumns(DataSourceConfig ds, String tableName) {
         List<Map<String, Object>> columns = new ArrayList<>();
+        validateTableName(tableName);
         try (Connection conn = getConnection(ds);
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery("SELECT * FROM " + tableName + " WHERE 1=0")) {
@@ -543,6 +561,7 @@ public class EtlTaskServiceImpl extends ServiceImpl<EtlTaskMapper, EtlTask> impl
         if (task == null) throw new BusinessException("任务不存在");
         if (limit <= 0 || limit > 100) limit = 10;
         DataSourceConfig ds = dataSourceConfigMapper.selectById(task.getSourceDatasourceId());
+        validateTableName(task.getSourceTable());
         try (Connection conn = getConnection(ds);
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(

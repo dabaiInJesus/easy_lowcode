@@ -110,27 +110,17 @@ public class ApiManagementController {
      */
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
-        // 物理删除：使用自定义Mapper方法
-        int count = apiManagementMapper.physicalDeleteById(id);
-        if (count > 0) {
-            return Result.success("删除成功");
-        } else {
-            return Result.error("删除失败");
-        }
+        boolean removed = apiManagementService.removeById(id);
+        return removed ? Result.success("删除成功") : Result.error("删除失败");
     }
-    
-    /**
-     * 批量删除API
-     */
+
     @DeleteMapping("/batch")
     public Result<Void> batchDelete(@RequestBody List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return Result.error("请选择要删除的API");
         }
-        
-        // 物理删除：使用自定义Mapper方法
-        int count = apiManagementMapper.physicalDeleteBatchIds(ids);
-        return Result.success("批量删除成功，共删除 " + count + " 条记录");
+        apiManagementService.removeBatchByIds(ids);
+        return Result.success("批量删除成功");
     }
     
     /**

@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.sql.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -28,8 +28,6 @@ public class ResourceExecutionServiceImpl implements ResourceExecutionService {
     private final TableResourceMapper tableResourceMapper;
     private final DataSourceConfigMapper dataSourceConfigMapper;
     private final ProcessorRegistry processorRegistry;
-
-    private final Map<Long, Set<String>> columnWhitelistCache = new ConcurrentHashMap<>();
 
     @Override
     public ConfigJson getConfig(String resourceCode) {
@@ -98,7 +96,9 @@ public class ResourceExecutionServiceImpl implements ResourceExecutionService {
             sql = engine.getSql();
             paramValues.addAll(Arrays.asList(engine.getParamValues()));
         } else {
-            sql = buildAutoQuerySql(resource.getTableName(), processedParams, dataSource.getDbType(), allowedColumns);
+            SqlBuildResult result = buildAutoQuerySql(resource.getTableName(), processedParams, dataSource.getDbType(), allowedColumns);
+            sql = result.sql;
+            paramValues.addAll(result.params);
         }
 
         log.debug("执行查询: {}", sql);
@@ -129,9 +129,25 @@ public class ResourceExecutionServiceImpl implements ResourceExecutionService {
         return null;
     }
 
-    private String buildAutoQuerySql(String tableName, Map<String, Object> params, String dbType, Set<String> allowedColumns) {
+    private static final Pattern SAFE_NAME = Pattern.compile("^[a-zA-Z_][a-zA-Z0-9_]*$");
+    private static final Pattern SAFE_TABLE = Pattern.compile("^[a-zA-Z_][a-zA-Z0-9_]*$");
+
+    private static class SqlBuildResult {
+        final String sql;
+        final List<Object> params;
+        SqlBuildResult(String sql, List<Object> params) {
+            this.sql = sql;
+            this.params = params;
+        }
+    }
+
+    private SqlBuildResult buildAutoQuerySql(String tableName, Map<String, Object> params, String dbType, Set<String> allowedColumns) {
+        if (!SAFE_TABLE.matcher(tableName).matches()) {
+            throw new BusinessException("非法表名: " + tableName);
+        }
         StringBuilder sql = new StringBuilder("SELECT * FROM ").append(tableName);
         List<String> wheres = new ArrayList<>();
+        List<Object> paramValues = new ArrayList<>();
 
         for (Map.Entry<String, Object> entry : params.entrySet()) {
             String key = entry.getKey();
@@ -152,17 +168,26 @@ public class ResourceExecutionServiceImpl implements ResourceExecutionService {
                 String fieldName = key.substring(0, key.length() - op.length() - 1);
                 validateField(fieldName, allowedColumns);
                 if ("in".equals(op)) {
-                    wheres.add(fieldName + " IN (" + String.join(",", strVal.split(",")) + ")");
+                    String[] parts = strVal.split(",");
+                    List<String> placeholders = new ArrayList<>();
+                    for (String p : parts) {
+                        placeholders.add("?");
+                        paramValues.add(p.trim());
+                    }
+                    wheres.add(fieldName + " IN (" + String.join(",", placeholders) + ")");
                 } else if ("like".equals(op)) {
-                    wheres.add("UPPER(" + fieldName + ") LIKE UPPER('%" + escapeSql(strVal) + "%')");
+                    wheres.add("UPPER(" + fieldName + ") LIKE UPPER(?)");
+                    paramValues.add("%" + strVal + "%");
                 } else {
-                    wheres.add(fieldName + " " + op + " " + quoteValue(strVal));
+                    wheres.add(fieldName + " " + op + " ?");
+                    paramValues.add(strVal);
                 }
                 continue;
             }
 
             validateField(key, allowedColumns);
-            wheres.add(key + " = " + quoteValue(strVal));
+            wheres.add(key + " = ?");
+            paramValues.add(strVal);
         }
 
         if (!wheres.isEmpty()) {
@@ -171,6 +196,9 @@ public class ResourceExecutionServiceImpl implements ResourceExecutionService {
 
         String orderField = getParamString(params, "_order");
         if (orderField != null) {
+            if (!SAFE_NAME.matcher(orderField).matches()) {
+                throw new BusinessException("非法排序字段: " + orderField);
+            }
             String sortDir = getParamString(params, "_sort");
             if (sortDir == null || (!"desc".equalsIgnoreCase(sortDir) && !"DESC".equalsIgnoreCase(sortDir))) {
                 sortDir = "ASC";
@@ -180,17 +208,22 @@ public class ResourceExecutionServiceImpl implements ResourceExecutionService {
 
         String limitStr = getParamString(params, "_limit");
         if (limitStr != null) {
-            sql.append(" LIMIT ").append(limitStr);
+            sql.append(" LIMIT ?");
+            paramValues.add(Integer.parseInt(limitStr));
         } else {
             String pageStr = getParamString(params, "_page");
             String sizeStr = getParamString(params, "_size");
             int page = pageStr != null ? Math.max(1, Integer.parseInt(pageStr)) : 1;
             int size = sizeStr != null ? Math.min(100, Integer.parseInt(sizeStr)) : 20;
-            sql.append(" LIMIT ").append(size);
-            if (page > 1) sql.append(" OFFSET ").append((page - 1) * size);
+            sql.append(" LIMIT ?");
+            paramValues.add(size);
+            if (page > 1) {
+                sql.append(" OFFSET ?");
+                paramValues.add((page - 1) * size);
+            }
         }
 
-        return sql.toString();
+        return new SqlBuildResult(sql.toString(), paramValues);
     }
 
     private List<Map<String, Object>> executeJdbcQuery(
@@ -209,16 +242,11 @@ public class ResourceExecutionServiceImpl implements ResourceExecutionService {
             Class.forName(dataSource.getDriverClassName());
             conn = DriverManager.getConnection(dataSource.getUrl(), dataSource.getUsername(), password);
 
-            if (paramValues.isEmpty()) {
-                Statement stmt = conn.createStatement();
-                rs = stmt.executeQuery(sql);
-            } else {
-                pstmt = conn.prepareStatement(sql);
-                for (int i = 0; i < paramValues.size(); i++) {
-                    pstmt.setObject(i + 1, paramValues.get(i));
-                }
-                rs = pstmt.executeQuery();
+            pstmt = conn.prepareStatement(sql);
+            for (int i = 0; i < paramValues.size(); i++) {
+                pstmt.setObject(i + 1, paramValues.get(i));
             }
+            rs = pstmt.executeQuery();
 
             List<Map<String, Object>> result = new ArrayList<>();
             int columnCount = rs.getMetaData().getColumnCount();
@@ -248,16 +276,6 @@ public class ResourceExecutionServiceImpl implements ResourceExecutionService {
                 && !allowedColumns.contains(field.toLowerCase())) {
             throw new BusinessException("不允许的查询字段: " + field);
         }
-    }
-
-    private String quoteValue(String value) {
-        if (value.matches("-?\\d+(\\.\\d+)?")) return value;
-        if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) return value.toLowerCase();
-        return "'" + escapeSql(value) + "'";
-    }
-
-    private String escapeSql(String value) {
-        return value.replace("'", "''");
     }
 
     private String getParamString(Map<String, Object> params, String key) {

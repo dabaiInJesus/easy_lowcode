@@ -28,8 +28,6 @@ public class DynamicDataServiceImpl implements DynamicDataService {
     private final DataSourceConfigMapper dataSourceConfigMapper;
     private final ResourceExecutionService executionService;
 
-    private final Map<Long, Set<String>> columnWhitelistCache = new ConcurrentHashMap<>();
-
     @Override
     public List<Map<String, Object>> queryDataByResourceCode(String resourceCode, Map<String, Object> params) {
         return executionService.executeQuery(resourceCode, params, null);

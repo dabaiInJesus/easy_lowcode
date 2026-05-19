@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * 数据源配置服务实现
@@ -225,10 +226,19 @@ public class DataSourceConfigServiceImpl extends ServiceImpl<DataSourceConfigMap
         }
     }
     
+    private static final Pattern SAFE_SQL_NAME = Pattern.compile("^[a-zA-Z_][a-zA-Z0-9_]*$");
+
+    private static void validateTableName(String tableName) {
+        if (!SAFE_SQL_NAME.matcher(tableName).matches()) {
+            throw new IllegalArgumentException("非法表名: " + tableName);
+        }
+    }
+
     /**
      * 根据数据库类型获取列列表SQL
      */
     private String getColumnListSql(String dbType, String tableName) {
+        validateTableName(tableName);
         switch (dbType.toLowerCase()) {
             case "mysql":
             case "tidb": // TiDB兼容MySQL

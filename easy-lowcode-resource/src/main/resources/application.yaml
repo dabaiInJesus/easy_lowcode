@@ -10,7 +10,7 @@ spring:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://127.0.0.1:5432/thinker
     username: postgres
-    password: thinker
+    password: ${DB_PASSWORD:thinker}
   
   # Redis 配置
   data:

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * 数据预览服务实现
@@ -30,6 +31,14 @@ public class DataPreviewServiceImpl implements DataPreviewService {
     
     private final TableResourceMapper tableResourceMapper;
     private final DataSourceConfigMapper dataSourceConfigMapper;
+
+    private static final Pattern SAFE_TABLE_NAME = Pattern.compile("^[a-zA-Z_][a-zA-Z0-9_]*$");
+
+    private static void validateTableName(String tableName) {
+        if (!SAFE_TABLE_NAME.matcher(tableName).matches()) {
+            throw new BusinessException("非法表名: " + tableName);
+        }
+    }
     
     @Override
     public List<Map<String, Object>> previewTableData(Long resourceId, int limit) {
@@ -68,6 +77,7 @@ public class DataPreviewServiceImpl implements DataPreviewService {
             conn = DriverManager.getConnection(dataSource.getUrl(), dataSource.getUsername(), password);
             
             // 构建查询SQL
+            validateTableName(tableResource.getTableName());
             String sql = buildQuerySql(tableResource.getTableName(), limit, dataSource.getDbType());
             
             log.debug("执行预览SQL: {}", sql);

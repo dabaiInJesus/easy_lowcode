@@ -43,10 +43,14 @@ public class AiConfigController {
     @PostMapping
     public Result<Void> save(@RequestBody AiConfig config) {
         if (config.getApiKey() != null && !config.getApiKey().contains("****")) {
-            try { config.setApiKey(EncryptUtil.encrypt(config.getApiKey())); } catch (Exception ignored) {}
+            try { config.setApiKey(EncryptUtil.encrypt(config.getApiKey())); } catch (Exception e) {
+                log.warn("API Key加密失败: {}", e.getMessage());
+            }
         }
         if (config.getSecretKey() != null && !config.getSecretKey().contains("****")) {
-            try { config.setSecretKey(EncryptUtil.encrypt(config.getSecretKey())); } catch (Exception ignored) {}
+            try { config.setSecretKey(EncryptUtil.encrypt(config.getSecretKey())); } catch (Exception e) {
+                log.warn("Secret Key加密失败: {}", e.getMessage());
+            }
         }
         if (config.getIsDefault() == 1) {
             aiConfigMapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<AiConfig>()
@@ -59,10 +63,14 @@ public class AiConfigController {
     @PutMapping
     public Result<Void> update(@RequestBody AiConfig config) {
         if (config.getApiKey() != null && !config.getApiKey().contains("****")) {
-            try { config.setApiKey(EncryptUtil.encrypt(config.getApiKey())); } catch (Exception ignored) {}
+            try { config.setApiKey(EncryptUtil.encrypt(config.getApiKey())); } catch (Exception e) {
+                log.warn("API Key加密失败: {}", e.getMessage());
+            }
         } else { config.setApiKey(null); }
         if (config.getSecretKey() != null && !config.getSecretKey().contains("****")) {
-            try { config.setSecretKey(EncryptUtil.encrypt(config.getSecretKey())); } catch (Exception ignored) {}
+            try { config.setSecretKey(EncryptUtil.encrypt(config.getSecretKey())); } catch (Exception e) {
+                log.warn("Secret Key加密失败: {}", e.getMessage());
+            }
         } else { config.setSecretKey(null); }
         if (config.getIsDefault() == 1) {
             aiConfigMapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<AiConfig>()
