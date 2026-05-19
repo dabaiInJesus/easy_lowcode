@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- 数据源配置表添加扩展配置字段 -->
+    <changeSet id="018-add-datasource-extra-config" author="dabai">
+        <addColumn tableName="collector_datasource">
+            <column name="extra_config" type="TEXT">
+                <comment>扩展配置JSON，存储数据源特有的额外参数（如Hive的host/port/principal）</comment>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

@@ -46,8 +46,21 @@ public class EncryptUtil {
         }
     }
     
-    // AES 加密密钥（16字节）
-    private static final String AES_KEY = "EasyLowcode2024!"; // 生产环境应该从配置文件读取
+    // AES 加密密钥（16字节），从系统属性或环境变量读取，默认值仅用于开发环境
+    // 生产环境务必通过 -Dencrypt.aes.key=xxx 或 ENCRYPT_AES_KEY=xxx 覆盖
+    private static String resolveAesKey() {
+        String key = System.getProperty("encrypt.aes.key");
+        if (key == null) {
+            key = System.getenv("ENCRYPT_AES_KEY");
+        }
+        if (key == null || key.length() != 16) {
+            // 危险：使用默认密钥，仅警告，不影响启动
+            System.err.println("[WARN] AES 密钥未正确配置，使用内置默认密钥！生产环境请设置 -Dencrypt.aes.key=16位密钥");
+            return "EasyLowcode2024!";
+        }
+        return key;
+    }
+    private static final String AES_KEY = resolveAesKey();
     
     /**
      * AES 加密

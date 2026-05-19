@@ -57,4 +57,10 @@ public class DataSourceConfig extends BaseEntity {
      * 备注
      */
     private String remark;
+
+    /**
+     * 扩展配置（JSON 格式，存储数据源特有的额外参数）
+     * 例如 Hive 的 host/port/principal 等
+     */
+    private String extraConfig;
 }

@@ -110,3 +110,80 @@ export function queryChartData(chartId: number, params?: Record<string, any>): P
 export function previewDashboard(id: number): Promise<any> {
   return request({ url: `/dashboard/${id}/preview`, method: 'get' })
 }
+
+// ========== Text-to-SQL ==========
+
+export interface TextToSqlRequest {
+  datasourceId: number
+  tableName: string
+  question: string
+  limit?: number
+  execute?: boolean
+}
+
+export interface TextToSqlResponse {
+  sql: string
+  data: any[]
+  rowCount: number
+  recommendedChartType: string
+  recommendedEchartsOption: string
+  aiContent: string
+  success: boolean
+  errorMessage?: string
+}
+
+export function textToSql(data: TextToSqlRequest): Promise<TextToSqlResponse> {
+  return request({ url: '/dataview/text-to-sql', method: 'post', data })
+}
+
+// ========== AI 图表推荐 ==========
+
+export interface ChartRecommendRequest {
+  data: any[]
+  limit?: number
+}
+
+export interface ChartRecommendation {
+  chartType: string
+  echartsOption: string
+  reason: string
+}
+
+export function recommendChart(data: ChartRecommendRequest): Promise<ChartRecommendation> {
+  return request({ url: '/dataview/chart/recommend', method: 'post', data })
+}
+
+// ========== SQL 解释 ==========
+
+export interface SqlExplainRequest {
+  sql: string
+  dialect?: string
+  datasourceId?: number
+}
+
+export interface SqlExplainResponse {
+  explanation: string
+  suggestions: string[]
+  rewrittenSql: string
+  syntaxValid: boolean
+  sampleData: any[]
+  error?: string
+}
+
+export function explainSql(data: SqlExplainRequest): Promise<SqlExplainResponse> {
+  return request({ url: '/dataview/sql/explain', method: 'post', data })
+}
+
+// ========== 数据源工具 ==========
+
+export function testDataSource(data: { datasourceId?: number; dbType?: string; url?: string; username?: string; password?: string }): Promise<boolean> {
+  return request({ url: '/dataview/datasource/test', method: 'post', data })
+}
+
+export function getDataSourceList(): Promise<any[]> {
+  return request({ url: '/dataview/datasources', method: 'get' })
+}
+
+export function getTableColumns(datasourceId: number, table: string, schema?: string): Promise<any[]> {
+  return request({ url: `/dataview/tables/${datasourceId}/columns`, method: 'get', params: { table, schema } })
+}
