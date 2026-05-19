@@ -22,5 +22,6 @@
     <include file="db/changelog/015-create-etl-task-tables.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/016-create-dashboard-tables.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/017-create-ai-config-table.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/018-add-datasource-extra-config.xml" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>
