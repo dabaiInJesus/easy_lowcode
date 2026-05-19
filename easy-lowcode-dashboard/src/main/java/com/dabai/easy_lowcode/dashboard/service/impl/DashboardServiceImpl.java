@@ -12,6 +12,7 @@ import com.dabai.easy_lowcode.dashboard.entity.DashboardChart;
 import com.dabai.easy_lowcode.dashboard.mapper.ChartDataSourceMapper;
 import com.dabai.easy_lowcode.dashboard.mapper.DashboardChartMapper;
 import com.dabai.easy_lowcode.dashboard.mapper.DashboardMapper;
+import com.dabai.easy_lowcode.dashboard.service.ChartCacheService;
 import com.dabai.easy_lowcode.dashboard.service.DashboardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,7 @@ public class DashboardServiceImpl extends ServiceImpl<DashboardMapper, Dashboard
     private final DashboardChartMapper chartMapper;
     private final ChartDataSourceMapper chartDataSourceMapper;
     private final DataSourceConfigMapper dataSourceConfigMapper;
+    private final ChartCacheService chartCacheService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -156,6 +158,8 @@ public class DashboardServiceImpl extends ServiceImpl<DashboardMapper, Dashboard
     public boolean updateChart(DashboardChart chart) {
         DashboardChart existing = chartMapper.selectById(chart.getId());
         if (existing == null) throw new BusinessException("图表不存在");
+        // 更新前清除缓存（SQL 或配置变化都可能导致数据不同）
+        chartCacheService.invalidate(chart.getId());
         return chartMapper.updateById(chart) > 0;
     }
 
@@ -164,6 +168,8 @@ public class DashboardServiceImpl extends ServiceImpl<DashboardMapper, Dashboard
     public boolean removeChart(Long chartId) {
         DashboardChart chart = chartMapper.selectById(chartId);
         if (chart == null) throw new BusinessException("图表不存在");
+        // 删除前清除缓存
+        chartCacheService.invalidate(chartId);
         // 删除关联的数据源配置
         chartDataSourceMapper.delete(
             new LambdaQueryWrapper<ChartDataSource>().eq(ChartDataSource::getChartId, chartId));
@@ -191,9 +197,19 @@ public class DashboardServiceImpl extends ServiceImpl<DashboardMapper, Dashboard
             return queryByTableResource(chart, params);
         }
 
-        // 2. 如果有数据源ID和SQL，直接执行SQL
+        // 2. 如果有数据源ID和SQL，直接执行SQL（带缓存）
         if (chart.getDatasourceId() != null && chart.getQuerySql() != null && !chart.getQuerySql().isEmpty()) {
-            return executeSql(chart.getDatasourceId(), chart.getQuerySql(), chart.getLimitRecords());
+            // 尝试从缓存获取（TTL = 图表配置的刷新间隔，0则用默认值）
+            int ttlSeconds = chart.getRefreshInterval() != null && chart.getRefreshInterval() > 0
+                    ? chart.getRefreshInterval() : 0;
+            var cached = chartCacheService.get(chartId, chart.getQuerySql(), chart.getLimitRecords(), ttlSeconds);
+            if (cached.isPresent()) {
+                log.debug("图表 {} 缓存命中，返回 {} 条数据", chartId, cached.get().size());
+                return cached.get();
+            }
+            List<Map<String, Object>> data = executeSql(chart.getDatasourceId(), chart.getQuerySql(), chart.getLimitRecords());
+            chartCacheService.put(chartId, chart.getQuerySql(), data, ttlSeconds);
+            return data;
         }
 
         // 3. 如果有自定义数据源配置

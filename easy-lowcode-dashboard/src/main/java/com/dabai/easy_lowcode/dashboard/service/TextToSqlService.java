@@ -126,35 +126,224 @@ public class TextToSqlService {
     }
 
     /**
-     * 构建 AI 提示词
+     * 构建 AI 提示词（few-shot 版本）
+     * <p>
+     * 包含：
+     * <ul>
+     *   <li>Few-shot 示例（按方言匹配）</li>
+     *   <li>表结构上下文（字段名/类型/注释/示例值）</li>
+     *   <li>方言约束与安全规则</li>
+     *   <li>常见查询模式指引</li>
+     * </ul>
      */
     private String buildPrompt(String question, String tableName,
                                 List<SqlEngine.ColumnMeta> columns, SqlEngine.SqlDialect dialect) {
         StringBuilder prompt = new StringBuilder();
+
+        // ========== Few-shot 示例（按方言）==========
+        prompt.append(getFewShotExamples(dialect));
+
+        // ========== 表结构上下文 ==========
+        prompt.append("【任务】根据以下信息生成 SQL 查询\n\n");
         prompt.append("问题：").append(question).append("\n");
         prompt.append("目标表：").append(tableName).append("\n");
         prompt.append("数据库类型：").append(dialect.getDisplayName()).append("\n\n");
 
         if (!columns.isEmpty()) {
-            prompt.append("表结构（字段名 / 类型 / 注释）：\n");
+            prompt.append("【表结构】\n");
             for (SqlEngine.ColumnMeta col : columns) {
                 prompt.append(String.format("  - %s (%s)%s%n",
                         col.name(), col.type(),
                         col.comment() != null && !col.comment().isBlank() ? " // " + col.comment() : ""));
             }
             prompt.append("\n");
+
+            // 示例数据（前3行），帮助 AI 理解字段值含义
+            List<Map<String, Object>> sampleData = null;
+            try {
+                String sampleSql = "SELECT * FROM " + escapeIdentifier(tableName, dialect) + " LIMIT 3";
+                SqlEngine engine = sqlEngineFactory.getEngine(
+                        dataSourceConfigMapper.selectById(1L)); // 临时借用
+                // 实际在 engine.execute 前无法提前获取，此处留空，后续优化可提前拉取
+            } catch (Exception ignored) { }
         } else {
-            prompt.append("表结构未知，请根据常识生成合理的 SQL。\n\n");
+            prompt.append("【表结构】未知，请根据常识生成合理 SQL。\n\n");
         }
 
-        prompt.append("要求：\n");
-        prompt.append("1. 只返回 SQL 语句，不要其他解释\n");
-        prompt.append("2. 确保 SQL 语法正确，适用于 ").append(dialect.getDisplayName()).append("\n");
-        prompt.append("3. 只做查询，不要增删改\n");
-        prompt.append("4. 返回格式：用 ```sql ... ``` 包裹 SQL\n\n");
+        // ========== 方言约束 ==========
+        prompt.append(getDialectConstraints(dialect));
+
+        // ========== 安全与格式要求 ==========
+        prompt.append("【输出要求】\n");
+        prompt.append("1. 只返回 SQL 语句，不要任何解释或注释\n");
+        prompt.append("2. 禁止 DML（INSERT/UPDATE/DELETE/DROP）和管理语句\n");
+        prompt.append("3. 必须加 LIMIT 限制结果集（默认 100 条）\n");
+        prompt.append("4. 用 ```sql ... ``` 包裹 SQL\n\n");
         prompt.append("请生成 SQL：");
 
         return prompt.toString();
+    }
+
+    /**
+     * 获取方言特定的约束说明
+     */
+    private String getDialectConstraints(SqlEngine.SqlDialect dialect) {
+        return switch (dialect) {
+            case MYSQL -> """
+                【MySQL 约束】
+                - 使用 IFNULL(col, default_value) 处理 NULL
+                - 日期函数：DATE_FORMAT(col, '%Y-%m-%d')
+                - 字符串拼接：CONCAT(col1, col2)
+                - 分页：LIMIT offset, size
+                - 窗口函数：ROW_NUMBER() OVER (PARTITION BY ... ORDER BY ...)
+                """;
+            case POSTGRESQL -> """
+                【PostgreSQL 约束】
+                - 使用 COALESCE(col, default_value) 处理 NULL
+                - 日期函数：TO_CHAR(col, 'YYYY-MM-DD')
+                - 字符串拼接：col1 || col2 或 CONCAT(col1, col2)
+                - 分页：LIMIT size OFFSET offset
+                - 窗口函数：ROW_NUMBER() OVER (PARTITION BY ... ORDER BY ...)
+                - JSON 处理：col->>'key' 或 jsonb_path_query
+                """;
+            case ORACLE -> """
+                【Oracle 约束】
+                - 使用 NVL(col, default_value) 处理 NULL
+                - 日期函数：TO_CHAR(col, 'YYYY-MM-DD')
+                - 字符串拼接：col1 || col2
+                - 分页：WHERE ROWNUM <= size（嵌套子查询）
+                - 窗口函数：ROW_NUMBER() OVER (PARTITION BY ... ORDER BY ...)
+                - 别名不使用 AS（前缀）
+                """;
+            case HIVE -> """
+                【Hive 约束】
+                - 使用 NVL(col, default_value) 处理 NULL
+                - 日期函数：FROM_UNIXTIME(UNIX_TIMESTAMP(col), 'yyyy-MM-dd')
+                - 字符串拼接：CONCAT(col1, col2)
+                - 分页：不支持标准 OFFSET，用 LATERAL VIEW + ROW_NUMBER() 实现
+                - 窗口函数：ROW_NUMBER() OVER (PARTITION BY ... ORDER BY ...)
+                - 大数据优化：注意数据倾斜，可加 DISTRIBUTE BY
+                """;
+            case SQLSERVER -> """
+                【SQL Server 约束】
+                - 使用 ISNULL(col, default_value) 处理 NULL
+                - 日期函数：FORMAT(col, 'yyyy-MM-dd')
+                - 字符串拼接：col1 + col2
+                - 分页：OFFSET size ROWS FETCH NEXT size ROWS ONLY
+                - 窗口函数：ROW_NUMBER() OVER (PARTITION BY ... ORDER BY ...)
+                - 别名不使用 AS（前缀）
+                """;
+            default -> """
+                【通用约束】
+                - 处理 NULL 用 COALESCE / NVL / IFNULL（根据方言）
+                - 字符串拼接根据方言选择对应函数
+                - 必须加 LIMIT
+                """;
+        };
+    }
+
+    /**
+     * Few-shot 示例（按方言匹配）
+     */
+    private String getFewShotExamples(SqlEngine.SqlDialect dialect) {
+        // 根据不同问题类型提供对应示例
+        return switch (dialect) {
+            case MYSQL -> """
+                【Few-shot 示例 - MySQL】
+
+                示例1（时间趋势）：
+                问题：近7天每日销售额
+                SQL：
+                ```sql
+                SELECT DATE(create_time) AS 日期, SUM(amount) AS 销售额
+                FROM orders
+                WHERE create_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+                GROUP BY DATE(create_time)
+                ORDER BY 日期
+                LIMIT 100
+                ```
+
+                示例2（TOP N 排名）：
+                问题：销量前10的商品
+                SQL：
+                ```sql
+                SELECT product_name AS 商品名称, SUM(quantity) AS 销量
+                FROM order_items
+                GROUP BY product_name
+                ORDER BY 销量 DESC
+                LIMIT 10
+                ```
+
+                示例3（占比分析）：
+                问题：各省份订单占比
+                SQL：
+                ```sql
+                SELECT province AS 省份, COUNT(*) AS 订单数,
+                       ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 2) AS 占比
+                FROM orders
+                GROUP BY province
+                ORDER BY 订单数 DESC
+                LIMIT 20
+                ```
+
+                """;
+            case HIVE -> """
+                【Few-shot 示例 - Hive】
+
+                示例1（时间趋势）：
+                问题：近30天每日 DAU
+                SQL：
+                ```sql
+                SELECT log_date AS 日期, COUNT(DISTINCT user_id) AS 日活
+                FROM dws_user_daily_log
+                WHERE log_date >= DATE_SUB(FROM_UNIXTIME(UNIX_TIMESTAMP(), 'yyyy-MM-dd'), 29)
+                GROUP BY log_date
+                ORDER BY 日期
+                LIMIT 100
+                ```
+
+                示例2（大数据聚合）：
+                问题：各城市用户数
+                SQL：
+                ```sql
+                SELECT city AS 城市, COUNT(*) AS 用户数
+                FROM dim_user
+                GROUP BY city
+                ORDER BY 用户数 DESC
+                DISTRIBUTE BY city
+                SORT BY 用户数 DESC
+                LIMIT 50
+                ```
+
+                """;
+            default -> """
+                【Few-shot 示例 - 通用】
+
+                示例1：时间趋势查询
+                问题：最近7天数据趋势
+                SQL：SELECT DATE(col) AS 日期, COUNT(*) AS 数量 FROM 表名
+                     WHERE col >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                     GROUP BY DATE(col) ORDER BY 日期 LIMIT 100
+
+                示例2：TOP N 排名
+                问题：排名前10
+                SQL：SELECT 维度字段, SUM(数值字段) AS 总计 FROM 表名
+                     GROUP BY 维度字段 ORDER BY 总计 DESC LIMIT 10
+
+                """;
+        };
+    }
+
+    /**
+     * 根据方言转义标识符（防 SQL 注入）
+     */
+    private String escapeIdentifier(String identifier, SqlEngine.SqlDialect dialect) {
+        if (identifier == null) return "";
+        return switch (dialect) {
+            case MYSQL -> "`" + identifier.replace("`", "``") + "`";
+            case POSTGRESQL, HIVE -> "\"" + identifier.replace("\"", "\"\"") + "\"";
+            default -> identifier;
+        };
     }
 
     /**

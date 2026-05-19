@@ -145,14 +145,30 @@
         </div>
       </div>
 
-      <!-- 画布 -->
+        <!-- 画布 -->
       <div class="designer-canvas" :style="{ backgroundColor: dashboard.backgroundColor || '#0a1628' }">
         <el-empty v-if="charts.length === 0" description="左侧添加图表开始设计" :image-size="80" style="color:#fff" />
         <div class="chart-grid">
-          <div v-for="(chart, idx) in charts" :key="chart.id" class="chart-preview"
-            :class="{ selected: selectedChartIdx === idx }"
-            :style="{ gridColumn: `span ${chart.width || 4}`, gridRow: `span ${chart.height || 3}` }"
-            @click="selectedChartIdx = idx">
+          <div
+            v-for="(chart, idx) in charts"
+            :key="chart.id"
+            class="chart-preview"
+            :class="{
+              selected: selectedChartIdx === idx,
+              'drag-over': dragOverIdx === idx,
+              'is-dragging': draggingIdx === idx,
+            }"
+            :style="{
+              gridColumn: `span ${chart.width || 4}`,
+              gridRow: `span ${chart.height || 3}`,
+            }"
+            draggable="true"
+            @click="selectedChartIdx = idx"
+            @dragstart="onDragStart(idx, $event)"
+            @dragend="onDragEnd"
+            @dragover.prevent="onDragOver(idx)"
+            @drop="onDrop(idx)"
+          >
             <div class="chart-preview-header">
               <span class="chart-preview-title">{{ chart.title }}</span>
               <el-tag size="small">{{ chart.chartType }}</el-tag>
@@ -212,6 +228,8 @@ const newChart = reactive<Partial<DashboardChart>>({
 })
 
 const showTextToSqlDialog = ref(false)
+const draggingIdx = ref<number | null>(null)
+const dragOverIdx = ref<number | null>(null)
 
 const loadDashboard = async () => {
   try {
@@ -353,6 +371,62 @@ const handleChartAdded = async (chart: Partial<DashboardChart>) => {
   }
 }
 
+// ========== 拖拽排序 ==========
+
+function onDragStart(idx: number, event: DragEvent) {
+  draggingIdx.value = idx
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', String(idx))
+  }
+}
+
+function onDragOver(idx: number) {
+  dragOverIdx.value = idx
+}
+
+function onDrop(targetIdx: number) {
+  const srcIdx = draggingIdx.value
+  if (srcIdx === null || srcIdx === targetIdx) {
+    resetDragState()
+    return
+  }
+  // 数组重排序
+  const items = [...charts.value]
+  const [moved] = items.splice(srcIdx, 1)
+  items.splice(targetIdx, 0, moved)
+  charts.value = items
+  // 更新选中
+  selectedChartIdx.value = targetIdx
+  // 保存新排序到后端
+  savePositions(items)
+  resetDragState()
+}
+
+function onDragEnd() {
+  resetDragState()
+}
+
+function resetDragState() {
+  draggingIdx.value = null
+  dragOverIdx.value = null
+}
+
+async function savePositions(items: DashboardChart[]) {
+  const positions = items.map((c, order) => ({
+    id: c.id,
+    sortOrder: order,
+    width: c.width,
+    height: c.height,
+  }))
+  try {
+    const { updateChartPositions } = await import('@/api/dashboard')
+    await updateChartPositions(positions)
+  } catch (e: any) {
+    ElMessage.warning('位置保存失败: ' + (e.message || ''))
+  }
+}
+
 onMounted(() => { loadDashboard(); loadDatasources() })
 
 onUnmounted(() => {
@@ -388,6 +462,18 @@ onUnmounted(() => {
 .number-value-preview { font-size: 36px; font-weight: 700; color: #409eff; }
 .chart-text-preview { font-size: 12px; color: rgba(255,255,255,.5); word-break: break-all; }
 .chart-echarts-preview { width: 100%; height: 100%; min-height: 80px; }
+
+/* 拖拽状态样式 */
+.chart-preview.drag-over {
+  border: 2px dashed #409eff !important;
+  background: rgba(64, 158, 255, 0.15) !important;
+}
+.chart-preview.is-dragging {
+  opacity: 0.4;
+  border: 2px dashed #909399 !important;
+}
+.chart-preview:hover { cursor: grab; }
+.chart-preview:active { cursor: grabbing; }
 
 /* AI 生成器侧边栏 */
 .ai-sidebar .ai-intro { background: #f0f9eb; border-radius: 8px; padding: 12px; margin-bottom: 16px; }
