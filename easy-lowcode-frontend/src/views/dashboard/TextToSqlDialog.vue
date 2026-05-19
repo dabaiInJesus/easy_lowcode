@@ -117,7 +117,6 @@
           <el-tag type="success">{{ result.recommendedChartType }}</el-tag>
           <el-tag type="info" v-if="result.rowCount">{{ result.rowCount }} 条数据</el-tag>
         </div>
-        <p class="recommend-reason" v-if="result.reason">{{ result.reason }}</p>
       </div>
 
       <!-- 数据预览表格 -->
