@@ -7,7 +7,7 @@
 
     <changeSet id="019-create-sys-role-resource-table" author="dabai">
         <createTable tableName="sys_role_resource" remarks="角色资源关联表">
-            <column name="id" type="BIGINT" autoIncrement="true">
+            <column name="id" type="BIGINT">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="role_id" type="BIGINT">

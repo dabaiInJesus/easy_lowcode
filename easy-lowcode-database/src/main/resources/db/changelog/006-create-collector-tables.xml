@@ -8,7 +8,7 @@
     <!-- 数据源配置表 -->
     <changeSet id="006-create-datasource-table" author="dabai">
         <createTable tableName="collector_datasource" remarks="数据源配置表">
-            <column name="id" type="BIGINT" autoIncrement="true">
+            <column name="id" type="BIGINT">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="name" type="VARCHAR(100)">
@@ -59,7 +59,7 @@
     <!-- 表资源注册表 -->
     <changeSet id="006-create-table-resource" author="dabai">
         <createTable tableName="collector_table_resource" remarks="表资源注册表">
-            <column name="id" type="BIGINT" autoIncrement="true">
+            <column name="id" type="BIGINT">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="datasource_id" type="BIGINT">
@@ -109,6 +109,7 @@
     </changeSet>
 
     <!-- 插入默认数据源（PostgreSQL） -->
+    <!-- 注意：密码字段需通过系统界面配置，此处使用占位值 -->
     <changeSet id="006-insert-default-datasource" author="dabai">
         <insert tableName="collector_datasource">
             <column name="name" value="主数据库"/>
@@ -116,7 +117,7 @@
             <column name="db_type" value="postgresql"/>
             <column name="url" value="jdbc:postgresql://localhost:5432/easy_lowcode"/>
             <column name="username" value="postgres"/>
-            <column name="password" value="thinker"/>
+            <column name="password" value="${DB_PASSWORD_PLACEHOLDER:PLEASE_SET_VIA_UI}"/>
             <column name="driver_class_name" value="org.postgresql.Driver"/>
             <column name="status" valueNumeric="1"/>
             <column name="remark" value="系统主数据库"/>

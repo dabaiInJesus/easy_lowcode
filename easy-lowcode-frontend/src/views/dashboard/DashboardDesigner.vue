@@ -287,7 +287,11 @@ const initPreviewChart = (el: HTMLElement | null, chart: any) => {
 
   const dataEntry = chartDataMap.value[chartId]
   if (!dataEntry || !dataEntry.data || dataEntry.data.length === 0) {
-    el.innerHTML = `<div style="color:rgba(255,255,255,.3);padding:10px;font-size:11px;text-align:center">预览无数据</div>`
+    el.textContent = '预览无数据'
+    el.style.color = 'rgba(255,255,255,.3)'
+    el.style.padding = '10px'
+    el.style.fontSize = '11px'
+    el.style.textAlign = 'center'
     el.style.display = 'flex'
     el.style.alignItems = 'center'
     el.style.justifyContent = 'center'

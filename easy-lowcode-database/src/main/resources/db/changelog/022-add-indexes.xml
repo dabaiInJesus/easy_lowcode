@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <!-- 为所有软删除表的 deleted 列添加索引 -->
+    <changeSet id="022-add-deleted-indexes" author="dabai">
+        <createIndex indexName="idx_sys_user_deleted" tableName="sys_user">
+            <column name="deleted"/>
+        </createIndex>
+        <createIndex indexName="idx_sys_role_deleted" tableName="sys_role">
+            <column name="deleted"/>
+        </createIndex>
+        <createIndex indexName="idx_sys_menu_deleted" tableName="sys_menu">
+            <column name="deleted"/>
+        </createIndex>
+        <createIndex indexName="idx_sys_dept_deleted" tableName="sys_dept">
+            <column name="deleted"/>
+        </createIndex>
+        <createIndex indexName="idx_sys_app_deleted" tableName="sys_app">
+            <column name="deleted"/>
+        </createIndex>
+        <createIndex indexName="idx_ai_agent_deleted" tableName="ai_agent">
+            <column name="deleted"/>
+        </createIndex>
+        <createIndex indexName="idx_ai_prompt_template_deleted" tableName="ai_prompt_template">
+            <column name="deleted"/>
+        </createIndex>
+        <createIndex indexName="idx_ai_config_deleted" tableName="ai_config">
+            <column name="deleted"/>
+        </createIndex>
+        <createIndex indexName="idx_ds_deleted" tableName="collector_datasource">
+            <column name="deleted"/>
+        </createIndex>
+        <createIndex indexName="idx_tr_deleted" tableName="collector_table_resource">
+            <column name="deleted"/>
+        </createIndex>
+        <createIndex indexName="idx_api_deleted" tableName="collector_api_management">
+            <column name="deleted"/>
+        </createIndex>
+        <createIndex indexName="idx_resource_deleted" tableName="sys_resource">
+            <column name="deleted"/>
+        </createIndex>
+        <createIndex indexName="idx_etl_task_deleted" tableName="etl_task">
+            <column name="deleted"/>
+        </createIndex>
+        <createIndex indexName="idx_etl_task_log_deleted" tableName="etl_task_log">
+            <column name="deleted"/>
+        </createIndex>
+        <createIndex indexName="idx_etl_ds_mapping_deleted" tableName="etl_datasource_mapping">
+            <column name="deleted"/>
+        </createIndex>
+        <createIndex indexName="idx_dashboard_deleted" tableName="dashboard">
+            <column name="deleted"/>
+        </createIndex>
+        <createIndex indexName="idx_dashboard_chart_deleted" tableName="dashboard_chart">
+            <column name="deleted"/>
+        </createIndex>
+        <createIndex indexName="idx_dashboard_chart_ds_deleted" tableName="dashboard_chart_datasource">
+            <column name="deleted"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 为 status 列添加索引 -->
+    <changeSet id="022-add-status-indexes" author="dabai">
+        <createIndex indexName="idx_sys_user_status" tableName="sys_user">
+            <column name="status"/>
+        </createIndex>
+        <createIndex indexName="idx_sys_role_status" tableName="sys_role">
+            <column name="status"/>
+        </createIndex>
+        <createIndex indexName="idx_sys_menu_visible" tableName="sys_menu">
+            <column name="visible"/>
+        </createIndex>
+        <createIndex indexName="idx_sys_dept_status" tableName="sys_dept">
+            <column name="status"/>
+        </createIndex>
+        <createIndex indexName="idx_sys_app_status" tableName="sys_app">
+            <column name="status"/>
+        </createIndex>
+        <createIndex indexName="idx_ai_agent_status" tableName="ai_agent">
+            <column name="status"/>
+        </createIndex>
+        <createIndex indexName="idx_ds_status" tableName="collector_datasource">
+            <column name="status"/>
+        </createIndex>
+        <createIndex indexName="idx_tr_status" tableName="collector_table_resource">
+            <column name="status"/>
+        </createIndex>
+        <createIndex indexName="idx_resource_status" tableName="sys_resource">
+            <column name="status"/>
+        </createIndex>
+        <createIndex indexName="idx_etl_task_status" tableName="etl_task">
+            <column name="status"/>
+        </createIndex>
+        <createIndex indexName="idx_dashboard_status" tableName="dashboard">
+            <column name="status"/>
+        </createIndex>
+        <createIndex indexName="idx_ai_config_status" tableName="ai_config">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 为常用查询列添加索引 -->
+    <changeSet id="022-add-query-indexes" author="dabai">
+        <createIndex indexName="idx_sys_user_phone" tableName="sys_user">
+            <column name="phone"/>
+        </createIndex>
+        <createIndex indexName="idx_sys_user_email" tableName="sys_user">
+            <column name="email"/>
+        </createIndex>
+        <createIndex indexName="idx_sys_app_client_id" tableName="sys_app">
+            <column name="client_id"/>
+        </createIndex>
+        <createIndex indexName="idx_ai_agent_provider" tableName="ai_agent">
+            <column name="provider"/>
+        </createIndex>
+        <createIndex indexName="idx_ds_db_type" tableName="collector_datasource">
+            <column name="db_type"/>
+        </createIndex>
+        <createIndex indexName="idx_tr_table_name" tableName="collector_table_resource">
+            <column name="table_name"/>
+        </createIndex>
+        <createIndex indexName="idx_etl_task_schedule_type" tableName="etl_task">
+            <column name="schedule_type"/>
+        </createIndex>
+        <createIndex indexName="idx_dashboard_chart_ds_source_type" tableName="dashboard_chart_datasource">
+            <column name="source_type"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,11 +1,10 @@
 package com.dabai.easy_lowcode.resource.service.impl;
 
-import com.dabai.easy_lowcode.collector.entity.DataSourceConfig;
 import com.dabai.easy_lowcode.collector.entity.TableResource;
-import com.dabai.easy_lowcode.collector.mapper.DataSourceConfigMapper;
 import com.dabai.easy_lowcode.collector.mapper.TableResourceMapper;
 import com.dabai.easy_lowcode.common.exception.BusinessException;
-import com.dabai.easy_lowcode.common.util.EncryptUtil;
+import com.dabai.easy_lowcode.database.model.DataSourceInfo;
+import com.dabai.easy_lowcode.database.service.DataSourceProvider;
 import com.dabai.easy_lowcode.resource.model.ConfigJson;
 import com.dabai.easy_lowcode.resource.model.ConfigParser;
 import com.dabai.easy_lowcode.resource.model.DisplayFieldSetting;
@@ -36,7 +35,7 @@ import com.dabai.easy_lowcode.common.util.SimpleCache;
 public class ResourceSearchServiceImpl implements ResourceSearchService {
 
     private final TableResourceMapper tableResourceMapper;
-    private final DataSourceConfigMapper dataSourceConfigMapper;
+    private final DataSourceProvider dataSourceProvider;
     private final DynamicDataService dynamicDataService;
     private final ProcessorRegistry processorRegistry;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -56,13 +55,13 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
             throw new BusinessException("资源不存在: " + resourceCode);
         }
 
-        DataSourceConfig dataSource = dataSourceConfigMapper.selectById(tableResource.getDatasourceId());
+        DataSourceInfo dataSource = dataSourceProvider.getById(tableResource.getDatasourceId());
         if (dataSource == null) {
             throw new BusinessException("数据源不存在");
         }
 
         validateTableName(tableResource.getTableName());
-        try (Connection conn = getConnection(dataSource)) {
+        try (Connection conn = dataSourceProvider.getConnection(dataSource)) {
             Set<String> allowedColumns = getAllowedColumns(tableResource, conn);
             List<FieldConfig> fields = getTableFields(tableResource, conn);
             fieldConfigCache.put(tableResource.getId(), fields);
@@ -187,13 +186,13 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
             throw new BusinessException("资源不存在: " + resourceCode);
         }
 
-        DataSourceConfig dataSource = dataSourceConfigMapper.selectById(tableResource.getDatasourceId());
+        DataSourceInfo dataSource = dataSourceProvider.getById(tableResource.getDatasourceId());
         if (dataSource == null) {
             throw new BusinessException("数据源不存在");
         }
 
         validateTableName(tableResource.getTableName());
-        try (Connection conn = getConnection(dataSource)) {
+        try (Connection conn = dataSourceProvider.getConnection(dataSource)) {
             // 获取主键列名
             String primaryKey = getPrimaryKeyColumn(tableResource.getTableName(), conn);
             
@@ -269,17 +268,17 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
             throw new BusinessException("关联资源不存在");
         }
 
-        DataSourceConfig leftDs = dataSourceConfigMapper.selectById(leftResource.getDatasourceId());
-        DataSourceConfig rightDs = dataSourceConfigMapper.selectById(rightResource.getDatasourceId());
+        DataSourceInfo leftDs = dataSourceProvider.getById(leftResource.getDatasourceId());
+        DataSourceInfo rightDs = dataSourceProvider.getById(rightResource.getDatasourceId());
         
         // 简单实现：同数据源关联
-        if (!leftDs.getId().equals(rightDs.getId())) {
+        if (leftDs == null || rightDs == null || !leftDs.getId().equals(rightDs.getId())) {
             throw new BusinessException("目前仅支持同数据源的关联查询");
         }
 
         validateTableName(leftResource.getTableName());
         validateTableName(rightResource.getTableName());
-        try (Connection conn = getConnection(leftDs)) {
+        try (Connection conn = dataSourceProvider.getConnection(leftDs)) {
             Set<String> leftColumns = getAllowedColumns(leftResource, conn);
             Set<String> rightColumns = getAllowedColumns(rightResource, conn);
 
@@ -464,12 +463,13 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
             return cachedFields;
         }
 
-        DataSourceConfig dataSource = dataSourceConfigMapper.selectById(tableResource.getDatasourceId());
+        DataSourceInfo dataSource = dataSourceProvider.getById(tableResource.getDatasourceId());
         if (dataSource == null) {
             throw new BusinessException("数据源不存在");
         }
 
-        try (Connection conn = getConnection(dataSource)) {
+        try (Connection conn = dataSourceProvider.getConnection(dataSource)) {
+            Set<String> allowedColumns = getAllowedColumns(tableResource, conn);
             List<FieldConfig> fields = getTableFields(tableResource, conn);
             fieldConfigCache.put(tableResource.getId(), fields);
             return fields;
@@ -522,14 +522,6 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
                 record.values().removeIf(v -> v == null);
             }
         }
-    }
-
-    private Connection getConnection(DataSourceConfig dataSource) throws Exception {
-        String password;
-        try { password = EncryptUtil.decrypt(dataSource.getPassword()); }
-        catch (Exception e) { password = dataSource.getPassword(); }
-        Class.forName(dataSource.getDriverClassName());
-        return DriverManager.getConnection(dataSource.getUrl(), dataSource.getUsername(), password);
     }
 
     private Set<String> getAllowedColumns(TableResource tableResource, Connection conn) {

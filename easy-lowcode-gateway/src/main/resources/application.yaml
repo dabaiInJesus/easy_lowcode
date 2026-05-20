@@ -49,6 +49,14 @@ sa-token:
   token-style: uuid
   is-log: false
 
+# Gateway 认证白名单
+gateway:
+  auth:
+    whitelist:
+      - /api/auth/login
+      - /api/auth/register
+      - /api/auth/captcha
+
 # 日志配置
 logging:
   level:

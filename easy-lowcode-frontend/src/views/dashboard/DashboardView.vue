@@ -92,7 +92,11 @@ const initChart = (el: HTMLElement | null, item: any) => {
 
   // 空数据时不初始化
   if (!item.data || item.data.length === 0) {
-    el.innerHTML = `<div style="color:rgba(255,255,255,.3);text-align:center;padding:20px;font-size:13px">暂无数据</div>`
+    el.textContent = '暂无数据'
+    el.style.color = 'rgba(255,255,255,.3)'
+    el.style.textAlign = 'center'
+    el.style.padding = '20px'
+    el.style.fontSize = '13px'
     return
   }
 

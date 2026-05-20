@@ -2,6 +2,16 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { getMenuTree } from '@/api/auth'
 
+/** 允许动态加载的组件路径白名单 */
+const ALLOWED_COMPONENTS = new Set([
+  'system/UserManagement', 'system/RoleManagement', 'system/MenuManagement',
+  'system/DeptManagement', 'system/AppManagement',
+  'resource/DataSourceManagement', 'resource/TableResourceManagement', 'resource/ApiManagement',
+  'etl/EtlTaskManagement', 'dashboard/DashboardManagement', 'dashboard/DashboardView',
+  'dashboard/DashboardDesigner', 'ai/ChatView', 'ai/AiConfigManagement',
+  'Home', 'Layout'
+])
+
 export interface MenuItem {
   id: number | string
   parentId: number | null | string
@@ -96,7 +106,11 @@ export const useMenuStore = defineStore('menu', () => {
         if (menu.children && menu.children.length > 0) {
           route.children = generateRoutes(menu.children)
         } else if (menu.component) {
-          // 动态导入组件
+          // 白名单校验：防止恶意路径加载任意模块
+          if (!ALLOWED_COMPONENTS.has(menu.component)) {
+            console.warn(`组件路径不在白名单中: ${menu.component}`)
+            return
+          }
           route.component = () => import(`../views${menu.component}.vue`)
         }
 
