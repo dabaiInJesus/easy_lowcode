@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <!-- 为 ai_agent 表添加 instructions（系统提示词）字段 -->
+    <changeSet id="021-add-ai-agent-instructions" author="dabai">
+        <addColumn tableName="ai_agent">
+            <column name="instructions" type="TEXT" remarks="系统提示词（可直接填写，或关联 promptTemplateId）">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        <rollback>
+            <dropColumn tableName="ai_agent" columnName="instructions"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,4 +1,12 @@
 # Easy Lowcode AI 模块配置
+#
+# 重要：API Key 必须通过环境变量配置，不要直接写在配置文件中
+# 必需的环境变量：
+#   - DASHSCOPE_API_KEY    （通义千问）
+#   - OPENAI_API_KEY       （OpenAI GPT）
+#   - DEEPSEEK_API_KEY     （DeepSeek）
+#   - MINIMAX_API_KEY      （Minimax）
+#   - OLLAMA_BASE_URL      （Ollama 本地，可选，默认 http://localhost:11434）
 
 server:
   port: 8081
@@ -6,11 +14,11 @@ server:
 spring:
   application:
     name: easy-lowcode-ai
-  
+
   # Spring AI OpenAI 配置（如果使用 OpenAI）
   ai:
     openai:
-      api-key: ${OPENAI_API_KEY:sk-placeholder-for-development}
+      api-key: ${OPENAI_API_KEY:}
       base-url: https://api.openai.com/v1
       chat:
         options:
@@ -21,32 +29,32 @@ ai:
   # 默认 AI 提供商 (openai/dashscope/ollama/deepseek/minimax)
   provider:
     default: dashscope
-  
-  # OpenAI 配置
+
+  # OpenAI 配置（必需：设置 OPENAI_API_KEY 环境变量）
   openai:
-    api-key: ${OPENAI_API_KEY:sk-placeholder-for-development}
-    base-url: https://api.openai.com/v1
-    model: gpt-3.5-turbo
-  
-  # 通义千问配置（阿里云 DashScope）
+    api-key: ${OPENAI_API_KEY:}
+    base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+    model: ${OPENAI_MODEL:gpt-3.5-turbo}
+
+  # 通义千问配置（必需：设置 DASHSCOPE_API_KEY 环境变量）
   dashscope:
-    api-key: ${DASHSCOPE_API_KEY:your-dashscope-api-key}
-    model: qwen-turbo
-  
-  # Ollama 配置（本地运行）
+    api-key: ${DASHSCOPE_API_KEY:}
+    model: ${DASHSCOPE_MODEL:qwen-turbo}
+
+  # Ollama 配置（可选：本地运行）
   ollama:
     base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
     model: ${OLLAMA_MODEL:llama2}
-  
-  # DeepSeek 配置
+
+  # DeepSeek 配置（必需：设置 DEEPSEEK_API_KEY 环境变量）
   deepseek:
-    api-key: ${DEEPSEEK_API_KEY:your-deepseek-api-key}
+    api-key: ${DEEPSEEK_API_KEY:}
     base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com/v1}
     model: ${DEEPSEEK_MODEL:deepseek-chat}
-  
-  # Minimax 配置
+
+  # Minimax 配置（必需：设置 MINIMAX_API_KEY 环境变量）
   minimax:
-    api-key: ${MINIMAX_API_KEY:your-minimax-api-key}
+    api-key: ${MINIMAX_API_KEY:}
     base-url: ${MINIMAX_BASE_URL:https://api.minimax.chat/v1}
     model: ${MINIMAX_MODEL:abab6-chat}
 
@@ -57,3 +65,24 @@ logging:
     com.dabai.easy_lowcode.ai: DEBUG
   pattern:
     console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
+
+# SpringDoc OpenAPI 配置
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+
+# Actuator 健康检查
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always

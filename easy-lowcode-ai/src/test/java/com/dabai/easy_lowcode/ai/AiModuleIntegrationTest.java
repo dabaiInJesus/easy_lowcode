@@ -6,6 +6,7 @@ import com.dabai.easy_lowcode.ai.enums.AiProvider;
 import com.dabai.easy_lowcode.ai.factory.AiServiceFactory;
 import com.dabai.easy_lowcode.ai.service.AiAgentService;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,11 +18,17 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * AI 模块集成测试
- * 
- * 注意：运行测试前需要配置相应的 AI 提供商 API Key
+ *
+ * 注意：运行测试前需要：
+ * 1. 配置 MySQL 数据库连接（spring.datasource.url）
+ * 2. 配置相应的 AI 提供商 API Key 环境变量
+ *
+ * 由于需要真实数据库，该测试默认禁用。
+ * 在有数据库环境的机器上运行时，移除 @Disabled 注解即可。
  */
 @Slf4j
 @SpringBootTest
+@Disabled("集成测试需要 MySQL 数据库连接，请在有数据库环境中取消禁用")
 public class AiModuleIntegrationTest {
     
     @Autowired

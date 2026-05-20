@@ -25,5 +25,6 @@
     <include file="db/changelog/018-add-datasource-extra-config.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/019-create-sys-role-resource-table.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/020-add-ai-management-menu.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/021-add-ai-agent-instructions.xml" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

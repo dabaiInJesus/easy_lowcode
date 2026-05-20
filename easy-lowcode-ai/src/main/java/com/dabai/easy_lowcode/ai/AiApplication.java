@@ -24,7 +24,7 @@ public class AiApplication {
         
         log.info("========================================");
         log.info("  Easy Lowcode AI 模块启动成功！");
-        log.info("  API 文档: http://localhost:8081/api/ai");
+        log.info("  Swagger UI: http://localhost:8081/swagger-ui.html");
         log.info("========================================");
     }
 }
