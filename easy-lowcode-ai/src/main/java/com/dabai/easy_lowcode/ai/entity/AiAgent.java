@@ -71,6 +71,11 @@ public class AiAgent extends BaseEntity {
     private String workflowConfig;
     
     /**
+     * 系统提示词（可直接填写，或关联 promptTemplateId）
+     */
+    private String instructions;
+
+    /**
      * 变量配置 JSON（如：{{name}}）
      */
     @TableField(value = "variables_config")

@@ -115,52 +115,59 @@ public class AiModuleIntegrationTest {
     @Test
     public void testListAgents() {
         log.info("测试 Agent 列表功能");
-        
+
         List<Map<String, Object>> agents = aiAgentService.listAgents();
-        
+
         assertNotNull(agents);
         log.info("可用 Agent 数量: {}", agents.size());
-        
+
         for (Map<String, Object> agent : agents) {
             log.info("Agent: {} - {}", agent.get("name"), agent.get("description"));
         }
     }
-    
+
     /**
      * 测试创建自定义 Agent
      */
     @Test
     public void testCreateAgent() {
         log.info("测试创建自定义 Agent");
-        
+
         String agentName = "TestAgent_" + System.currentTimeMillis();
         String description = "测试用 Agent";
         String instructions = "你是一个测试助手";
-        
-        String result = aiAgentService.createAgent(agentName, description, instructions);
-        
-        assertNotNull(result);
-        log.info("创建的 Agent: {}", result);
-        
+
+        String code = aiAgentService.createAgent(agentName, description, instructions);
+
+        assertNotNull(code);
+        log.info("创建的 Agent: {}", code);
+
         // 验证 Agent 是否在列表中
         List<Map<String, Object>> agents = aiAgentService.listAgents();
         boolean found = agents.stream()
-                .anyMatch(a -> agentName.equals(a.get("name")));
-        
+                .anyMatch(a -> code.equals(a.get("code")));
+
         assertTrue(found, "新创建的 Agent 应该在列表中");
     }
-    
+
     /**
      * 测试执行 Agent 任务
      */
     @Test
     public void testExecuteAgent() {
         log.info("测试执行 Agent 任务");
-        
+
+        // 先创建一个 Agent
+        String code = aiAgentService.createAgent(
+                "CodeReviewer_" + System.currentTimeMillis(),
+                "代码审查助手",
+                "你是一个专业的代码审查员"
+        );
+
         String task = "请分析以下代码的优点和缺点：public class HelloWorld { public static void main(String[] args) { System.out.println(\"Hello\"); } }";
-        
-        String result = aiAgentService.executeAgent("SampleAgent", task);
-        
+
+        String result = aiAgentService.executeAgent(code, task);
+
         assertNotNull(result);
         log.info("Agent 执行结果: {}", result);
     }
