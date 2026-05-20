@@ -152,21 +152,21 @@ public class AiAgentServiceImpl implements AiAgentService {
 
             Flux<String> rawStream = aiService.streamChat(request);
 
-            return rawStream
-                    .map(chunk -> {
-                        chunkCount[0]++;
-                        return chunk;
-                    })
-                    .doOnComplete(() -> {
-                        long elapsed = System.currentTimeMillis() - start;
-                        AiCallLogger.logStreamEnd(provider, elapsed, (int) chunkCount[0], true);
-                        // 完成后记录 assistant 消息（为空，等整个流结束再记录完整内容）
-                    })
-                    .doOnError(e -> {
-                        long elapsed = System.currentTimeMillis() - start;
-                        AiCallLogger.logStreamEnd(provider, elapsed, (int) chunkCount[0], false);
-                    })
-                    .doOnNext(chunk -> updateSession(agentCode, "assistant", chunk));
+        final StringBuilder fullResponse = new StringBuilder();
+
+        return rawStream
+                .doOnNext(chunk -> fullResponse.append(chunk))
+                .doOnComplete(() -> {
+                    long elapsed = System.currentTimeMillis() - start;
+                    AiCallLogger.logStreamEnd(provider, elapsed, (int) chunkCount[0], true);
+                    if (fullResponse.length() > 0) {
+                        updateSession(agentCode, "assistant", fullResponse.toString());
+                    }
+                })
+                .doOnError(e -> {
+                    long elapsed = System.currentTimeMillis() - start;
+                    AiCallLogger.logStreamEnd(provider, elapsed, (int) chunkCount[0], false);
+                });
 
         } catch (Exception e) {
             log.error("Agent '{}' 流式执行失败", agentCode, e);

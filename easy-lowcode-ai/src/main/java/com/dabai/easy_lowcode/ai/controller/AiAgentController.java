@@ -49,7 +49,6 @@ public class AiAgentController {
     public Flux<String> executeAgentStream(@RequestBody ExecuteAgentRequest request) {
         log.info("流式执行 Agent: code={}", request.getAgentCode());
         return aiAgentService.executeAgentStream(request.getAgentCode(), request.getTask())
-                .map(chunk -> "data: " + chunk + "\n\n")
                 .doOnError(e -> log.error("Agent 流式执行异常", e));
     }
 
