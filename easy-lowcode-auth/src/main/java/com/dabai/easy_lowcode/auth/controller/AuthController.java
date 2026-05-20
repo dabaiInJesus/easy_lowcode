@@ -109,9 +109,9 @@ public class AuthController {
      */
     @PostMapping("/user")
     public Result<Void> createUser(@RequestBody SysUser user) {
-        // 加密密码
+        // 使用 BCrypt 加密密码
         if (user.getPassword() != null) {
-            user.setPassword(EncryptUtil.md5(user.getPassword()));
+            user.setPassword(EncryptUtil.bcrypt(user.getPassword()));
         }
         userService.save(user);
         return Result.success("创建成功");
@@ -150,45 +150,7 @@ public class AuthController {
         userService.updateById(user);
         return Result.success("密码重置成功");
     }
-    
-    /**
-     * 临时接口：生成BCrypt密码哈希（仅用于测试）
-     */
-    @GetMapping("/generate-bcrypt")
-    public Result<Map<String, String>> generateBcrypt(@RequestParam String password) {
-        String bcryptHash = EncryptUtil.bcrypt(password);
-        Map<String, String> data = new HashMap<>();
-        data.put("password", password);
-        data.put("bcryptHash", bcryptHash);
-        return Result.success(data);
-    }
-    
-    /**
-     * 临时接口：修复admin用户密码为BCrypt格式
-     */
-    @PostMapping("/fix-admin-password")
-    public Result<Map<String, String>> fixAdminPassword() {
-        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SysUser::getUsername, "admin");
-        SysUser admin = userService.getOne(wrapper);
-        
-        if (admin != null) {
-            // 生成 BCrypt 密码
-            String bcryptPassword = EncryptUtil.bcrypt("admin123");
-            admin.setPassword(bcryptPassword);
-            userService.updateById(admin);
-            
-            Map<String, String> data = new HashMap<>();
-            data.put("message", "密码已修复");
-            data.put("username", "admin");
-            data.put("newPassword", "admin123");
-            data.put("bcryptHash", bcryptPassword);
-            return Result.success(data);
-        } else {
-            return Result.error("未找到 admin 用户");
-        }
-    }
-    
+
     /**
      * 修改密码
      */

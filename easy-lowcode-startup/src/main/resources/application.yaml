@@ -10,20 +10,20 @@ spring:
   # Spring AI 配置
   ai:
     openai:
-      api-key: ${OPENAI_API_KEY:sk-placeholder-for-development}
+      api-key: ${OPENAI_API_KEY:}
       base-url: https://api.openai.com/v1
       chat:
         options:
           model: gpt-3.5-turbo
     dashscope:
-      api-key: ${DASHSCOPE_API_KEY:sk-placeholder-for-development}
+      api-key: ${DASHSCOPE_API_KEY:}
   
   # 数据源配置
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://127.0.0.1:5432/easy_lowcode?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
     username: postgres
-    password: ${DB_PASSWORD:thinker}
+    password: ${DB_PASSWORD:}
   
   # Liquibase 数据库版本管理配置
   liquibase:
@@ -36,9 +36,9 @@ spring:
   # Redis配置
   data:
     redis:
-      host: localhost
-      port: 6379
-      password: 
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
       database: 0
       timeout: 10s
       lettuce:
@@ -47,10 +47,10 @@ spring:
           max-wait: -1ms
           max-idle: 10
           min-idle: 0
-  
+
   # RocketMQ配置
   rocketmq:
-    name-server: localhost:9876
+    name-server: ${ROCKETMQ_NAMESERVER:localhost:9876}
     producer:
       group: easy-lowcode-producer
       send-message-timeout: 3000
@@ -80,7 +80,7 @@ spring:
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
   global-config:
     db-config:
       id-type: assign_id
@@ -101,43 +101,43 @@ sa-token:
   is-read-cookie: false
   is-read-header: true
 
-# AI 配置
+# AI 配置（所有 key 必须通过环境变量配置，禁止硬编码）
 ai:
   # 默认 AI 提供商 (openai/dashscope/wenxin/hunyuan/zhipu/moonshot/ollama/deepseek/minimax)
   provider:
-    default: openai
-  
+    default: ${AI_DEFAULT_PROVIDER:}
+
   # OpenAI 配置
   openai:
-    api-key: ${OPENAI_API_KEY:sk-placeholder-for-development}
-    base-url: https://api.openai.com/v1
-    model: gpt-3.5-turbo
-  
+    api-key: ${OPENAI_API_KEY:}
+    base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+    model: ${OPENAI_MODEL:gpt-3.5-turbo}
+
   # 通义千问配置
   dashscope:
-    api-key: ${DASHSCOPE_API_KEY:your-dashscope-api-key}
-    model: qwen-turbo
-  
+    api-key: ${DASHSCOPE_API_KEY:}
+    model: ${DASHSCOPE_MODEL:qwen-turbo}
+
   # 文心一言配置
   wenxin:
-    api-key: ${WENXIN_API_KEY:your-wenxin-api-key}
-    secret-key: ${WENXIN_SECRET_KEY:your-wenxin-secret-key}
-    model: eb-instant
-  
+    api-key: ${WENXIN_API_KEY:}
+    secret-key: ${WENXIN_SECRET_KEY:}
+    model: ${WENXIN_MODEL:eb-instant}
+
   # Ollama 配置
   ollama:
     base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
     model: ${OLLAMA_MODEL:llama2}
-  
+
   # DeepSeek 配置
   deepseek:
-    api-key: ${DEEPSEEK_API_KEY:your-deepseek-api-key}
+    api-key: ${DEEPSEEK_API_KEY:}
     base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com/v1}
     model: ${DEEPSEEK_MODEL:deepseek-chat}
-  
+
   # Minimax 配置
   minimax:
-    api-key: ${MINIMAX_API_KEY:your-minimax-api-key}
+    api-key: ${MINIMAX_API_KEY:}
     base-url: ${MINIMAX_BASE_URL:https://api.minimax.chat/v1}
     model: ${MINIMAX_MODEL:abab6-chat}
 

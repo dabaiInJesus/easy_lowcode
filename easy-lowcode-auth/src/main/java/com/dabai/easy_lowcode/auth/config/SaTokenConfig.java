@@ -24,12 +24,10 @@ public class SaTokenConfig implements WebMvcConfigurer {
             SaRouter.match("/**")
                 // 排除登录接口
                 .notMatch("/api/auth/login")
-                // 排除修复密码接口（临时）
-                .notMatch("/api/auth/fix-admin-password")
-                // 排除生成BCrypt密码接口
-                .notMatch("/api/auth/generate-bcrypt")
                 // 排除静态资源
                 .notMatch("/*.html", "/*.js", "/*.css", "/*.ico", "/static/**", "/public/**", "/favicon.ico")
+                // 排除 Swagger / Actuator
+                .notMatch("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**", "/actuator/**")
                 // 其他接口都需要登录
                 .check(r -> StpUtil.checkLogin());
         })).addPathPatterns("/**");
