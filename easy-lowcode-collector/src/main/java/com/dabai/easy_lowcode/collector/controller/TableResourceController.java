@@ -8,6 +8,10 @@ import com.dabai.easy_lowcode.collector.service.DataPreviewService;
 import com.dabai.easy_lowcode.collector.service.TableResourceService;
 import com.dabai.easy_lowcode.common.result.PageResult;
 import com.dabai.easy_lowcode.common.result.Result;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +22,7 @@ import java.util.Map;
 /**
  * 表资源控制器
  */
+@Tag(name = "表资源管理", description = "数据库表资源的注册、API生成、数据预览")
 @Slf4j
 @RestController
 @RequestMapping("/api/collector/table-resource")
@@ -28,15 +33,14 @@ public class TableResourceController {
     private final DataPreviewService dataPreviewService;
     private final TableResourceMapper tableResourceMapper;
     
-    /**
-     * 分页查询表资源列表
-     */
+    @Operation(summary = "分页查询表资源列表", description = "分页查询表资源，支持按数据源和关键词筛选")
+    @ApiResponse(responseCode = "200", description = "查询成功")
     @GetMapping("/page")
     public Result<PageResult<TableResource>> page(
-            @RequestParam(defaultValue = "1") Long current,
-            @RequestParam(defaultValue = "10") Long size,
-            @RequestParam(required = false) Long datasourceId,
-            @RequestParam(required = false) String keyword) {
+            @Parameter(description = "当前页码") @RequestParam(defaultValue = "1") Long current,
+            @Parameter(description = "每页条数") @RequestParam(defaultValue = "10") Long size,
+            @Parameter(description = "数据源ID") @RequestParam(required = false) Long datasourceId,
+            @Parameter(description = "搜索关键词（表名或资源编码）") @RequestParam(required = false) String keyword) {
         
         try {
             LambdaQueryWrapper<TableResource> wrapper = new LambdaQueryWrapper<>();
@@ -50,7 +54,6 @@ public class TableResourceController {
             }
             wrapper.orderByDesc(TableResource::getCreateTime);
             
-            // 使用带数据源名称的page方法
             Page<TableResource> page = ((com.dabai.easy_lowcode.collector.service.impl.TableResourceServiceImpl) tableResourceService).pageWithDatasourceName(new Page<>(current, size), wrapper);
             
             PageResult<TableResource> result = new PageResult<>(
@@ -67,27 +70,25 @@ public class TableResourceController {
         }
     }
     
-    /**
-     * 获取所有表资源列表（不分页）
-     */
+    @Operation(summary = "获取表资源列表", description = "获取所有表资源列表（不分页）")
+    @ApiResponse(responseCode = "200", description = "获取成功")
     @GetMapping("/list")
-    public Result<List<TableResource>> list(@RequestParam(required = false) Long datasourceId) {
+    public Result<List<TableResource>> list(
+            @Parameter(description = "数据源ID") @RequestParam(required = false) Long datasourceId) {
         LambdaQueryWrapper<TableResource> wrapper = new LambdaQueryWrapper<>();
         if (datasourceId != null) {
             wrapper.eq(TableResource::getDatasourceId, datasourceId);
         }
         wrapper.orderByDesc(TableResource::getCreateTime);
         
-        // 使用带数据源名称的list方法
         List<TableResource> list = ((com.dabai.easy_lowcode.collector.service.impl.TableResourceServiceImpl) tableResourceService).listWithDatasourceName(wrapper);
         return Result.success(list);
     }
     
-    /**
-     * 获取表资源详情
-     */
+    @Operation(summary = "获取表资源详情", description = "根据ID获取表资源详细信息")
+    @ApiResponse(responseCode = "200", description = "获取成功")
     @GetMapping("/{id}")
-    public Result<TableResource> getById(@PathVariable Long id) {
+    public Result<TableResource> getById(@Parameter(description = "表资源ID") @PathVariable Long id) {
         TableResource resource = tableResourceService.getById(id);
         if (resource == null) {
             return Result.error("表资源不存在");
@@ -95,54 +96,41 @@ public class TableResourceController {
         return Result.success(resource);
     }
     
-    /**
-     * 注册表资源
-     */
+    @Operation(summary = "注册表资源", description = "注册数据库表为API资源")
+    @ApiResponse(responseCode = "200", description = "注册成功")
     @PostMapping
     public Result<Void> register(@RequestBody TableResource tableResource) {
         log.info("收到注册请求: {}", tableResource);
         
-        // 参数验证
         if (tableResource.getDatasourceId() == null) {
-            log.warn("数据源ID为空");
             return Result.error("数据源ID不能为空");
         }
         if (tableResource.getTableName() == null || tableResource.getTableName().trim().isEmpty()) {
-            log.warn("表名为空");
             return Result.error("表名不能为空");
         }
         if (tableResource.getResourceCode() == null || tableResource.getResourceCode().trim().isEmpty()) {
-            log.warn("资源编码为空");
             return Result.error("资源编码不能为空");
         }
         if (tableResource.getApiPath() == null || tableResource.getApiPath().trim().isEmpty()) {
-            log.warn("API路径为空");
             return Result.error("API路径不能为空");
         }
         
-        // 验证API路径格式
         if (!tableResource.getApiPath().startsWith("/")) {
-            log.warn("API路径格式错误: {}", tableResource.getApiPath());
             return Result.error("API路径必须以/开头");
         }
         
-        // 检查资源编码唯一性
         LambdaQueryWrapper<TableResource> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(TableResource::getResourceCode, tableResource.getResourceCode());
         if (tableResourceService.count(wrapper) > 0) {
-            log.warn("资源编码已存在: {}", tableResource.getResourceCode());
             return Result.error("资源编码已存在: " + tableResource.getResourceCode());
         }
         
-        // 检查API路径唯一性
         wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(TableResource::getApiPath, tableResource.getApiPath());
         if (tableResourceService.count(wrapper) > 0) {
-            log.warn("API路径已存在: {}", tableResource.getApiPath());
             return Result.error("API路径已存在: " + tableResource.getApiPath());
         }
         
-        // 设置默认值
         if (tableResource.getMethods() == null || tableResource.getMethods().trim().isEmpty()) {
             tableResource.setMethods("GET");
         }
@@ -150,38 +138,31 @@ public class TableResourceController {
             tableResource.setStatus(1);
         }
         
-        log.info("开始调用Service注册表资源");
         try {
             boolean success = tableResourceService.registerTableResource(tableResource);
             if (success) {
-                log.info("注册表资源成功: {} -> {}", tableResource.getTableName(), tableResource.getResourceCode());
                 return Result.success("注册成功");
             } else {
-                log.error("Service返回失败");
                 return Result.error("注册失败");
             }
         } catch (Exception e) {
-            log.error("注册表资源异常", e);
             return Result.error("注册失败: " + e.getMessage());
         }
     }
     
-    /**
-     * 更新表资源
-     */
+    @Operation(summary = "更新表资源", description = "更新表资源配置信息")
+    @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping
     public Result<Void> update(@RequestBody TableResource tableResource) {
         if (tableResource.getId() == null) {
             return Result.error("资源ID不能为空");
         }
         
-        // 检查资源是否存在
         TableResource existing = tableResourceService.getById(tableResource.getId());
         if (existing == null) {
             return Result.error("表资源不存在");
         }
         
-        // 如果修改了资源编码，检查唯一性
         if (tableResource.getResourceCode() != null && !tableResource.getResourceCode().equals(existing.getResourceCode())) {
             LambdaQueryWrapper<TableResource> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(TableResource::getResourceCode, tableResource.getResourceCode());
@@ -191,7 +172,6 @@ public class TableResourceController {
             }
         }
         
-        // 如果修改了API路径，检查唯一性
         if (tableResource.getApiPath() != null && !tableResource.getApiPath().equals(existing.getApiPath())) {
             LambdaQueryWrapper<TableResource> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(TableResource::getApiPath, tableResource.getApiPath());
@@ -203,30 +183,22 @@ public class TableResourceController {
         
         try {
             tableResourceService.updateById(tableResource);
-            log.info("更新表资源成功: {}", tableResource.getId());
             return Result.success("更新成功");
         } catch (Exception e) {
-            log.error("更新表资源失败", e);
             return Result.error("更新失败: " + e.getMessage());
         }
     }
     
-    /**
-     * 删除表资源
-     */
+    @Operation(summary = "删除表资源", description = "删除表资源（需确保无关联API）")
+    @ApiResponse(responseCode = "200", description = "删除成功")
     @DeleteMapping("/{id}")
-    public Result<Void> delete(@PathVariable Long id) {
-        log.info("收到删除请求，ID: {}", id);
-        
+    public Result<Void> delete(@Parameter(description = "表资源ID") @PathVariable Long id) {
         TableResource resource = tableResourceService.getById(id);
         if (resource == null) {
-            log.warn("表资源不存在，ID: {}", id);
             return Result.error("表资源不存在");
         }
         
-        // 检查是否有关联的API
         if (tableResourceService.hasRelatedApi(id)) {
-            log.warn("表资源 {} 有关联的API，无法删除", id);
             return Result.error(
                 String.format("无法删除表资源「%s」\n该表已生成 API 接口（%s），请先在 API 管理中删除相关接口后再试",
                     resource.getTableName(),
@@ -235,56 +207,41 @@ public class TableResourceController {
             );
         }
         
-        log.info("找到表资源: ID={}, 表名={}", id, resource.getTableName());
-        
         boolean removed = tableResourceService.removeById(id);
         if (removed) {
-            log.info("删除表资源成功: {}, 表名: {}", id, resource.getTableName());
             return Result.success("删除成功");
         } else {
-            log.error("删除表资源失败: {}", id);
             return Result.error("删除失败");
         }
     }
     
-    /**
-     * 生成API接口
-     */
+    @Operation(summary = "生成API接口", description = "为指定表资源生成API接口")
+    @ApiResponse(responseCode = "200", description = "生成成功")
     @PostMapping("/{id}/generate-api")
-    public Result<Void> generateApi(@PathVariable Long id) {
-        log.info("生成API接口，请求ID: {}", id);
-        
+    public Result<Void> generateApi(@Parameter(description = "表资源ID") @PathVariable Long id) {
         TableResource resource = tableResourceService.getById(id);
         if (resource == null) {
-            log.warn("表资源不存在，ID: {}", id);
             return Result.error("表资源不存在");
         }
-        
-        log.info("找到表资源: ID={}, 表名={}, API路径={}", id, resource.getTableName(), resource.getApiPath());
         
         try {
             boolean success = tableResourceService.generateApi(id);
             if (success) {
-                log.info("生成API接口成功: {}, 路径: {}", id, resource.getApiPath());
                 return Result.success("API生成成功");
             } else {
                 return Result.error("API生成失败");
             }
         } catch (Exception e) {
-            log.error("生成API接口失败", e);
             return Result.error("API生成失败: " + e.getMessage());
         }
     }
     
-    /**
-     * 预览数据（根据资源ID查询实际数据）
-     */
+    @Operation(summary = "预览数据", description = "预览表资源的实际数据")
+    @ApiResponse(responseCode = "200", description = "预览成功")
     @GetMapping("/{id}/preview")
     public Result<List<Map<String, Object>>> previewData(
-            @PathVariable Long id,
-            @RequestParam(defaultValue = "10") int limit) {
-        log.info("预览数据，资源ID: {}, 限制条数: {}", id, limit);
-        
+            @Parameter(description = "表资源ID") @PathVariable Long id,
+            @Parameter(description = "限制条数") @RequestParam(defaultValue = "10") int limit) {
         TableResource resource = tableResourceService.getById(id);
         if (resource == null) {
             return Result.error("表资源不存在");
@@ -294,28 +251,24 @@ public class TableResourceController {
             List<Map<String, Object>> data = dataPreviewService.previewTableData(id, limit);
             return Result.success(data);
         } catch (Exception e) {
-            log.error("预览数据失败", e);
             return Result.error("预览数据失败: " + e.getMessage());
         }
     }
     
-    /**
-     * 批量删除表资源
-     */
+    @Operation(summary = "批量删除表资源", description = "批量删除多个表资源")
+    @ApiResponse(responseCode = "200", description = "批量删除成功")
     @DeleteMapping("/batch")
     public Result<Void> batchDelete(@RequestBody List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return Result.error("请选择要删除的资源");
         }
         
-        boolean removed = tableResourceService.removeBatchByIds(ids);
-        log.info("批量删除表资源完成: {}", ids);
+        tableResourceService.removeBatchByIds(ids);
         return Result.success("批量删除成功");
     }
     
-    /**
-     * 批量生成API接口
-     */
+    @Operation(summary = "批量生成API接口", description = "批量为多个表资源生成API接口")
+    @ApiResponse(responseCode = "200", description = "批量生成完成")
     @PostMapping("/batch-generate-api")
     public Result<Void> batchGenerateApi(@RequestBody List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
@@ -334,13 +287,11 @@ public class TableResourceController {
                     failCount++;
                 }
             } catch (Exception e) {
-                log.error("生成API失败，资源ID: {}", id, e);
                 failCount++;
             }
         }
         
         String message = String.format("批量生成完成，成功: %d，失败: %d", successCount, failCount);
-        log.info(message);
         return Result.success(message);
     }
 }

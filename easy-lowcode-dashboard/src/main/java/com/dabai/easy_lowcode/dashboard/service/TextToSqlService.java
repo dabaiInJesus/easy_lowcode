@@ -9,12 +9,12 @@ import com.dabai.easy_lowcode.dashboard.dto.TextToSqlResponse;
 import com.dabai.easy_lowcode.dashboard.engine.SqlEngine;
 import com.dabai.easy_lowcode.dashboard.engine.SqlEngineFactory;
 import com.dabai.easy_lowcode.dashboard.service.ai.ChartRecommendService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -38,13 +38,23 @@ import java.util.regex.Pattern;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class TextToSqlService {
 
-    private final ChatModel defaultChatModel;  // 默认 AI 模型（通义千问）
+    private final ChatModel defaultChatModel;
     private final DataSourceConfigMapper dataSourceConfigMapper;
     private final SqlEngineFactory sqlEngineFactory;
     private final ChartRecommendService chartRecommendService;
+
+    public TextToSqlService(
+            @Qualifier("dashScopeChatModel") ChatModel defaultChatModel,
+            DataSourceConfigMapper dataSourceConfigMapper,
+            SqlEngineFactory sqlEngineFactory,
+            ChartRecommendService chartRecommendService) {
+        this.defaultChatModel = defaultChatModel;
+        this.dataSourceConfigMapper = dataSourceConfigMapper;
+        this.sqlEngineFactory = sqlEngineFactory;
+        this.chartRecommendService = chartRecommendService;
+    }
 
     /**
      * 自然语言转 SQL 并可选执行

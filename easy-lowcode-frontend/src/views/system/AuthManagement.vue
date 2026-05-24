@@ -193,12 +193,9 @@ const loadAllRoles = async () => {
 // 加载菜单树
 const loadMenuTree = async () => {
   try {
-    console.log('开始加载菜单树...')
     const res = await getMenuTree()
-    console.log('菜单树响应数据:', res)
     if (res) {
       menuTree.value = res
-      console.log('菜单树长度:', menuTree.value.length)
       if (menuTree.value.length === 0) {
         console.warn('菜单树为空，请检查数据库中是否有菜单数据')
       }
@@ -208,7 +205,6 @@ const loadMenuTree = async () => {
     }
   } catch (error: any) {
     console.error('加载菜单树失败:', error)
-    console.error('错误详情:', error.message, error.response)
     ElMessage.error('加载菜单树失败: ' + (error.message || '未知错误'))
   }
 }
@@ -260,13 +256,9 @@ const handleAuthRole = async (row: any) => {
   // 加载该角色的菜单
   try {
     const menuIds = await getRoleMenus(row.id)
-    console.log('角色已分配的菜单IDs:', menuIds)
-    // 等待DOM更新后设置选中的节点
     setTimeout(() => {
       if (menuTreeRef.value && menuIds && menuIds.length > 0) {
-        // 将数字ID转换为字符串ID
         const stringMenuIds = menuIds.map((id: number) => String(id))
-        console.log('转换后的字符串IDs:', stringMenuIds)
         menuTreeRef.value.setCheckedKeys(stringMenuIds)
       }
     }, 100)
@@ -285,8 +277,6 @@ const handleSubmitRoleAuth = async () => {
     const checkedKeys = menuTreeRef.value.getCheckedKeys(false) as string[]
     const halfCheckedKeys = menuTreeRef.value.getHalfCheckedKeys() as string[]
     const allCheckedKeys = ([...checkedKeys, ...halfCheckedKeys].map(Number))
-    
-    console.log('选中的菜单IDs:', allCheckedKeys)
     
     await assignMenusToRole(currentRole.value.id, allCheckedKeys)
     ElMessage.success('授权成功')

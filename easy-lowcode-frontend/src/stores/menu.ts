@@ -34,9 +34,7 @@ export const useMenuStore = defineStore('menu', () => {
 
   // 计算属性：获取可见的菜单（用于侧边栏）
   const visibleMenus = computed(() => {
-    const result = filterVisibleMenus(menus.value)
-    console.log('visibleMenus 计算结果:', result)
-    return result
+    return filterVisibleMenus(menus.value)
   })
 
   // 方法
@@ -45,18 +43,13 @@ export const useMenuStore = defineStore('menu', () => {
    */
   async function loadMenus() {
     if (isLoaded.value && menus.value.length > 0) {
-      console.log('菜单已缓存，直接返回:', menus.value)
       return menus.value
     }
 
     try {
       const response = await getMenuTree()
-      console.log('从后端获取的菜单数据:', response)
-      // axios 拦截器已经解包了 data，所以直接使用 response
       const menuData = response.data || response
-      console.log('菜单数据:', menuData)
       menus.value = Array.isArray(menuData) ? menuData : []
-      console.log('store 中的 menus:', menus.value)
       isLoaded.value = true
       return menus.value
     } catch (error) {

@@ -10,6 +10,10 @@ import com.dabai.easy_lowcode.dashboard.engine.SqlEngineFactory;
 import com.dabai.easy_lowcode.dashboard.service.SqlExplainService;
 import com.dabai.easy_lowcode.dashboard.service.TextToSqlService;
 import com.dabai.easy_lowcode.dashboard.service.ai.ChartRecommendService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -19,9 +23,9 @@ import java.util.Map;
 
 /**
  * 数据大屏增强 API
- * <p>
  * 提供 Text-to-SQL、AI 图表推荐、SQL 解释等能力。
  */
+@Tag(name = "数据视图增强", description = "Text-to-SQL、SQL解释、图表推荐、数据源连接测试")
 @Slf4j
 @RestController
 @RequestMapping("/api/dataview")
@@ -34,14 +38,8 @@ public class DataViewController {
     private final SqlEngineFactory sqlEngineFactory;
     private final DataSourceConfigMapper dataSourceConfigMapper;
 
-    // ========== Text-to-SQL ==========
-
-    /**
-     * 自然语言转 SQL 并执行
-     *
-     * POST /api/dataview/text-to-sql
-     * Body: { datasourceId, tableName, question, limit, execute }
-     */
+    @Operation(summary = "自然语言转SQL并执行", description = "使用AI将自然语言问题转换为SQL并执行查询")
+    @ApiResponse(responseCode = "200", description = "执行成功")
     @PostMapping("/text-to-sql")
     public Result<TextToSqlResponse> textToSql(@RequestBody TextToSqlRequest request) {
         try {
@@ -52,19 +50,12 @@ public class DataViewController {
                 return Result.error(response.getErrorMessage());
             }
         } catch (Exception e) {
-            log.error("Text-to-SQL 失败", e);
             return Result.error("Text-to-SQL 失败: " + e.getMessage());
         }
     }
 
-    // ========== SQL 解释与纠错 ==========
-
-    /**
-     * AI 解释 SQL 并给出优化建议
-     *
-     * POST /api/dataview/sql/explain
-     * Body: { sql, dialect, datasourceId }
-     */
+    @Operation(summary = "AI解释SQL", description = "使用AI解释SQL语句并给出优化建议")
+    @ApiResponse(responseCode = "200", description = "解释成功")
     @PostMapping("/sql/explain")
     public Result<SqlExplainService.ExplainResponse> explainSql(@RequestBody SqlExplainService.ExplainRequest request) {
         try {
@@ -74,17 +65,12 @@ public class DataViewController {
             }
             return Result.success(response);
         } catch (Exception e) {
-            log.error("SQL 解释失败", e);
             return Result.error("SQL 解释失败: " + e.getMessage());
         }
     }
 
-    /**
-     * 校验 SQL 语法
-     *
-     * POST /api/dataview/sql/validate
-     * Body: { sql, dialect }
-     */
+    @Operation(summary = "校验SQL语法", description = "检查SQL语句的语法是否正确")
+    @ApiResponse(responseCode = "200", description = "校验完成")
     @PostMapping("/sql/validate")
     public Result<Boolean> validateSql(@RequestBody Map<String, String> body) {
         String sql = body.get("sql");
@@ -96,14 +82,8 @@ public class DataViewController {
         return Result.success(valid);
     }
 
-    // ========== AI 图表推荐 ==========
-
-    /**
-     * 根据数据特征推荐图表类型
-     *
-     * POST /api/dataview/chart/recommend
-     * Body: { fields: [{name, type, distinctCount, sampleValue}], rowCount }
-     */
+    @Operation(summary = "推荐图表类型", description = "根据数据特征AI推荐合适的图表类型")
+    @ApiResponse(responseCode = "200", description = "推荐成功")
     @PostMapping("/chart/recommend")
     public Result<ChartRecommendService.ChartRecommendation> recommendChart(
             @RequestBody ChartRecommendService.ChartRecommendRequest request) {
@@ -111,19 +91,12 @@ public class DataViewController {
             var recommendation = chartRecommendService.recommend(request);
             return Result.success(recommendation);
         } catch (Exception e) {
-            log.error("图表推荐失败", e);
             return Result.error("图表推荐失败: " + e.getMessage());
         }
     }
 
-    // ========== 数据源连接测试 ==========
-
-    /**
-     * 测试数据源连接
-     *
-     * POST /api/dataview/datasource/test
-     * Body: { datasourceId } 或 { dbType, url, username, password }
-     */
+    @Operation(summary = "测试数据源连接", description = "测试数据源连接是否可用")
+    @ApiResponse(responseCode = "200", description = "测试完成")
     @PostMapping("/datasource/test")
     public Result<Boolean> testDataSource(@RequestBody Map<String, Object> body) {
         try {
@@ -147,39 +120,31 @@ public class DataViewController {
             boolean ok = engine.testConnection();
             return ok ? Result.success("连接成功", true) : Result.error("连接失败");
         } catch (Exception e) {
-            log.error("数据源测试失败", e);
             return Result.error("连接失败: " + e.getMessage());
         }
     }
 
-    /**
-     * 获取数据源列表
-     *
-     * GET /api/dataview/datasources
-     */
+    @Operation(summary = "获取数据源列表", description = "获取所有已启用的数据源列表")
+    @ApiResponse(responseCode = "200", description = "获取成功")
     @GetMapping("/datasources")
     public Result<List<DataSourceConfig>> listDataSources() {
         var wrapper = new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<DataSourceConfig>()
                 .eq(DataSourceConfig::getStatus, 1)
                 .orderByDesc(DataSourceConfig::getCreateTime);
         List<DataSourceConfig> list = dataSourceConfigMapper.selectList(wrapper);
-        // 隐藏密码
         for (DataSourceConfig ds : list) {
             ds.setPassword("******");
         }
         return Result.success(list);
     }
 
-    /**
-     * 获取表字段元数据
-     *
-     * GET /api/dataview/tables/{datasourceId}/columns?table=xxx&schema=default
-     */
+    @Operation(summary = "获取表字段元数据", description = "获取指定表的列元数据信息")
+    @ApiResponse(responseCode = "200", description = "获取成功")
     @GetMapping("/tables/{datasourceId}/columns")
     public Result<List<SqlEngine.ColumnMeta>> getTableColumns(
-            @PathVariable Long datasourceId,
-            @RequestParam String table,
-            @RequestParam(required = false) String schema) {
+            @Parameter(description = "数据源ID") @PathVariable Long datasourceId,
+            @Parameter(description = "表名", required = true) @RequestParam String table,
+            @Parameter(description = "Schema名称") @RequestParam(required = false) String schema) {
         try {
             DataSourceConfig config = dataSourceConfigMapper.selectById(datasourceId);
             if (config == null) {
@@ -189,7 +154,6 @@ public class DataViewController {
             List<SqlEngine.ColumnMeta> columns = engine.getColumns(schema, table);
             return Result.success(columns);
         } catch (Exception e) {
-            log.error("获取表字段失败: datasourceId={}, table={}", datasourceId, table, e);
             return Result.error("获取字段失败: " + e.getMessage());
         }
     }

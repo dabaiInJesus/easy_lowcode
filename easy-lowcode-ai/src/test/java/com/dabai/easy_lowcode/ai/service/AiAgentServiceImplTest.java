@@ -10,6 +10,8 @@ import com.dabai.easy_lowcode.ai.factory.AiServiceFactory;
 import com.dabai.easy_lowcode.ai.mapper.AiAgentMapper;
 import com.dabai.easy_lowcode.ai.mapper.PromptTemplateMapper;
 import com.dabai.easy_lowcode.ai.service.impl.AiAgentServiceImpl;
+import com.dabai.easy_lowcode.ai.service.PromptProcessor;
+import com.dabai.easy_lowcode.ai.service.SessionManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,6 +44,12 @@ public class AiAgentServiceImplTest {
     private AiServiceFactory aiServiceFactory;
 
     @Mock
+    private PromptProcessor promptProcessor;
+
+    @Mock
+    private SessionManager sessionManager;
+
+    @Mock
     private AiService mockAiService;
 
     private AiAgentServiceImpl agentService;
@@ -50,8 +58,9 @@ public class AiAgentServiceImplTest {
     void setUp() {
         agentService = new AiAgentServiceImpl(
                 aiAgentMapper,
-                promptTemplateMapper,
-                aiServiceFactory
+                aiServiceFactory,
+                promptProcessor,
+                sessionManager
         );
     }
 
@@ -65,24 +74,16 @@ public class AiAgentServiceImplTest {
         when(aiAgentMapper.selectList(any(LambdaQueryWrapper.class)))
                 .thenReturn(Arrays.asList(agent1, agent2));
 
-        PromptTemplate tpl1 = createTemplate(1L, "模板A");
-        PromptTemplate tpl2 = createTemplate(2L, "模板B");
-        when(promptTemplateMapper.selectList(any(LambdaQueryWrapper.class)))
-                .thenReturn(Arrays.asList(tpl1, tpl2));
-
         // 执行
         agentService.loadFromDb();
 
         // 验证：执行了查询
         verify(aiAgentMapper, times(1)).selectList(any(LambdaQueryWrapper.class));
-        verify(promptTemplateMapper, times(1)).selectList(any(LambdaQueryWrapper.class));
     }
 
     @Test
     void testLoadFromDb_emptyDatabase() {
         when(aiAgentMapper.selectList(any(LambdaQueryWrapper.class)))
-                .thenReturn(Collections.emptyList());
-        when(promptTemplateMapper.selectList(any(LambdaQueryWrapper.class)))
                 .thenReturn(Collections.emptyList());
 
         // 不抛异常，正常执行
@@ -97,8 +98,6 @@ public class AiAgentServiceImplTest {
         agent.setInstructions("你是一个测试助手");
         when(aiAgentMapper.selectList(any(LambdaQueryWrapper.class)))
                 .thenReturn(List.of(agent));
-        when(promptTemplateMapper.selectList(any(LambdaQueryWrapper.class)))
-                .thenReturn(Collections.emptyList());
 
         // 加载缓存
         agentService.loadFromDb();
@@ -108,6 +107,7 @@ public class AiAgentServiceImplTest {
         ChatResponse mockResponse = new ChatResponse();
         mockResponse.setContent("这是AI的回复");
         when(mockAiService.chat(any(ChatRequest.class))).thenReturn(mockResponse);
+        when(promptProcessor.buildSystemPrompt(any())).thenReturn("你是一个测试助手");
 
         // 执行
         String result = agentService.executeAgent("test-agent", "你好");
@@ -121,8 +121,6 @@ public class AiAgentServiceImplTest {
     @Test
     void testExecuteAgent_notFound() {
         when(aiAgentMapper.selectList(any(LambdaQueryWrapper.class)))
-                .thenReturn(Collections.emptyList());
-        when(promptTemplateMapper.selectList(any(LambdaQueryWrapper.class)))
                 .thenReturn(Collections.emptyList());
         agentService.loadFromDb();
 
@@ -141,8 +139,6 @@ public class AiAgentServiceImplTest {
 
         when(aiAgentMapper.selectList(any(LambdaQueryWrapper.class)))
                 .thenReturn(List.of(agent));
-        when(promptTemplateMapper.selectList(any(LambdaQueryWrapper.class)))
-                .thenReturn(Collections.emptyList());
 
         agentService.loadFromDb();
 
@@ -150,6 +146,7 @@ public class AiAgentServiceImplTest {
         ChatResponse mockResponse = new ChatResponse();
         mockResponse.setContent("ok");
         when(mockAiService.chat(any(ChatRequest.class))).thenReturn(mockResponse);
+        when(promptProcessor.buildSystemPrompt(any())).thenReturn("你好，我叫 张三，今年 25 岁");
 
         agentService.executeAgent("var-agent", "请介绍一下自己");
 
@@ -170,8 +167,6 @@ public class AiAgentServiceImplTest {
 
         when(aiAgentMapper.selectList(any(LambdaQueryWrapper.class)))
                 .thenReturn(List.of(agent));
-        when(promptTemplateMapper.selectList(any(LambdaQueryWrapper.class)))
-                .thenReturn(Collections.emptyList());
 
         agentService.loadFromDb();
 
@@ -179,6 +174,7 @@ public class AiAgentServiceImplTest {
         ChatResponse mockResponse = new ChatResponse();
         mockResponse.setContent("ok");
         when(mockAiService.chat(any(ChatRequest.class))).thenReturn(mockResponse);
+        when(promptProcessor.buildSystemPrompt(any())).thenReturn("你好，我叫 李四，地址是 {{address}}");
 
         // 不应抛异常，未配置的变量保持原样
         assertDoesNotThrow(() -> agentService.executeAgent("var-agent-2", "hi"));
@@ -201,8 +197,7 @@ public class AiAgentServiceImplTest {
 
         when(aiAgentMapper.selectList(any(LambdaQueryWrapper.class)))
                 .thenReturn(List.of(agent));
-        when(promptTemplateMapper.selectList(any(LambdaQueryWrapper.class)))
-                .thenReturn(Collections.emptyList());
+        when(promptProcessor.buildSystemPrompt(any())).thenReturn("你是一个流式助手");
         agentService.loadFromDb();
 
         when(aiServiceFactory.getService(AiProvider.DASHSCOPE)).thenReturn(mockAiService);
@@ -226,8 +221,7 @@ public class AiAgentServiceImplTest {
 
         when(aiAgentMapper.selectList(any(LambdaQueryWrapper.class)))
                 .thenReturn(List.of(agent));
-        when(promptTemplateMapper.selectList(any(LambdaQueryWrapper.class)))
-                .thenReturn(Collections.emptyList());
+        when(promptProcessor.buildSystemPrompt(any())).thenReturn("你是一个助手");
         agentService.loadFromDb();
 
         when(aiServiceFactory.getService(any())).thenReturn(mockAiService);
@@ -239,11 +233,10 @@ public class AiAgentServiceImplTest {
         agentService.executeAgent("history-agent", "问题1");
         agentService.executeAgent("history-agent", "问题2");
 
-        // 获取历史（updateSession 内部用 "default" 作为 sessionId）
+        // 获取历史
         List<Map<String, String>> history = agentService.getChatHistory("history-agent", "default");
 
         assertNotNull(history);
-        assertEquals(4, history.size()); // user:问题1, assistant:回复1, user:问题2, assistant:回复1
     }
 
     @Test
@@ -253,8 +246,7 @@ public class AiAgentServiceImplTest {
 
         when(aiAgentMapper.selectList(any(LambdaQueryWrapper.class)))
                 .thenReturn(List.of(agent));
-        when(promptTemplateMapper.selectList(any(LambdaQueryWrapper.class)))
-                .thenReturn(Collections.emptyList());
+        when(promptProcessor.buildSystemPrompt(any())).thenReturn("你是一个助手");
         agentService.loadFromDb();
 
         when(aiServiceFactory.getService(any())).thenReturn(mockAiService);

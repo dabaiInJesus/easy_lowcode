@@ -27,7 +27,7 @@ spring:
   
   # Liquibase 数据库版本管理配置
   liquibase:
-    enabled: true
+    enabled: false
     change-log: classpath:db/changelog/db.changelog-master.xml
     contexts: dev
     database-change-log-table: databasechangelog
@@ -61,14 +61,10 @@ spring:
     database-schema-update: true
     check-process-definitions: false
   
-  # DevTools 热重载配置
-  devtools:
-    restart:
-      enabled: true  # 启用热重载
-      additional-paths: src/main/java  # 监控的额外路径
-      exclude: static/**,public/**,templates/**  # 排除不需要重启的资源
-    livereload:
-      enabled: true  # 启用 LiveReload
+# DevTools 热重载配置 (禁用以避免模块依赖问题)
+    devtools:
+      restart:
+        enabled: false
   # 自由标记模板缓存（开发时关闭）
   freemarker:
     cache: false
@@ -158,3 +154,14 @@ management:
   endpoint:
     health:
       show-details: always
+
+# SpringDoc OpenAPI 配置
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha

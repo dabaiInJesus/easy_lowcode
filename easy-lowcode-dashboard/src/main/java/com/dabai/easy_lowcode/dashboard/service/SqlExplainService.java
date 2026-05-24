@@ -4,12 +4,12 @@ import com.dabai.easy_lowcode.collector.entity.DataSourceConfig;
 import com.dabai.easy_lowcode.collector.mapper.DataSourceConfigMapper;
 import com.dabai.easy_lowcode.dashboard.engine.SqlEngine;
 import com.dabai.easy_lowcode.dashboard.engine.SqlEngineFactory;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -29,12 +29,20 @@ import java.util.function.Supplier;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class SqlExplainService {
 
     private final ChatModel defaultChatModel;
     private final SqlEngineFactory sqlEngineFactory;
     private final DataSourceConfigMapper dataSourceConfigMapper;
+
+    public SqlExplainService(
+            @Qualifier("dashScopeChatModel") ChatModel defaultChatModel,
+            SqlEngineFactory sqlEngineFactory,
+            DataSourceConfigMapper dataSourceConfigMapper) {
+        this.defaultChatModel = defaultChatModel;
+        this.sqlEngineFactory = sqlEngineFactory;
+        this.dataSourceConfigMapper = dataSourceConfigMapper;
+    }
 
     /**
      * 解释/优化请求

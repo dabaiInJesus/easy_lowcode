@@ -2,6 +2,10 @@ package com.dabai.easy_lowcode.ai.controller;
 
 import com.dabai.easy_lowcode.ai.service.AiAgentService;
 import com.dabai.easy_lowcode.common.result.Result;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -14,6 +18,7 @@ import java.util.Map;
 /**
  * AI Agent 控制器
  */
+@Tag(name = "AI Agent", description = "AI Agent任务执行、创建、会话管理")
 @Slf4j
 @RestController
 @RequestMapping("/api/ai/agent")
@@ -22,59 +27,44 @@ public class AiAgentController {
 
     private final AiAgentService aiAgentService;
 
-    // ==================== 核心接口 ====================
-
-    /**
-     * 执行 Agent 任务
-     */
+    @Operation(summary = "执行Agent任务", description = "执行指定的AI Agent任务")
+    @ApiResponse(responseCode = "200", description = "执行成功")
     @PostMapping("/execute")
     public Result<String> executeAgent(@RequestBody ExecuteAgentRequest request) {
-        log.info("执行 Agent: code={}, task={}", request.getAgentCode(), request.getTask());
-
         try {
             String result = aiAgentService.executeAgent(request.getAgentCode(), request.getTask());
             return Result.success(result);
         } catch (IllegalArgumentException e) {
             return Result.error(e.getMessage());
         } catch (Exception e) {
-            log.error("Agent 执行失败", e);
             return Result.error("Agent 执行失败: " + e.getMessage());
         }
     }
 
-    /**
-     * 流式执行 Agent 任务（SSE）
-     */
+    @Operation(summary = "流式执行Agent任务", description = "以SSE流式方式执行AI Agent任务，实时返回响应")
+    @ApiResponse(responseCode = "200", description = "流式执行开始")
     @PostMapping(value = "/execute/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> executeAgentStream(@RequestBody ExecuteAgentRequest request) {
-        log.info("流式执行 Agent: code={}", request.getAgentCode());
         return aiAgentService.executeAgentStream(request.getAgentCode(), request.getTask())
                 .doOnError(e -> log.error("Agent 流式执行异常", e));
     }
 
-    // ==================== Agent 管理接口 ====================
-
-    /**
-     * 获取所有可用的 Agent
-     */
+    @Operation(summary = "获取所有可用Agent", description = "获取系统中所有可用的AI Agent列表")
+    @ApiResponse(responseCode = "200", description = "获取成功")
     @GetMapping("/list")
     public Result<List<Map<String, Object>>> listAgents() {
         try {
             List<Map<String, Object>> agents = aiAgentService.listAgents();
             return Result.success(agents);
         } catch (Exception e) {
-            log.error("获取 Agent 列表失败", e);
             return Result.error("获取 Agent 列表失败: " + e.getMessage());
         }
     }
 
-    /**
-     * 创建自定义 Agent
-     */
+    @Operation(summary = "创建自定义Agent", description = "创建一个新的自定义AI Agent")
+    @ApiResponse(responseCode = "200", description = "创建成功")
     @PostMapping("/create")
     public Result<String> createAgent(@RequestBody CreateAgentRequest request) {
-        log.info("创建 Agent: {}", request.getName());
-
         try {
             String code = aiAgentService.createAgent(
                     request.getName(),
@@ -85,46 +75,37 @@ public class AiAgentController {
         } catch (IllegalArgumentException e) {
             return Result.error(e.getMessage());
         } catch (Exception e) {
-            log.error("创建 Agent 失败", e);
             return Result.error("创建 Agent 失败: " + e.getMessage());
         }
     }
 
-    // ==================== 会话管理接口 ====================
-
-    /**
-     * 获取 Agent 对话历史
-     */
+    @Operation(summary = "获取Agent对话历史", description = "获取指定Agent的对话历史记录")
+    @ApiResponse(responseCode = "200", description = "获取成功")
     @GetMapping("/history/{agentCode}")
     public Result<List<Map<String, String>>> getChatHistory(
-            @PathVariable String agentCode,
-            @RequestParam(defaultValue = "default") String sessionId) {
+            @Parameter(description = "Agent编码") @PathVariable String agentCode,
+            @Parameter(description = "会话ID") @RequestParam(defaultValue = "default") String sessionId) {
         try {
             List<Map<String, String>> history = aiAgentService.getChatHistory(agentCode, sessionId);
             return Result.success(history);
         } catch (Exception e) {
-            log.error("获取聊天历史失败", e);
             return Result.error("获取聊天历史失败: " + e.getMessage());
         }
     }
 
-    /**
-     * 清除指定会话
-     */
+    @Operation(summary = "清除会话", description = "清除指定Agent的会话对话历史")
+    @ApiResponse(responseCode = "200", description = "清除成功")
     @DeleteMapping("/session/{agentCode}")
     public Result<Void> clearSession(
-            @PathVariable String agentCode,
-            @RequestParam(defaultValue = "default") String sessionId) {
+            @Parameter(description = "Agent编码") @PathVariable String agentCode,
+            @Parameter(description = "会话ID") @RequestParam(defaultValue = "default") String sessionId) {
         try {
             aiAgentService.clearSession(agentCode, sessionId);
             return Result.success("会话已清除");
         } catch (Exception e) {
-            log.error("清除会话失败", e);
             return Result.error("清除会话失败: " + e.getMessage());
         }
     }
-
-    // ==================== 请求对象 ====================
 
     @lombok.Data
     public static class ExecuteAgentRequest {

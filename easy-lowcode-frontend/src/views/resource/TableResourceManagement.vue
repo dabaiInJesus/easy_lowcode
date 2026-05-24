@@ -111,7 +111,7 @@
               v-model="selectedDatasourceId"
               placeholder="请选择数据源"
               style="width: 100%"
-              @change="(val: any) => { console.log('选择的数据源ID:', val); handleDatasourceChange(); }"
+              @change="(val: any) => handleDatasourceChange()"
             >
               <el-option
                 v-for="ds in datasourceList"
@@ -688,15 +688,10 @@ const handleDatasourceChange = async () => {
         .map(item => item.tableName)
     )
     
-    console.log('已注册的表名:', Array.from(registeredTableNames))
-    console.log('扫描到的表:', tables.map(t => t.tableName))
-    
     tableList.value = tables.map(table => ({
       ...table,
       isRegistered: registeredTableNames.has(table.tableName),
     }))
-    
-    console.log('标记后的表列表:', tableList.value.map(t => ({ name: t.tableName, registered: t.isRegistered })))
     
     ElMessage.success(`扫描到 ${tables.length} 个表`)
     

@@ -6,6 +6,10 @@ import com.dabai.easy_lowcode.ai.enums.AiProvider;
 import com.dabai.easy_lowcode.ai.factory.AiServiceFactory;
 import com.dabai.easy_lowcode.ai.service.AiService;
 import com.dabai.easy_lowcode.common.result.Result;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +28,7 @@ import java.util.concurrent.Executors;
 /**
  * AI 聊天控制器
  */
+@Tag(name = "AI聊天", description = "AI对话、流式聊天、连接测试")
 @Slf4j
 @RestController
 @RequestMapping("/api/ai")
@@ -34,15 +39,10 @@ public class AiController {
     private final AiServiceFactory aiServiceFactory;
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
-    // ==================== 聊天接口 ====================
-
-    /**
-     * 聊天对话（使用默认 AI 服务）
-     */
+    @Operation(summary = "聊天对话（默认AI）", description = "使用默认AI服务进行对话")
+    @ApiResponse(responseCode = "200", description = "对话成功")
     @PostMapping("/chat")
     public Result<ChatResponse> chat(@RequestBody @Validated ChatRequest request) {
-        log.info("收到聊天请求: {}", request.getMessage());
-
         AiService aiService = aiServiceFactory.getDefaultService();
         if (aiService == null) {
             return Result.error("AI 服务未配置，请先在配置文件中启用至少一个 AI 厂商");
@@ -52,24 +52,20 @@ public class AiController {
         return Result.success(response);
     }
 
-    /**
-     * 聊天对话（指定 AI 厂商）
-     */
+    @Operation(summary = "聊天对话（指定AI厂商）", description = "使用指定的AI厂商进行对话")
+    @ApiResponse(responseCode = "200", description = "对话成功")
     @PostMapping("/chat/{provider}")
     public Result<ChatResponse> chatWithProvider(
-            @PathVariable String provider,
+            @Parameter(description = "AI厂商（openai/dashscope/ollama/deepseek/minimax）") @PathVariable String provider,
             @RequestBody @Validated ChatRequest request) {
-        log.info("收到聊天请求，厂商: {}, 消息: {}", provider, request.getMessage());
-
         AiProvider aiProvider = AiProvider.fromCode(provider);
         AiService aiService = aiServiceFactory.getService(aiProvider);
         ChatResponse response = aiService.chat(request);
         return Result.success(response);
     }
 
-    /**
-     * 简单文本对话
-     */
+    @Operation(summary = "简单文本对话", description = "使用默认AI服务进行简单文本对话")
+    @ApiResponse(responseCode = "200", description = "对话成功")
     @PostMapping("/simple-chat")
     public Result<String> simpleChat(@RequestBody @Validated Map<String, @NotBlank String> request) {
         String message = request.get("message");
@@ -83,19 +79,12 @@ public class AiController {
         return Result.success(response);
     }
 
-    // ==================== 流式聊天接口 ====================
-
-    /**
-     * SSE 流式聊天（使用默认 AI 服务）
-     */
+    @Operation(summary = "SSE流式聊天", description = "使用SSE进行流式对话，实时返回AI响应")
+    @ApiResponse(responseCode = "200", description = "流式对话开始")
     @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamChat(@RequestBody @Validated ChatRequest request) {
         long startTime = System.currentTimeMillis();
         SseEmitter emitter = new SseEmitter(300_000L);
-
-        log.info("SSE 流式聊天开始，消息长度: {}, 是否有systemPrompt: {}",
-                request.getMessage() != null ? request.getMessage().length() : 0,
-                request.getSystemPrompt() != null);
 
         AiService aiService = aiServiceFactory.getDefaultService();
         if (aiService == null) {
@@ -108,26 +97,22 @@ public class AiController {
             return emitter;
         }
 
-        // 注册超时回调
         emitter.onTimeout(() -> {
             long elapsed = System.currentTimeMillis() - startTime;
             log.warn("SSE 流式聊天超时，历时: {}ms");
         });
 
-        // 注册完成回调
         emitter.onCompletion(() -> {
             long elapsed = System.currentTimeMillis() - startTime;
             log.info("SSE 流式聊天完成，历时: {}ms", elapsed);
         });
 
-        // 注册异常回调
         emitter.onError(e -> {
             long elapsed = System.currentTimeMillis() - startTime;
             log.error("SSE 流式聊天异常，历时: {}ms, 错误: {}", elapsed, e.getMessage());
         });
 
         if (!aiService.supportsStreaming()) {
-            // 非流式服务：模拟打字效果
             executor.execute(() -> {
                 try {
                     ChatResponse response = aiService.chat(request);
@@ -150,7 +135,6 @@ public class AiController {
             return emitter;
         }
 
-        // 流式服务：真正SSE
         executor.execute(() -> {
             try {
                 aiService.streamChat(request)
@@ -192,11 +176,8 @@ public class AiController {
         return emitter;
     }
 
-    // ==================== 诊断与配置接口 ====================
-
-    /**
-     * 获取支持的 AI 厂商列表
-     */
+    @Operation(summary = "获取支持的AI厂商列表", description = "获取所有已配置和可用的AI厂商信息")
+    @ApiResponse(responseCode = "200", description = "获取成功")
     @GetMapping("/providers")
     public Result<Map<String, Object>> getProviders() {
         List<AiProvider> supported = aiServiceFactory.getSupportedProviders();
@@ -215,9 +196,8 @@ public class AiController {
         return Result.success(result);
     }
 
-    /**
-     * 测试 AI 连接（指定厂商）
-     */
+    @Operation(summary = "测试AI连接", description = "测试指定AI厂商的连接是否正常")
+    @ApiResponse(responseCode = "200", description = "测试完成")
     @PostMapping("/test")
     public Result<Map<String, Object>> testConnection(@RequestBody Map<String, String> request) {
         String providerCode = request.get("provider");
@@ -253,14 +233,12 @@ public class AiController {
             result.put("success", false);
             result.put("provider", providerCode);
             result.put("error", e.getMessage());
-            log.error("AI 连接测试失败: provider={}", providerCode, e);
             return Result.error("连接失败: " + e.getMessage());
         }
     }
 
-    /**
-     * 健康检查
-     */
+    @Operation(summary = "AI服务健康检查", description = "检查AI服务的运行状态")
+    @ApiResponse(responseCode = "200", description = "检查完成")
     @GetMapping("/health")
     public Result<Map<String, Object>> health() {
         Map<String, Object> health = new HashMap<>();

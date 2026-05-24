@@ -10,7 +10,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 /**
  * WebMvc 配置
  */
-@Configuration
+@Configuration("startupWebMvcConfig")
 @RequiredArgsConstructor
 public class WebMvcConfig implements WebMvcConfigurer {
 

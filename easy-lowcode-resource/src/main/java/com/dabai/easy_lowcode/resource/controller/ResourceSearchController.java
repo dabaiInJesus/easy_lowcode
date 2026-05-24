@@ -1,8 +1,13 @@
 package com.dabai.easy_lowcode.resource.controller;
 
 import com.dabai.easy_lowcode.common.result.Result;
+import com.dabai.easy_lowcode.resource.model.FieldConfig;
 import com.dabai.easy_lowcode.resource.service.ResourceSearchService;
 import com.dabai.easy_lowcode.resource.service.ResourceSearchService.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +20,7 @@ import java.util.Set;
  * 资源检索控制器
  * 支持单资源检索、多资源统一检索、全文检索
  */
+@Tag(name = "资源检索", description = "单资源检索、多资源检索、关联检索、全文检索及数据导出")
 @Slf4j
 @RestController
 @RequestMapping("/api/resource/search")
@@ -23,19 +29,15 @@ public class ResourceSearchController {
 
     private final ResourceSearchService searchService;
 
-    // ==================== 单资源检索 ====================
-
-    /**
-     * 单资源检索
-     * GET /api/resource/search/single/{resourceCode}?page=1&pageSize=20&orderField=id&orderDirection=DESC
-     */
+    @Operation(summary = "单资源检索（GET）", description = "根据资源编码检索数据，支持分页和排序")
+    @ApiResponse(responseCode = "200", description = "检索成功")
     @GetMapping("/single/{resourceCode}")
     public Result<SearchResult> singleSearch(
-            @PathVariable String resourceCode,
-            @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer pageSize,
-            @RequestParam(required = false) String orderField,
-            @RequestParam(required = false) String orderDirection) {
+            @Parameter(description = "资源编码") @PathVariable String resourceCode,
+            @Parameter(description = "页码") @RequestParam(required = false) Integer page,
+            @Parameter(description = "每页条数") @RequestParam(required = false) Integer pageSize,
+            @Parameter(description = "排序字段") @RequestParam(required = false) String orderField,
+            @Parameter(description = "排序方向（ASC/DESC）") @RequestParam(required = false) String orderDirection) {
         
         SearchParams params = new SearchParams();
         params.setPage(page);
@@ -47,27 +49,23 @@ public class ResourceSearchController {
         return Result.success(result);
     }
 
-    /**
-     * 单资源检索（带过滤条件）
-     * POST /api/resource/search/single/{resourceCode}
-     * Body: {"page":1,"pageSize":20,"filters":{"name":"测试","status":1}}
-     */
+    @Operation(summary = "单资源检索（POST）", description = "根据资源编码检索数据，支持过滤条件")
+    @ApiResponse(responseCode = "200", description = "检索成功")
     @PostMapping("/single/{resourceCode}")
     public Result<SearchResult> singleSearchWithFilters(
-            @PathVariable String resourceCode,
+            @Parameter(description = "资源编码") @PathVariable String resourceCode,
             @RequestBody SearchParams params) {
         
         SearchResult result = searchService.singleSearch(resourceCode, params);
         return Result.success(result);
     }
 
-    /**
-     * 根据ID获取单条记录
-     */
+    @Operation(summary = "根据ID获取记录", description = "根据资源编码和ID获取单条记录详情")
+    @ApiResponse(responseCode = "200", description = "获取成功")
     @GetMapping("/single/{resourceCode}/{id}")
     public Result<Map<String, Object>> getById(
-            @PathVariable String resourceCode,
-            @PathVariable Long id) {
+            @Parameter(description = "资源编码") @PathVariable String resourceCode,
+            @Parameter(description = "记录ID") @PathVariable Long id) {
         
         Map<String, Object> record = searchService.singleGetById(resourceCode, id);
         if (record == null) {
@@ -76,13 +74,8 @@ public class ResourceSearchController {
         return Result.success(record);
     }
 
-    // ==================== 多资源统一检索 ====================
-
-    /**
-     * 多资源统一检索
-     * POST /api/resource/search/multi
-     * Body: {"resourceCodes":["user","role"],"page":1,"pageSize":20}
-     */
+    @Operation(summary = "多资源统一检索", description = "同时在多个资源中检索数据")
+    @ApiResponse(responseCode = "200", description = "检索成功")
     @PostMapping("/multi")
     public Result<SearchResult> multiSearch(@RequestBody MultiSearchRequest request) {
         if (request.getResourceCodes() == null || request.getResourceCodes().isEmpty()) {
@@ -92,11 +85,8 @@ public class ResourceSearchController {
         return Result.success(result);
     }
 
-    /**
-     * 多资源关联检索
-     * POST /api/resource/search/join
-     * Body: {"leftResource":"user","rightResource":"role","leftField":"role_id","rightField":"id","joinType":"LEFT"}
-     */
+    @Operation(summary = "多资源关联检索", description = "执行两个资源之间的关联查询")
+    @ApiResponse(responseCode = "200", description = "检索成功")
     @PostMapping("/join")
     public Result<SearchResult> joinSearch(@RequestBody JoinSearchRequest request) {
         JoinConfig config = new JoinConfig();
@@ -110,18 +100,14 @@ public class ResourceSearchController {
         return Result.success(result);
     }
 
-    // ==================== 全文检索 ====================
-
-    /**
-     * 单资源全文检索
-     * GET /api/resource/search/fulltext/{resourceCode}?keyword=关键词&page=1&pageSize=20
-     */
+    @Operation(summary = "单资源全文检索", description = "在指定资源中进行全文关键词检索")
+    @ApiResponse(responseCode = "200", description = "检索成功")
     @GetMapping("/fulltext/{resourceCode}")
     public Result<SearchResult> fullTextSearch(
-            @PathVariable String resourceCode,
-            @RequestParam String keyword,
-            @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer pageSize) {
+            @Parameter(description = "资源编码") @PathVariable String resourceCode,
+            @Parameter(description = "搜索关键词", required = true) @RequestParam String keyword,
+            @Parameter(description = "页码") @RequestParam(required = false) Integer page,
+            @Parameter(description = "每页条数") @RequestParam(required = false) Integer pageSize) {
         
         SearchParams params = new SearchParams();
         params.setPage(page);
@@ -132,11 +118,8 @@ public class ResourceSearchController {
         return Result.success(result);
     }
 
-    /**
-     * 多资源全文检索
-     * POST /api/resource/search/fulltext/multi
-     * Body: {"resourceCodes":["user","order"],"keyword":"关键词","page":1,"pageSize":20}
-     */
+    @Operation(summary = "多资源全文检索", description = "在多个资源中同时进行全文关键词检索")
+    @ApiResponse(responseCode = "200", description = "检索成功")
     @PostMapping("/fulltext/multi")
     public Result<SearchResult> multiFullTextSearch(@RequestBody MultiFullTextRequest request) {
         if (request.getKeyword() == null || request.getKeyword().trim().isEmpty()) {
@@ -147,14 +130,11 @@ public class ResourceSearchController {
         return Result.success(result);
     }
 
-    // ==================== 数据导出 ====================
-
-    /**
-     * 导出搜索结果为CSV
-     */
+    @Operation(summary = "导出搜索结果为CSV", description = "将搜索结果导出为CSV文件")
+    @ApiResponse(responseCode = "200", description = "导出成功")
     @PostMapping("/export/{resourceCode}")
     public void exportCSV(
-            @PathVariable String resourceCode,
+            @Parameter(description = "资源编码") @PathVariable String resourceCode,
             @RequestBody SearchParams params,
             jakarta.servlet.http.HttpServletResponse response) {
         try {
@@ -199,18 +179,13 @@ public class ResourceSearchController {
         }
     }
 
-    // ==================== 辅助接口 ====================
-
-    /**
-     * 获取资源字段列表（用于前端构建查询表单）
-     */
+    @Operation(summary = "获取资源字段列表", description = "获取指定资源的字段配置，用于前端构建查询表单")
+    @ApiResponse(responseCode = "200", description = "获取成功")
     @GetMapping("/fields/{resourceCode}")
-    public Result<List<FieldConfig>> getResourceFields(@PathVariable String resourceCode) {
+    public Result<List<FieldConfig>> getResourceFields(@Parameter(description = "资源编码") @PathVariable String resourceCode) {
         List<FieldConfig> fields = searchService.getResourceFields(resourceCode);
         return Result.success(fields);
     }
-
-    // ==================== 请求DTO ====================
 
     public static class MultiSearchRequest {
         private List<String> resourceCodes;

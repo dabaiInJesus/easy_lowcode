@@ -8,6 +8,10 @@ import com.dabai.easy_lowcode.auth.service.SysUserService;
 import com.dabai.easy_lowcode.common.result.PageResult;
 import com.dabai.easy_lowcode.common.result.Result;
 import com.dabai.easy_lowcode.common.util.EncryptUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -21,6 +25,7 @@ import java.util.Map;
 /**
  * 认证控制器
  */
+@Tag(name = "认证管理", description = "用户登录、登出、用户CRUD及密码管理")
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -31,9 +36,8 @@ public class AuthController {
     private final com.dabai.easy_lowcode.auth.mapper.SysMenuMapper menuMapper;
     private final com.dabai.easy_lowcode.auth.mapper.SysDeptMapper deptMapper;
     
-    /**
-     * 用户登录
-     */
+    @Operation(summary = "用户登录", description = "使用用户名和密码登录系统，返回token")
+    @ApiResponse(responseCode = "200", description = "登录成功")
     @PostMapping("/login")
     public Result<Map<String, Object>> login(@Valid @RequestBody LoginRequest request) {
         String token = userService.login(request.getUsername(), request.getPassword());
@@ -44,32 +48,29 @@ public class AuthController {
         return Result.success("登录成功", data);
     }
     
-    /**
-     * 用户登出
-     */
+    @Operation(summary = "用户登出", description = "退出当前登录")
+    @ApiResponse(responseCode = "200", description = "登出成功")
     @PostMapping("/logout")
     public Result<Void> logout() {
         userService.logout();
         return Result.success("登出成功", null);
     }
     
-    /**
-     * 获取当前用户信息
-     */
+    @Operation(summary = "获取当前用户信息", description = "获取当前登录用户的详细信息")
+    @ApiResponse(responseCode = "200", description = "获取成功")
     @GetMapping("/current")
     public Result<SysUser> getCurrentUser() {
         SysUser user = userService.getCurrentUser();
         return Result.success(user);
     }
     
-    /**
-     * 分页查询用户列表
-     */
+    @Operation(summary = "分页查询用户列表", description = "分页查询用户列表，支持关键词搜索")
+    @ApiResponse(responseCode = "200", description = "查询成功")
     @GetMapping("/user/page")
     public Result<PageResult<SysUser>> pageUsers(
-            @RequestParam(defaultValue = "1") Long current,
-            @RequestParam(defaultValue = "10") Long size,
-            @RequestParam(required = false) String keyword) {
+            @Parameter(description = "当前页码") @RequestParam(defaultValue = "1") Long current,
+            @Parameter(description = "每页条数") @RequestParam(defaultValue = "10") Long size,
+            @Parameter(description = "搜索关键词（用户名或真实姓名）") @RequestParam(required = false) String keyword) {
         
         LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
         if (keyword != null && !keyword.isEmpty()) {
@@ -91,25 +92,21 @@ public class AuthController {
         return Result.success(result);
     }
     
-    /**
-     * 获取用户详情
-     */
+    @Operation(summary = "获取用户详情", description = "根据ID获取用户详细信息")
+    @ApiResponse(responseCode = "200", description = "获取成功")
     @GetMapping("/user/{id}")
-    public Result<SysUser> getUserById(@PathVariable Long id) {
+    public Result<SysUser> getUserById(@Parameter(description = "用户ID") @PathVariable Long id) {
         SysUser user = userService.getById(id);
-        // 不返回密码
         if (user != null) {
             user.setPassword(null);
         }
         return Result.success(user);
     }
     
-    /**
-     * 创建用户
-     */
+    @Operation(summary = "创建用户", description = "创建新用户，密码会自动使用BCrypt加密")
+    @ApiResponse(responseCode = "200", description = "创建成功")
     @PostMapping("/user")
     public Result<Void> createUser(@RequestBody SysUser user) {
-        // 使用 BCrypt 加密密码
         if (user.getPassword() != null) {
             user.setPassword(EncryptUtil.bcrypt(user.getPassword()));
         }
@@ -117,43 +114,39 @@ public class AuthController {
         return Result.success("创建成功");
     }
     
-    /**
-     * 更新用户
-     */
+    @Operation(summary = "更新用户", description = "更新用户信息（不允许修改密码）")
+    @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping("/user")
     public Result<Void> updateUser(@RequestBody SysUser user) {
-        // 不允许直接修改密码
         user.setPassword(null);
         userService.updateById(user);
         return Result.success("更新成功");
     }
     
-    /**
-     * 删除用户
-     */
+    @Operation(summary = "删除用户", description = "根据ID删除用户")
+    @ApiResponse(responseCode = "200", description = "删除成功")
     @DeleteMapping("/user/{id}")
-    public Result<Void> deleteUser(@PathVariable Long id) {
+    public Result<Void> deleteUser(@Parameter(description = "用户ID") @PathVariable Long id) {
         userService.removeById(id);
         return Result.success("删除成功");
     }
     
-    /**
-     * 重置密码
-     */
+    @Operation(summary = "重置密码", description = "管理员重置指定用户的密码")
+    @ApiResponse(responseCode = "200", description = "密码重置成功")
     @PostMapping("/user/{id}/reset-password")
-    public Result<Void> resetPassword(@PathVariable Long id, @RequestBody Map<String, String> params) {
+    public Result<Void> resetPassword(
+            @Parameter(description = "用户ID") @PathVariable Long id,
+            @RequestBody Map<String, String> params) {
         String newPassword = params.get("newPassword");
         SysUser user = new SysUser();
         user.setId(id);
-        // 使用 BCrypt 加密密码
         user.setPassword(EncryptUtil.bcrypt(newPassword));
         userService.updateById(user);
         return Result.success("密码重置成功");
     }
 
-    /**
-     * 修改密码
-     */
+    @Operation(summary = "修改密码", description = "当前用户修改自己的密码")
+    @ApiResponse(responseCode = "200", description = "密码修改成功")
     @PostMapping("/change-password")
     public Result<Void> changePassword(@RequestBody Map<String, String> params) {
         String oldPassword = params.get("oldPassword");
@@ -172,9 +165,6 @@ public class AuthController {
         return Result.success("密码修改成功");
     }
     
-    /**
-     * 登录请求DTO
-     */
     @lombok.Data
     public static class LoginRequest {
         @NotBlank(message = "用户名不能为空")
@@ -183,100 +173,87 @@ public class AuthController {
         private String password;
     }
     
-    /**
-     * 获取统计数据
-     */
+    @Operation(summary = "获取统计数据", description = "获取用户、角色、菜单、部门的统计数量")
+    @ApiResponse(responseCode = "200", description = "获取成功")
     @GetMapping("/statistics")
     public Result<Map<String, Long>> getStatistics() {
         Map<String, Long> statistics = new HashMap<>();
         
-        // 用户总数
         long userCount = userService.count();
         statistics.put("userCount", userCount);
         
-        // 角色总数
         long roleCount = roleMapper.selectCount(null);
         statistics.put("roleCount", roleCount);
         
-        // 菜单总数
         long menuCount = menuMapper.selectCount(null);
         statistics.put("menuCount", menuCount);
         
-        // 部门总数
         long deptCount = deptMapper.selectCount(null);
         statistics.put("deptCount", deptCount);
         
         return Result.success(statistics);
     }
     
-    /**
-     * 获取菜单列表
-     */
+    @Operation(summary = "获取菜单列表", description = "获取所有菜单列表")
+    @ApiResponse(responseCode = "200", description = "获取成功")
     @GetMapping("/menu/list")
     public Result<List<com.dabai.easy_lowcode.auth.entity.SysMenu>> getMenuList() {
         List<com.dabai.easy_lowcode.auth.entity.SysMenu> menuList = menuMapper.selectList(null);
         return Result.success(menuList);
     }
     
-    /**
-     * 创建菜单
-     */
+    @Operation(summary = "创建菜单", description = "创建新菜单")
+    @ApiResponse(responseCode = "200", description = "创建成功")
     @PostMapping("/menu")
     public Result<Void> createMenu(@RequestBody com.dabai.easy_lowcode.auth.entity.SysMenu menu) {
         menuMapper.insert(menu);
         return Result.success("创建成功");
     }
     
-    /**
-     * 更新菜单
-     */
+    @Operation(summary = "更新菜单", description = "更新菜单信息")
+    @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping("/menu")
     public Result<Void> updateMenu(@RequestBody com.dabai.easy_lowcode.auth.entity.SysMenu menu) {
         menuMapper.updateById(menu);
         return Result.success("更新成功");
     }
     
-    /**
-     * 删除菜单
-     */
+    @Operation(summary = "删除菜单", description = "根据ID删除菜单")
+    @ApiResponse(responseCode = "200", description = "删除成功")
     @DeleteMapping("/menu/{id}")
-    public Result<Void> deleteMenu(@PathVariable Long id) {
+    public Result<Void> deleteMenu(@Parameter(description = "菜单ID") @PathVariable Long id) {
         menuMapper.deleteById(id);
         return Result.success("删除成功");
     }
     
-    /**
-     * 获取部门列表
-     */
+    @Operation(summary = "获取部门列表", description = "获取所有部门列表")
+    @ApiResponse(responseCode = "200", description = "获取成功")
     @GetMapping("/dept/list")
     public Result<List<com.dabai.easy_lowcode.auth.entity.SysDept>> getDeptList() {
         List<com.dabai.easy_lowcode.auth.entity.SysDept> deptList = deptMapper.selectList(null);
         return Result.success(deptList);
     }
     
-    /**
-     * 创建部门
-     */
+    @Operation(summary = "创建部门", description = "创建新部门")
+    @ApiResponse(responseCode = "200", description = "创建成功")
     @PostMapping("/dept")
     public Result<Void> createDept(@RequestBody com.dabai.easy_lowcode.auth.entity.SysDept dept) {
         deptMapper.insert(dept);
         return Result.success("创建成功");
     }
     
-    /**
-     * 更新部门
-     */
+    @Operation(summary = "更新部门", description = "更新部门信息")
+    @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping("/dept")
     public Result<Void> updateDept(@RequestBody com.dabai.easy_lowcode.auth.entity.SysDept dept) {
         deptMapper.updateById(dept);
         return Result.success("更新成功");
     }
     
-    /**
-     * 删除部门
-     */
+    @Operation(summary = "删除部门", description = "根据ID删除部门")
+    @ApiResponse(responseCode = "200", description = "删除成功")
     @DeleteMapping("/dept/{id}")
-    public Result<Void> deleteDept(@PathVariable Long id) {
+    public Result<Void> deleteDept(@Parameter(description = "部门ID") @PathVariable Long id) {
         deptMapper.deleteById(id);
         return Result.success("删除成功");
     }

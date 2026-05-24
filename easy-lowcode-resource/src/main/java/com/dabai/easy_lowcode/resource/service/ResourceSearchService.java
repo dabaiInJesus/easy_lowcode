@@ -1,5 +1,7 @@
 package com.dabai.easy_lowcode.resource.service;
 
+import com.dabai.easy_lowcode.resource.model.FieldConfig;
+
 import java.util.List;
 import java.util.Map;
 
@@ -171,28 +173,4 @@ public interface ResourceSearchService {
         public void setJoinType(String joinType) { this.joinType = joinType; }
     }
     
-    /**
-     * 字段配置
-     */
-    class FieldConfig {
-        private String columnName;
-        private String fieldLabel;
-        private String fieldType; // string, number, date, boolean
-        private boolean searchable;
-        private boolean sortable;
-        private String comment;
-        
-        public String getColumnName() { return columnName; }
-        public void setColumnName(String columnName) { this.columnName = columnName; }
-        public String getFieldLabel() { return fieldLabel; }
-        public void setFieldLabel(String fieldLabel) { this.fieldLabel = fieldLabel; }
-        public String getFieldType() { return fieldType; }
-        public void setFieldType(String fieldType) { this.fieldType = fieldType; }
-        public boolean isSearchable() { return searchable; }
-        public void setSearchable(boolean searchable) { this.searchable = searchable; }
-        public boolean isSortable() { return sortable; }
-        public void setSortable(boolean sortable) { this.sortable = sortable; }
-        public String getComment() { return comment; }
-        public void setComment(String comment) { this.comment = comment; }
-    }
 }

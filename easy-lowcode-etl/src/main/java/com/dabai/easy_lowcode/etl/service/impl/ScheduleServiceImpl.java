@@ -9,6 +9,8 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
@@ -21,13 +23,20 @@ import java.util.concurrent.ScheduledFuture;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ScheduleServiceImpl implements ScheduleService {
 
     private final EtlTaskMapper etlTaskMapper;
-    private final EtlTaskService etlTaskService;
+
+    @Autowired @Lazy
+    private EtlTaskService etlTaskService;
 
     private ThreadPoolTaskScheduler taskScheduler;
+
+    @Autowired
+    public ScheduleServiceImpl(EtlTaskMapper etlTaskMapper) {
+        this.etlTaskMapper = etlTaskMapper;
+    }
+
     private final Map<Long, ScheduledFuture<?>> scheduledJobs = new ConcurrentHashMap<>();
 
     @PostConstruct

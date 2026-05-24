@@ -4,6 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.dabai.easy_lowcode.auth.entity.SysDept;
 import com.dabai.easy_lowcode.auth.service.SysDeptService;
 import com.dabai.easy_lowcode.common.result.Result;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -14,6 +18,7 @@ import java.util.List;
 /**
  * 部门管理控制器
  */
+@Tag(name = "部门管理", description = "部门CRUD及树形结构管理")
 @Slf4j
 @RestController
 @RequestMapping("/auth/dept")
@@ -23,43 +28,36 @@ public class DeptController {
     private final SysDeptService deptService;
     private final JdbcTemplate jdbcTemplate;
     
-    /**
-     * 获取部门树形列表
-     */
+    @Operation(summary = "获取部门树形列表", description = "获取树形结构的部门列表")
+    @ApiResponse(responseCode = "200", description = "获取成功")
     @GetMapping("/list")
     public Result<List<SysDept>> getDeptList() {
         List<SysDept> deptTree = deptService.getDeptTree();
         return Result.success(deptTree);
     }
     
-    /**
-     * 创建部门
-     */
+    @Operation(summary = "创建部门", description = "创建新部门，自动生成部门编码")
+    @ApiResponse(responseCode = "200", description = "创建成功")
     @PostMapping
     public Result<Void> createDept(@RequestBody SysDept dept) {
-        // 自动生成dept_code（如果未提供）
         if (dept.getDeptCode() == null || dept.getDeptCode().trim().isEmpty()) {
             dept.setDeptCode(generateDeptCode(dept.getDeptName()));
         }
         
-        // 验证dept_code唯一性
         LambdaQueryWrapper<SysDept> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysDept::getDeptCode, dept.getDeptCode());
         if (deptService.count(wrapper) > 0) {
             return Result.error("部门编码已存在");
         }
         
-        // 设置默认排序
         if (dept.getSort() == null) {
             dept.setSort(1);
         }
         
-        // 设置默认状态
         if (dept.getStatus() == null) {
             dept.setStatus(1);
         }
         
-        // 设置默认父部门ID
         if (dept.getParentId() == null) {
             dept.setParentId(0L);
         }
@@ -68,12 +66,10 @@ public class DeptController {
         return Result.success();
     }
     
-    /**
-     * 更新部门
-     */
+    @Operation(summary = "更新部门", description = "更新部门信息")
+    @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping
     public Result<Void> updateDept(@RequestBody SysDept dept) {
-        // 验证dept_code唯一性（排除自身）
         LambdaQueryWrapper<SysDept> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysDept::getDeptCode, dept.getDeptCode())
                .ne(SysDept::getId, dept.getId());
@@ -85,11 +81,10 @@ public class DeptController {
         return Result.success();
     }
     
-    /**
-     * 删除部门
-     */
+    @Operation(summary = "删除部门", description = "删除部门（需确保无子部门且无关联用户）")
+    @ApiResponse(responseCode = "200", description = "删除成功")
     @DeleteMapping("/{id}")
-    public Result<Void> deleteDept(@PathVariable Long id) {
+    public Result<Void> deleteDept(@Parameter(description = "部门ID") @PathVariable Long id) {
         LambdaQueryWrapper<SysDept> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysDept::getParentId, id);
         long childCount = deptService.count(wrapper);
@@ -107,25 +102,19 @@ public class DeptController {
         return Result.success();
     }
     
-    /**
-     * 根据部门名称生成部门编码
-     */
     private String generateDeptCode(String deptName) {
         if (deptName == null || deptName.trim().isEmpty()) {
             return "dept_" + System.currentTimeMillis();
         }
         
-        // 简单处理：移除空格和特殊字符，转为小写
-        String code = deptName.replaceAll("[\\s\\u3000]+", "_")  // 替换空格
-                             .replaceAll("[^a-zA-Z0-9_\\u4e00-\\u9fa5]", "")  // 移除特殊字符
-                             .toLowerCase();
+        String code = deptName.replaceAll("[\\s\\u3000]+", "_")
+                              .replaceAll("[^a-zA-Z0-9_\\u4e00-\\u9fa5]", "")
+                              .toLowerCase();
         
-        // 如果是中文，保留原样让用户手动输入英文
         if (code.matches(".*[\\u4e00-\\u9fa5].*")) {
             return code;
         }
         
-        // 确保不以数字开头
         if (code.matches("^\\d.*")) {
             code = "dept_" + code;
         }
