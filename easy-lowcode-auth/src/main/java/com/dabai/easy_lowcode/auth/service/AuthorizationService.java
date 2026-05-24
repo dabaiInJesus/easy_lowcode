@@ -51,4 +51,10 @@ public interface AuthorizationService {
      * 获取角色列表（包含菜单数量）
      */
     List<Map<String, Object>> getRolesWithMenuCount();
+
+    /**
+     * 清理无效的菜单（删除/dashboard/design等没有对应路由的菜单）
+     * @return 删除的菜单数量
+     */
+    int cleanupInvalidMenus();
 }

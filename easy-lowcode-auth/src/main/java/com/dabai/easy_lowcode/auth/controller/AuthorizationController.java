@@ -119,4 +119,11 @@ public class AuthorizationController {
     static class AssignMenusRequest {
         private List<String> menuIds;
     }
+
+    @Operation(summary = "清理无效的菜单", description = "删除大屏设计等无效菜单项（路径为/dashboard/design但没有对应路由）")
+    @DeleteMapping("/menus/cleanup")
+    public Result<Integer> cleanupInvalidMenus() {
+        int count = authorizationService.cleanupInvalidMenus();
+        return Result.success(count);
+    }
 }

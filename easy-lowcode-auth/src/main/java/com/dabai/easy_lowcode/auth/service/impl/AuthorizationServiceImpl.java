@@ -122,7 +122,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public List<Map<String, Object>> getMenuTree() {
         // 获取所有菜单（只查询目录和菜单类型，排除按钮）
         LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
-        wrapper.in(SysMenu::getMenuType, 1) // 1-目录/菜单
+        wrapper.in(SysMenu::getMenuType, 1, 2) // 1-目录 2-菜单，排除按钮
                .eq(SysMenu::getVisible, 1) // 只显示可见菜单
                .orderByAsc(SysMenu::getSort);
         List<SysMenu> allMenus = menuMapper.selectList(wrapper);
@@ -214,5 +214,15 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             role.put("menuCount", rs.getInt("menu_count"));
             return role;
         });
+    }
+
+    @Override
+    @Transactional
+    public int cleanupInvalidMenus() {
+        // 删除路径为 /dashboard/design 的菜单（设计器需要ID参数，不适合作为菜单）
+        String deleteSql = "DELETE FROM sys_menu WHERE path = '/dashboard/design'";
+        int deleted = jdbcTemplate.update(deleteSql);
+        log.info("清理无效菜单，删除了 {} 条记录", deleted);
+        return deleted;
     }
 }

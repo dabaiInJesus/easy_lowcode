@@ -1,6 +1,5 @@
 package com.dabai.easy_lowcode.resource.controller;
 
-import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dabai.easy_lowcode.common.result.PageResult;
@@ -65,9 +64,21 @@ public class SysResourceController {
     @ApiResponse(responseCode = "200", description = "获取成功")
     @GetMapping("/user-menu-tree")
     public Result<List<SysResource>> getUserMenuTree() {
-        Long userId = StpUtil.getLoginIdAsLong();
+        Long userId = getCurrentUserIdFromToken();
+        if (userId == null) {
+            return Result.error("用户未登录");
+        }
         List<SysResource> tree = resourceService.getUserResourceTree(userId);
         return Result.success(tree);
+    }
+    
+    private Long getCurrentUserIdFromToken() {
+        org.springframework.security.core.Authentication authentication = 
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof com.dabai.easy_lowcode.common.security.LoginUser loginUser) {
+            return loginUser.getUserId();
+        }
+        return null;
     }
     
     @Operation(summary = "获取所有菜单", description = "获取所有菜单类型的资源")

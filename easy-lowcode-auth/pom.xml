@@ -13,7 +13,7 @@
     <artifactId>easy-lowcode-auth</artifactId>
     <packaging>jar</packaging>
     <name>easy-lowcode-auth</name>
-    <description>认证授权模块 - Sa-Token、用户/角色/权限管理</description>
+    <description>认证授权模块 - Spring Security JWT、用户/角色/权限管理</description>
 
     <dependencies>
         <!-- 数据库模块 -->
@@ -22,16 +22,26 @@
             <artifactId>easy-lowcode-database</artifactId>
         </dependency>
 
-        <!-- Sa-Token 权限认证 -->
+        <!-- Spring Security -->
         <dependency>
-            <groupId>cn.dev33</groupId>
-            <artifactId>sa-token-spring-boot3-starter</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
-        <!-- Sa-Token 整合 Redis -->
+        <!-- JWT -->
         <dependency>
-            <groupId>cn.dev33</groupId>
-            <artifactId>sa-token-redis-jackson</artifactId>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- Spring Boot Redis -->

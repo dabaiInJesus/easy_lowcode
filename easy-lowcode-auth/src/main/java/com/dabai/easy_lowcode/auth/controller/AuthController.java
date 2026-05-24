@@ -1,6 +1,5 @@
 package com.dabai.easy_lowcode.auth.controller;
 
-import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dabai.easy_lowcode.auth.entity.SysUser;
@@ -152,15 +151,17 @@ public class AuthController {
         String oldPassword = params.get("oldPassword");
         String newPassword = params.get("newPassword");
         
-        Long userId = StpUtil.getLoginIdAsLong();
-        SysUser user = userService.getById(userId);
+        SysUser currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            return Result.error("用户未登录");
+        }
         
-        if (!EncryptUtil.verifyPassword(oldPassword, user.getPassword())) {
+        if (!EncryptUtil.verifyPassword(oldPassword, currentUser.getPassword())) {
             return Result.error("原密码错误");
         }
         
-        user.setPassword(EncryptUtil.bcrypt(newPassword));
-        userService.updateById(user);
+        currentUser.setPassword(EncryptUtil.bcrypt(newPassword));
+        userService.updateById(currentUser);
         
         return Result.success("密码修改成功");
     }

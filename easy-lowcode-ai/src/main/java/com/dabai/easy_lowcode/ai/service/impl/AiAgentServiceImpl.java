@@ -38,16 +38,21 @@ public class AiAgentServiceImpl implements AiAgentService {
 
     @jakarta.annotation.PostConstruct
     public void loadFromDb() {
-        List<AiAgent> agents = aiAgentMapper.selectList(
-                new LambdaQueryWrapper<AiAgent>()
-                        .eq(AiAgent::getStatus, 1)
-                        .eq(AiAgent::getPublishStatus, 1)
-        );
-        for (AiAgent agent : agents) {
-            agentCache.put(agent.getAgentCode(), agent);
-            log.info("加载 Agent: {} ({})", agent.getAgentName(), agent.getAgentCode());
+        try {
+            List<AiAgent> agents = aiAgentMapper.selectList(
+                    new LambdaQueryWrapper<AiAgent>()
+                            .eq(AiAgent::getStatus, 1)
+                            .eq(AiAgent::getPublishStatus, 1)
+            );
+            for (AiAgent agent : agents) {
+                agentCache.put(agent.getAgentCode(), agent);
+                log.info("加载 Agent: {} ({})", agent.getAgentName(), agent.getAgentCode());
+            }
+            log.info("Agent 缓存加载完成，共 {} 个", agentCache.size());
+        } catch (Exception e) {
+            log.warn("Agent 缓存加载失败（可能是数据库表不存在），将使用空缓存: {}", e.getMessage());
+            log.warn("提示: 请确保已执行 Liquibase 数据库迁移或手动创建 ai_agent 表");
         }
-        log.info("Agent 缓存加载完成，共 {} 个", agentCache.size());
     }
 
     @Scheduled(fixedRate = 600_000)

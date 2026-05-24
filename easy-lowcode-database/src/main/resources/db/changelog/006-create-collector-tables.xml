@@ -112,6 +112,7 @@
     <!-- 注意：密码字段需通过系统界面配置，此处使用占位值 -->
     <changeSet id="006-insert-default-datasource" author="dabai">
         <insert tableName="collector_datasource">
+            <column name="id" valueNumeric="1"/>
             <column name="name" value="主数据库"/>
             <column name="code" value="main_db"/>
             <column name="db_type" value="postgresql"/>

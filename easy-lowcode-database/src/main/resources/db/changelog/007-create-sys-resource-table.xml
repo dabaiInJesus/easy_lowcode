@@ -63,6 +63,7 @@
     <changeSet id="007-insert-default-resources" author="dabai">
         <!-- 资源配置顶级菜单 -->
         <insert tableName="sys_resource">
+            <column name="id" valueNumeric="1"/>
             <column name="resource_name" value="资源配置"/>
             <column name="resource_code" value="resource_config"/>
             <column name="resource_type" value="menu"/>
@@ -76,6 +77,7 @@
         
         <!-- 数据源配置子菜单 -->
         <insert tableName="sys_resource">
+            <column name="id" valueNumeric="2"/>
             <column name="resource_name" value="数据源配置"/>
             <column name="resource_code" value="datasource_config"/>
             <column name="resource_type" value="menu"/>
@@ -90,6 +92,7 @@
         
         <!-- 表资源注册子菜单 -->
         <insert tableName="sys_resource">
+            <column name="id" valueNumeric="3"/>
             <column name="resource_name" value="表资源注册"/>
             <column name="resource_code" value="table_resource"/>
             <column name="resource_type" value="menu"/>
@@ -104,6 +107,7 @@
         
         <!-- 接口管理子菜单 -->
         <insert tableName="sys_resource">
+            <column name="id" valueNumeric="4"/>
             <column name="resource_name" value="接口管理"/>
             <column name="resource_code" value="api_management"/>
             <column name="resource_type" value="menu"/>

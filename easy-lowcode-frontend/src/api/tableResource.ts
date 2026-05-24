@@ -95,7 +95,7 @@ export function exportResourceDataCsv(resourceCode: string, params: Record<strin
     method: 'post',
     data: params,
     responseType: 'blob',
-  }).then(blob => {
+  }).then((blob: any) => {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url

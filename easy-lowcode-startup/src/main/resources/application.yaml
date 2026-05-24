@@ -23,11 +23,11 @@ spring:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://127.0.0.1:5432/easy_lowcode?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
     username: postgres
-    password: ${DB_PASSWORD:}
+    password: ${DB_PASSWORD:postgres123}
   
   # Liquibase 数据库版本管理配置
   liquibase:
-    enabled: false
+    enabled: true
     change-log: classpath:db/changelog/db.changelog-master.xml
     contexts: dev
     database-change-log-table: databasechangelog
@@ -84,6 +84,11 @@ mybatis-plus:
       logic-delete-value: 1
       logic-not-delete-value: 0
   mapper-locations: classpath*:/mapper/**/*.xml
+
+# 加密配置
+encrypt:
+  aes:
+    key: ${ENCRYPT_AES_KEY:1234567890123456}
 
 # Sa-Token配置
 sa-token:
