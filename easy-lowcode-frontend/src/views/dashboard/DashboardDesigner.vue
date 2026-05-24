@@ -198,7 +198,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
@@ -210,7 +210,21 @@ import TextToSqlDialog from './TextToSqlDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
-const dashboardId = Number(route.params.id)
+
+// 安全获取大屏 ID
+const dashboardId = computed(() => {
+  const id = Number(route.params.id)
+  if (isNaN(id) || id <= 0) {
+    return null
+  }
+  return id
+})
+
+// 如果没有有效的大屏 ID，跳转回管理页面
+if (dashboardId.value === null) {
+  ElMessage.error('无效的大屏ID，正在跳转...')
+  router.replace({ name: 'dashboardManagement' })
+}
 
 const dashboard = ref<Dashboard>({ name: '', code: '', backgroundColor: '#0a1628', width: 1920, height: 1080, refreshInterval: 0, status: 0 } as Dashboard)
 const charts = ref<DashboardChart[]>([])
@@ -223,7 +237,7 @@ const chartDataMap = ref<Record<number, { data: any[]; displayValue: string }>>(
 const previewChartInstances = new Map<number, echarts.ECharts>()
 
 const newChart = reactive<Partial<DashboardChart>>({
-  dashboardId, title: '', chartType: 'bar', datasourceId: undefined,
+  dashboardId: 0, title: '', chartType: 'bar', datasourceId: undefined,
   querySql: '', xField: '', yField: '', width: 4, height: 3
 })
 
@@ -232,10 +246,11 @@ const draggingIdx = ref<number | null>(null)
 const dragOverIdx = ref<number | null>(null)
 
 const loadDashboard = async () => {
+  if (!dashboardId.value) return
   try {
-    const d = await getDashboardById(dashboardId)
+    const d = await getDashboardById(dashboardId.value)
     dashboard.value = d || dashboard.value
-    const c = await getDashboardCharts(dashboardId)
+    const c = await getDashboardCharts(dashboardId.value)
     charts.value = c || []
     // 加载图表预览数据
     await loadChartData()
@@ -316,12 +331,14 @@ const initPreviewChart = (el: HTMLElement | null, chart: any) => {
 
 const addChart = async () => {
   if (!newChart.title) { ElMessage.warning('请输入图表标题'); return }
+  if (!dashboardId.value) { ElMessage.error('无效的大屏ID'); return }
   addingChart.value = true
   try {
+    newChart.dashboardId = dashboardId.value
     await apiAddChart(newChart as DashboardChart)
     ElMessage.success('添加成功')
     // 重新加载图表
-    const c = await getDashboardCharts(dashboardId)
+    const c = await getDashboardCharts(dashboardId.value)
     charts.value = c || []
     newChart.title = ''; newChart.querySql = ''; newChart.xField = ''; newChart.yField = ''
   } catch (e: any) { ElMessage.error(e.message || '添加失败') }
@@ -350,7 +367,7 @@ const saveCharts = async () => {
 }
 
 const previewDashboard = () => {
-  router.push({ name: 'dashboardView', params: { id: dashboardId } })
+  router.push({ name: 'dashboardView', params: { id: dashboardId.value } })
 }
 
 const handleBack = () => { router.push({ name: 'dashboardManagement' }) }
@@ -367,7 +384,7 @@ const handleChartAdded = async (chart: Partial<DashboardChart>) => {
     await apiAddChart(chart)
     ElMessage.success('图表添加成功')
     // 重新加载图表
-    const c = await getDashboardCharts(dashboardId)
+    const c = await getDashboardCharts(dashboardId.value)
     charts.value = c || []
     await loadChartData()
   } catch (e: any) {
@@ -444,7 +461,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.dashboard-designer { height: calc(100vh - 60px); display: flex; flex-direction: column; }
+.dashboard-designer { height: 100vh; display: flex; flex-direction: column; }
 .designer-header { padding: 12px 20px; background: #fff; border-bottom: 1px solid #dcdfe6; display: flex; align-items: center; }
 .designer-title { margin: 0; font-size: 18px; }
 .designer-body { flex: 1; display: flex; overflow: hidden; }

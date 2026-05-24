@@ -138,11 +138,11 @@ const handleCreate = () => {
 
 
 const handleDesign = (row: Dashboard) => {
-  router.push({ name: 'dashboardDesigner', params: { id: row.id } })
+  window.open(`/dashboard/design/${row.id}`, '_blank')
 }
 
 const handlePreview = (row: Dashboard) => {
-  router.push({ name: 'dashboardView', params: { id: row.id } })
+  window.open(`/dashboard/view/${row.id}`, '_blank')
 }
 
 const handlePublish = async (row: Dashboard) => {

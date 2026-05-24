@@ -12,6 +12,7 @@ const router = createRouter({
     },
     {
       path: '/',
+      name: 'main',
       component: () => import('../views/Layout.vue'),
       redirect: '/home',
       meta: { requiresAuth: true, title: '首页' },
@@ -65,8 +66,26 @@ const router = createRouter({
           ],
         },
         {
+          path: 'ai',
+          meta: { title: 'AI助手' },
+          children: [
+            {
+              path: 'chat',
+              name: 'aiChat',
+              component: () => import('../views/ai/ChatView.vue'),
+              meta: { title: 'AI对话' },
+            },
+            {
+              path: 'config',
+              name: 'aiConfig',
+              component: () => import('../views/ai/AiConfigManagement.vue'),
+              meta: { title: 'AI配置' },
+            },
+          ],
+        },
+        {
           path: 'resource',
-          meta: { title: '资源配置' },
+          meta: { title: '资源管理' },
           children: [
             {
               path: 'datasource',
@@ -89,36 +108,6 @@ const router = createRouter({
           ],
         },
         {
-          path: 'ai',
-          meta: { title: 'AI智能' },
-          children: [
-            {
-              path: 'chat',
-              name: 'aiChat',
-              component: () => import('../views/ai/ChatView.vue'),
-              meta: { title: 'AI对话' },
-            },
-            {
-              path: 'config',
-              name: 'aiConfig',
-              component: () => import('../views/ai/AiConfigManagement.vue'),
-              meta: { title: 'AI配置' },
-            },
-          ],
-        },
-        {
-          path: 'etl',
-          meta: { title: 'ETL管理' },
-          children: [
-            {
-              path: 'task',
-              name: 'etlTaskManagement',
-              component: () => import('../views/etl/EtlTaskManagement.vue'),
-              meta: { title: 'ETL任务' },
-            },
-          ],
-        },
-        {
           path: 'dashboard',
           meta: { title: '数据大屏' },
           children: [
@@ -128,6 +117,19 @@ const router = createRouter({
               component: () => import('../views/dashboard/DashboardManagement.vue'),
               meta: { title: '大屏管理' },
             },
+            // 注意：设计器和预览路由是全屏页面，不在 Layout 中渲染
+          ],
+        },
+        {
+          path: 'etl',
+          meta: { title: 'ETL任务' },
+          children: [
+            {
+              path: 'task',
+              name: 'etlTaskManagement',
+              component: () => import('../views/etl/EtlTaskManagement.vue'),
+              meta: { title: 'ETL任务' },
+            },
           ],
         },
       ],
@@ -136,13 +138,13 @@ const router = createRouter({
       path: '/dashboard/design/:id',
       name: 'dashboardDesigner',
       component: () => import('../views/dashboard/DashboardDesigner.vue'),
-      meta: { requiresAuth: true, title: '大屏设计' },
+      meta: { requiresAuth: true, title: '大屏设计', hideLayout: true },
     },
     {
       path: '/dashboard/view/:id',
       name: 'dashboardView',
       component: () => import('../views/dashboard/DashboardView.vue'),
-      meta: { requiresAuth: true, title: '大屏预览' },
+      meta: { requiresAuth: true, title: '大屏预览', hideLayout: true },
     },
   ],
 })

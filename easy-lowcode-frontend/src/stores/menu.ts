@@ -1,16 +1,31 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { getMenuTree } from '@/api/auth'
+import router from '@/router'
 
-/** 允许动态加载的组件路径白名单 */
-const ALLOWED_COMPONENTS = new Set([
-  'system/UserManagement', 'system/RoleManagement', 'system/MenuManagement',
-  'system/DeptManagement', 'system/AppManagement',
-  'resource/DataSourceManagement', 'resource/TableResourceManagement', 'resource/ApiManagement',
-  'etl/EtlTaskManagement', 'dashboard/DashboardManagement', 'dashboard/DashboardView',
-  'dashboard/DashboardDesigner', 'ai/ChatView', 'ai/AiConfigManagement',
-  'Home', 'Layout'
-])
+// 静态导入所有组件，用于动态路由
+const AllComponents = {
+  // 系统管理
+  'system/UserManagement': () => import('../views/system/UserManagement.vue'),
+  'system/RoleManagement': () => import('../views/system/RoleManagement.vue'),
+  'system/MenuManagement': () => import('../views/system/MenuManagement.vue'),
+  'system/DeptManagement': () => import('../views/system/DeptManagement.vue'),
+  'system/AppManagement': () => import('../views/system/AppManagement.vue'),
+  'system/AuthManagement': () => import('../views/system/AuthManagement.vue'),
+  // 资源管理
+  'resource/DataSourceManagement': () => import('../views/resource/DataSourceManagement.vue'),
+  'resource/TableResourceManagement': () => import('../views/resource/TableResourceManagement.vue'),
+  'resource/ApiManagement': () => import('../views/resource/ApiManagement.vue'),
+  // ETL
+  'etl/EtlTaskManagement': () => import('../views/etl/EtlTaskManagement.vue'),
+  // 数据大屏
+  'dashboard/DashboardManagement': () => import('../views/dashboard/DashboardManagement.vue'),
+  'dashboard/DashboardDesigner': () => import('../views/dashboard/DashboardDesigner.vue'),
+  'dashboard/DashboardView': () => import('../views/dashboard/DashboardView.vue'),
+  // AI
+  'ai/ChatView': () => import('../views/ai/ChatView.vue'),
+  'ai/AiConfigManagement': () => import('../views/ai/AiConfigManagement.vue'),
+}
 
 export interface MenuItem {
   id: number | string
@@ -39,7 +54,7 @@ export const useMenuStore = defineStore('menu', () => {
 
   // 方法
   /**
-   * 加载菜单树
+   * 加载菜单树并注册动态路由
    */
   async function loadMenus() {
     if (isLoaded.value && menus.value.length > 0) {
@@ -51,6 +66,17 @@ export const useMenuStore = defineStore('menu', () => {
       const menuData = response.data || response
       menus.value = Array.isArray(menuData) ? menuData : []
       isLoaded.value = true
+      
+      // 注册动态路由
+      const dynamicRoutes = generateRoutes(menus.value)
+      dynamicRoutes.forEach(route => {
+        try {
+          router.addRoute('main', route)
+        } catch (e) {
+          console.error('添加路由失败:', route, e)
+        }
+      })
+      
       return menus.value
     } catch (error) {
       console.error('加载菜单失败:', error)
@@ -62,6 +88,12 @@ export const useMenuStore = defineStore('menu', () => {
    * 清除菜单（登出时调用）
    */
   function clearMenus() {
+    // 移除动态添加的路由
+    menus.value.forEach(menu => {
+      if (menu.menuCode && router.hasRoute(menu.menuCode)) {
+        router.removeRoute(menu.menuCode)
+      }
+    })
     menus.value = []
     isLoaded.value = false
   }
@@ -76,6 +108,20 @@ export const useMenuStore = defineStore('menu', () => {
         ...menu,
         children: menu.children ? filterVisibleMenus(menu.children) : undefined,
       }))
+      // 过滤掉无效的菜单（设计器和预览页面需要ID，不适合作为菜单）
+      .filter(menu => {
+        // 过滤掉 /dashboard/design 和 /dashboard/view
+        if (menu.path === '/dashboard/design' || menu.path === '/dashboard/view') {
+          return false
+        }
+        // 过滤子菜单中的无效项
+        if (menu.children) {
+          menu.children = menu.children.filter(
+            child => child.path !== '/dashboard/design' && child.path !== '/dashboard/view'
+          )
+        }
+        return true
+      })
   }
 
   /**
@@ -85,35 +131,56 @@ export const useMenuStore = defineStore('menu', () => {
     const routes: any[] = []
 
     menuList.forEach(menu => {
+      // 有子菜单的菜单（父菜单如"数据大屏"）
+      if (menu.children && menu.children.length > 0) {
+        if (menu.path && menu.component) {
+          const parentRoute: any = {
+            path: menu.path,
+            name: menu.menuCode,
+            component: () => import('../views/Layout.vue'),
+            meta: { title: menu.menuName, icon: menu.icon },
+            children: [] as any[],
+          }
+
+          // 处理子菜单
+          menu.children.forEach(child => {
+            if (child.path && child.component) {
+              const loader = AllComponents[child.component as keyof typeof AllComponents]
+              if (!loader) {
+                console.warn(`组件不存在: ${child.component}`)
+                return
+              }
+
+              const childRoute: any = {
+                path: child.path.split('/').pop() || child.path,
+                name: child.menuCode,
+                component: loader,
+                meta: { title: child.menuName, icon: child.icon },
+              }
+              parentRoute.children.push(childRoute)
+            }
+          })
+
+          routes.push(parentRoute)
+        }
+        return
+      }
+
+      // 没有子菜单的菜单
       if (menu.path && menu.component) {
+        const loader = AllComponents[menu.component as keyof typeof AllComponents]
+        if (!loader) {
+          console.warn(`组件不存在: ${menu.component}`)
+          return
+        }
+
         const route: any = {
           path: menu.path,
           name: menu.menuCode,
-          meta: {
-            title: menu.menuName,
-            icon: menu.icon,
-          },
+          meta: { title: menu.menuName, icon: menu.icon },
+          component: loader,
         }
-
-        // 如果有子菜单
-        if (menu.children && menu.children.length > 0) {
-          route.children = generateRoutes(menu.children)
-        } else if (menu.component) {
-          // 白名单校验：防止恶意路径加载任意模块
-          if (!ALLOWED_COMPONENTS.has(menu.component)) {
-            console.warn(`组件路径不在白名单中: ${menu.component}`)
-            return
-          }
-          route.component = () => import(`../views${menu.component}.vue`)
-        }
-
         routes.push(route)
-      }
-
-      // 递归处理子菜单（如果当前菜单没有 path/component，但有 children）
-      if (menu.children && menu.children.length > 0 && (!menu.path || !menu.component)) {
-        const childRoutes = generateRoutes(menu.children)
-        routes.push(...childRoutes)
       }
     })
 

@@ -179,7 +179,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.dashboard-view { display: flex; flex-direction: column; position: relative; }
+.dashboard-view { display: flex; flex-direction: column; position: relative; height: 100vh; }
 .view-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: rgba(0,0,0,.3); position: sticky; top: 0; z-index: 10; }
 .view-title { font-size: 20px; font-weight: 600; }
 .view-actions { display: flex; gap: 8px; }

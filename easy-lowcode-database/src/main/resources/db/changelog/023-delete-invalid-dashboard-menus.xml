@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <!-- 删除无效的大屏设计菜单项 -->
+    <!-- 注意：大屏设计器和预览页面需要大屏ID参数，应该通过"设计"按钮导航，而不是菜单 -->
+    <changeSet id="023-delete-invalid-dashboard-menus" author="dabai">
+        <delete tableName="sys_menu">
+            <where>path = '/dashboard/design'</where>
+        </delete>
+        <delete tableName="sys_menu">
+            <where>path = '/dashboard/view'</where>
+        </delete>
+        <delete tableName="sys_role_menu">
+            <where>menu_id NOT IN (SELECT id FROM sys_menu)</where>
+        </delete>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,7 +1,7 @@
 <template>
   <el-container class="layout-container">
-    <!-- 侧边栏 -->
-    <el-aside :width="isCollapse ? '64px' : '200px'" class="sidebar">
+    <!-- 侧边栏（隐藏布局模式下不显示） -->
+    <el-aside v-if="!isHideLayout" :width="isCollapse ? '64px' : '200px'" class="sidebar">
       <div class="logo">
         <span v-if="!isCollapse">低代码平台</span>
         <span v-else>LC</span>
@@ -27,8 +27,8 @@
           <!-- 有子菜单 -->
           <el-sub-menu v-if="menu.children && menu.children.length > 0" :index="menu.path">
             <template #title>
-              <el-icon v-if="menu.icon">
-                <component :is="menu.icon" />
+              <el-icon v-if="menu.icon && iconMap[menu.icon]">
+                <component :is="iconMap[menu.icon]" />
               </el-icon>
               <span>{{ menu.menuName }}</span>
             </template>
@@ -37,8 +37,8 @@
               :key="child.id" 
               :index="child.path"
             >
-              <el-icon v-if="child.icon">
-                <component :is="child.icon" />
+              <el-icon v-if="child.icon && iconMap[child.icon]">
+                <component :is="iconMap[child.icon]" />
               </el-icon>
               <template #title>{{ child.menuName }}</template>
             </el-menu-item>
@@ -46,8 +46,8 @@
           
           <!-- 无子菜单 -->
           <el-menu-item v-else :index="menu.path">
-            <el-icon v-if="menu.icon">
-              <component :is="menu.icon" />
+            <el-icon v-if="menu.icon && iconMap[menu.icon]">
+              <component :is="iconMap[menu.icon]" />
             </el-icon>
             <template #title>{{ menu.menuName }}</template>
           </el-menu-item>
@@ -56,8 +56,8 @@
     </el-aside>
 
     <el-container>
-      <!-- 顶部导航栏 -->
-      <el-header class="header">
+      <!-- 顶部导航栏（隐藏布局模式下不显示） -->
+      <el-header v-if="!isHideLayout" class="header">
         <div class="header-left">
           <!-- 面包屑导航 -->
           <el-breadcrumb separator="/" class="breadcrumb">
@@ -104,7 +104,43 @@ import { ElMessageBox } from 'element-plus'
 import {
   DArrowLeft,
   DArrowRight,
+  Setting,
+  User,
+  List,
+  Grid,
+  Document,
+  Connection,
+  Sort,
+  ChatDotRound,
+  Tools,
+  Operation,
+  Monitor,
+  DataLine,
+  Link,
+  Odometer,
+  UserFilled,
 } from '@element-plus/icons-vue'
+
+const iconMap: Record<string, any> = {
+  setting: Setting,
+  user: User,
+  peoples: UserFilled,
+  'tree-table': Sort,
+  tree: Connection,
+  example: List,
+  list: List,
+  dashboard: Monitor,
+  transform: Grid,
+  management: Operation,
+  design: Document,
+  database: Connection,
+  datasource: DataLine,
+  table: DataLine,
+  api: Link,
+  ai: Odometer,
+  config: Tools,
+  chat: ChatDotRound,
+}
 
 const router = useRouter()
 const route = useRoute()
@@ -114,6 +150,9 @@ const menuStore = useMenuStore()
 const isCollapse = ref(false)
 
 const activeMenu = computed(() => route.path)
+
+// 是否隐藏布局（用于全屏页面如大屏设计器）
+const isHideLayout = computed(() => route.meta?.hideLayout === true)
 
 // 组件挂载时加载菜单
 onMounted(async () => {
