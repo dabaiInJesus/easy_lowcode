@@ -54,10 +54,10 @@ public class DataSourceConfigController {
         page.getRecords().forEach(ds -> ds.setPassword("******"));
         
         PageResult<DataSourceConfig> result = new PageResult<>(
+            page.getRecords(),
             page.getTotal(),
             page.getCurrent(),
-            page.getSize(),
-            page.getRecords()
+            page.getSize()
         );
         
         return Result.success(result);

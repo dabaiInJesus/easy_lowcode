@@ -98,23 +98,5 @@
         </dependency>
     </dependencies>
 
-    <build>
-        <plugins>
-            <!-- Spring Boot Maven 插件 -->
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <mainClass>com.dabai.easy_lowcode.ai.AiApplication</mainClass>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>repackage</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+
 </project>

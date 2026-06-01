@@ -45,10 +45,10 @@ public class SysAppController {
         Page<SysApp> result = sysAppService.page(page, wrapper);
         
         PageResult<SysApp> pageResult = new PageResult<>(
+                result.getRecords(),
                 result.getTotal(),
                 result.getCurrent(),
-                result.getSize(),
-                result.getRecords()
+                result.getSize()
         );
         return Result.success(pageResult);
     }

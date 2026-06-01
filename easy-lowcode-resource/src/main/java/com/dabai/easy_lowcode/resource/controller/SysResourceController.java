@@ -51,10 +51,10 @@ public class SysResourceController {
         Page<SysResource> page = resourceService.page(new Page<>(current, size), wrapper);
         
         PageResult<SysResource> result = new PageResult<>(
+            page.getRecords(),
             page.getTotal(),
             page.getCurrent(),
-            page.getSize(),
-            page.getRecords()
+            page.getSize()
         );
         
         return Result.success(result);

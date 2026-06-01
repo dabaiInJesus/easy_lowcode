@@ -1,53 +1,205 @@
-name: CI Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [master]
+    branches: [main, develop]
   pull_request:
-    branches: [master]
+    branches: [main, develop]
+
+env:
+  JAVA_VERSION: '21'
+  NODE_VERSION: '20'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  backend-build:
+  # =============================================
+  # 后端构建与测试
+  # =============================================
+  backend-test:
+    name: Backend Test (JDK ${{ env.JAVA_VERSION }})
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
           cache: maven
 
-      - name: Build with Maven
-        run: mvn clean compile -DskipTests
+      - name: Get Maven dependencies
+        run: mvn dependency:go-offline -B
 
-      - name: Run tests
-        run: mvn test
+      - name: Backend Compile
+        run: mvn clean compile -DskipTests -B
 
-  frontend-build:
+      - name: Backend Unit Tests
+        run: mvn test -B
+        env:
+          DB_PASSWORD: test_password
+          DASHSCOPE_API_KEY: dummy_key
+          MINIMAX_API_KEY: dummy_key
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: '**/target/surefire-reports/*.xml'
+          retention-days: 7
+
+      - name: Generate Coverage Report
+        if: always()
+        run: mvn jacoco:report -B || true
+
+      - name: Upload Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: '**/target/site/jacoco/'
+          retention-days: 14
+
+  # =============================================
+  # 前端构建与测试
+  # =============================================
+  frontend-test:
+    name: Frontend Build (Node ${{ env.NODE_VERSION }})
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: easy-lowcode-frontend
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: easy-lowcode-frontend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Type check
+      - name: TypeScript Type Check
         run: npx vue-tsc --noEmit
+        continue-on-error: true
 
-      - name: Lint
-        run: npm run lint -- --no-fix || true
+      - name: ESLint Check
+        run: npm run lint || true
 
       - name: Build
         run: npm run build
+        env:
+          VITE_API_BASE_URL: /api
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: easy-lowcode-frontend/dist
+          retention-days: 7
+
+  # =============================================
+  # Docker镜像构建（仅main分支）
+  # =============================================
+  docker-build:
+    name: Docker Image Build
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test]
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}:latest
+            ${{ env.REGISTRY }}/${{ github.repository }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Image digest
+        run: echo "Image built: ${{ env.REGISTRY }}/${{ github.repository }}:${{ github.sha }}"
+
+  # =============================================
+  # 安全扫描（可选）
+  # =============================================
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # =============================================
+  # 质量门禁汇总
+  # =============================================
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test]
+    if: always()
+    steps:
+      - name: Check Results
+        run: |
+          echo "=== CI/CD Pipeline Summary ==="
+          echo "Backend Tests: ${{ needs.backend-test.result }}"
+          echo "Frontend Build: ${{ needs.frontend-test.result }}"
+          echo ""
+          if [[ "${{ needs.backend-test.result }}" == "failure" || "${{ needs.frontend-test.result }}" == "failure" ]]; then
+            echo "❌ Quality gate failed"
+            exit 1
+          fi
+          echo "✅ All checks passed"

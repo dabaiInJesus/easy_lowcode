@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <!-- 创建审计日志表 -->
+    <changeSet id="024-create-audit-log-table" author="system">
+        <createTable tableName="sys_audit_log">
+            <column name="id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="username" type="VARCHAR(100)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="module" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="action" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(500)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="request_method" type="VARCHAR(10)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="request_url" type="VARCHAR(500)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="request_params" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="ip_address" type="VARCHAR(50)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="user_agent" type="VARCHAR(500)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="operation_status" type="VARCHAR(20)" defaultValue="SUCCESS">
+                <constraints nullable="false"/>
+            </column>
+            <column name="error_message" type="VARCHAR(1000)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="execution_time" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- 创建索引 -->
+        <createIndex indexName="idx_audit_user_id" tableName="sys_audit_log">
+            <column name="user_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_audit_module" tableName="sys_audit_log">
+            <column name="module"/>
+        </createIndex>
+
+        <createIndex indexName="idx_audit_create_time" tableName="sys_audit_log">
+            <column name="create_time"/>
+        </createIndex>
+
+        <createIndex indexName="idx_audit_action" tableName="sys_audit_log">
+            <column name="action"/>
+        </createIndex>
+
+        <addUniqueConstraint tableName="sys_audit_log" columnNames="id" constraintName="pk_audit_log_id"/>
+    </changeSet>
+
+</databaseChangeLog>

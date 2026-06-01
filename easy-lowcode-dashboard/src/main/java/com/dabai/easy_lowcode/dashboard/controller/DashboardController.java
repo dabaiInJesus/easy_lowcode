@@ -57,7 +57,7 @@ public class DashboardController {
         }
 
         PageResult<Dashboard> result = new PageResult<>(
-            page.getTotal(), page.getCurrent(), page.getSize(), page.getRecords());
+            page.getRecords(), page.getTotal(), page.getCurrent(), page.getSize());
         return Result.success(result);
     }
 

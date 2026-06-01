@@ -13,22 +13,46 @@ export interface ApiResponse<T = any> {
 // 扩展请求配置，添加静默错误选项
 export interface CustomRequestConfig extends InternalAxiosRequestConfig {
   silentError?: boolean // 是否静默错误（不显示错误提示）
+  retryCount?: number // 请求重试次数
+  loadingId?: string // 加载状态标识（防止重复请求）
 }
+
+// 防止重复请求的 Map
+const pendingRequests = new Map<string, AbortController>()
 
 // 创建 axios 实例
 const service: AxiosInstance = axios.create({
   baseURL: '/api',
-  timeout: 15000,
+  timeout: 30000,
 })
 
 // 请求拦截器
 service.interceptors.request.use(
   (config: CustomRequestConfig) => {
+    // 防止重复请求
+    if (config.loadingId) {
+      const key = `${config.method}:${config.url}:${JSON.stringify(config.params || config.data || {})}`
+      const existing = pendingRequests.get(key)
+      if (existing) {
+        existing.abort() // 取消之前的请求
+      }
+      const controller = new AbortController()
+      config.signal = controller.signal
+      pendingRequests.set(key, controller)
+      config.signal.addEventListener('abort', () => {
+        pendingRequests.delete(key)
+      })
+    }
+
     // 从 Pinia store 获取 token
     const userStore = useUserStore()
     if (userStore.token) {
       config.headers['Authorization'] = `Bearer ${userStore.token}`
     }
+
+    // 添加请求ID（用于链路追踪）
+    config.headers['X-Request-Id'] = generateRequestId()
+
     return config
   },
   (error) => {
@@ -73,6 +97,11 @@ service.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
+// 生成请求ID
+function generateRequestId(): string {
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
+}
 
 // 导出 axios 实例（支持 request(config) 方式）
 export { service }

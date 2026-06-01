@@ -82,10 +82,10 @@ public class AuthController {
         Page<SysUser> page = userService.page(new Page<>(current, size), wrapper);
         
         PageResult<SysUser> result = new PageResult<>(
+            page.getRecords(),
             page.getTotal(),
             page.getCurrent(),
-            page.getSize(),
-            page.getRecords()
+            page.getSize()
         );
         
         return Result.success(result);

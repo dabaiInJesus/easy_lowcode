@@ -66,6 +66,10 @@ export function getEtlTaskTargetColumns(id: number): Promise<any[]> {
   return request({ url: `/etl/task/${id}/target-columns`, method: 'get' })
 }
 
+export function scanTableColumns(datasourceId: number, tableName: string): Promise<any[]> {
+  return request({ url: '/etl/task/scan-columns', method: 'get', params: { datasourceId, tableName } })
+}
+
 export function previewEtlSourceData(id: number, limit = 10): Promise<any[]> {
   return request({ url: `/etl/task/${id}/preview`, method: 'get', params: { limit } })
 }

@@ -143,7 +143,7 @@ mvn spring-boot:run
 
 **默认账号：**
 - 用户名：admin
-- 密码：admin123
+- 密码：123456
 
 ## 项目结构
 
@@ -238,7 +238,7 @@ easy_lowcode/
 ```bash
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}'
+  -d '{"username":"admin","password":"123456"}'
 ```
 
 响应：
@@ -360,9 +360,9 @@ mybatis-plus:
 **A:** 直接在数据库中修改：
 ```sql
 UPDATE sys_user 
-SET password = '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi' 
+SET password = '$2a$10$l9Z.7X9AIuzj1gk783KvcORuWBlLCGraRFMTtdAmz7DTALdS0ajjO' 
 WHERE username = 'admin';
--- 密码重置为: admin123
+-- 密码重置为: 123456
 ```
 
 ## 下一步

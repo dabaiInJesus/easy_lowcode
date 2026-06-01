@@ -5,12 +5,12 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
 
-    <!-- 插入默认管理员用户 (密码: admin123) -->
+    <!-- 插入默认管理员用户 (密码: 123456) -->
     <changeSet id="001-insert-admin-user" author="dabai">
         <insert tableName="sys_user">
             <column name="id" valueNumeric="1"/>
             <column name="username" value="admin"/>
-            <column name="password" value="$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi"/>
+            <column name="password" value="$2a$10$l9Z.7X9AIuzj1gk783KvcORuWBlLCGraRFMTtdAmz7DTALdS0ajjO"/>
             <column name="nickname" value="管理员"/>
             <column name="status" valueNumeric="1"/>
             <column name="gender" valueNumeric="0"/>

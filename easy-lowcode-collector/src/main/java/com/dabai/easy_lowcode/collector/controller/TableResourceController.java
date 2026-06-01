@@ -57,10 +57,10 @@ public class TableResourceController {
             Page<TableResource> page = ((com.dabai.easy_lowcode.collector.service.impl.TableResourceServiceImpl) tableResourceService).pageWithDatasourceName(new Page<>(current, size), wrapper);
             
             PageResult<TableResource> result = new PageResult<>(
+                page.getRecords(),
                 page.getTotal(),
                 page.getCurrent(),
-                page.getSize(),
-                page.getRecords()
+                page.getSize()
             );
             
             return Result.success(result);

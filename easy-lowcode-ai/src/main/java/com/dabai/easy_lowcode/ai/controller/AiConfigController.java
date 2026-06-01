@@ -46,7 +46,7 @@ public class AiConfigController {
                 c.setApiKey(c.getApiKey().substring(0, 4) + "****" + c.getApiKey().substring(c.getApiKey().length() - 4));
             }
         });
-        return Result.success(new PageResult<>(page.getTotal(), page.getCurrent(), page.getSize(), page.getRecords()));
+        return Result.success(new PageResult<>(page.getRecords(), page.getTotal(), page.getCurrent(), page.getSize()));
     }
 
     @Operation(summary = "保存AI配置", description = "创建新的AI供应商配置")

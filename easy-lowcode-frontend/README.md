@@ -123,7 +123,7 @@ const res = await request({
 #### 默认账号
 
 - 用户名: `admin`
-- 密码: `admin123`
+- 密码: `123456`
 
 #### 认证流程
 
@@ -155,7 +155,7 @@ const res = await request({
   ```json
   {
     "username": "admin",
-    "password": "admin123"
+    "password": "123456"
   }
   ```
 - 响应:

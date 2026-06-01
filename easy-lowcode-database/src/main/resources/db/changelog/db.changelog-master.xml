@@ -11,8 +11,9 @@
     <include file="db/changelog/003-ai-agent-schema.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/004-add-real-name-field.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/005-update-admin-password.xml" relativeToChangelogFile="false"/>
-    <include file="db/changelog/006-create-collector-tables.xml" relativeToChangelogFile="false"/>
-    <include file="db/changelog/007-create-sys-resource-table.xml" relativeToChangelogFile="false"/>
+    <!-- 006, 007 已经执行过，跳过 -->
+    <!-- <include file="db/changelog/006-create-collector-tables.xml" relativeToChangelogFile="false"/> -->
+    <!-- <include file="db/changelog/007-create-sys-resource-table.xml" relativeToChangelogFile="false"/> -->
     <include file="db/changelog/008-add-app-management-menu.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/011-add-menu-code-to-sys-menu.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/009-create-api-management-table.xml" relativeToChangelogFile="false"/>
@@ -26,5 +27,6 @@
     <include file="db/changelog/021-add-ai-agent-instructions.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/022-add-indexes.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/023-delete-invalid-dashboard-menus.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/024-create-audit-log-table.xml" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

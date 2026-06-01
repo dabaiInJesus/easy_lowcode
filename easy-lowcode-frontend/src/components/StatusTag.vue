@@ -1,22 +1,51 @@
 <template>
-  <el-tag :type="status === 1 ? 'success' : 'danger'" v-bind="$attrs">
-    {{ statusText }}
+  <el-tag
+    :type="typeMap[status]"
+    :size="size"
+    :effect="effect"
+    :hit="hit"
+    :round="round"
+  >
+    {{ label || status }}
   </el-tag>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 
-const props = defineProps<{
-  status: number | string
-  enabledText?: string
-  disabledText?: string
-}>()
+interface Props {
+  status: string | number
+  typeMap?: Record<string, any>
+  labelMap?: Record<string, string>
+  label?: string
+  size?: 'large' | 'default' | 'small'
+  effect?: 'light' | 'dark' | 'plain'
+  hit?: boolean
+  round?: boolean
+}
 
-const statusText = computed(() => {
-  if (props.status === 1 || props.status === '1') {
-    return props.enabledText || '启用'
-  }
-  return props.disabledText || '禁用'
+const props = withDefaults(defineProps<Props>(), {
+  typeMap: () => ({
+    1: 'success',
+    0: 'danger',
+    ENABLE: 'success',
+    DISABLE: 'danger',
+    ENABLE: 'success',
+    DISABLE: 'danger',
+    SUCCESS: 'success',
+    FAILURE: 'danger',
+    RUNNING: 'warning',
+    PENDING: 'info',
+    ACTIVE: 'success',
+    INACTIVE: 'info',
+    DELETED: 'info'
+  }),
+  labelMap: () => ({}),
+  size: 'small',
+  effect: 'light',
+  hit: false,
+  round: false
 })
+
+const type = computed(() => props.typeMap[props.status] || 'info')
 </script>

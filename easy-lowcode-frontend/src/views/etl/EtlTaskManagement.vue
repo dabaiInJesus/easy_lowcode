@@ -227,7 +227,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { getEtlTaskPage, createEtlTask, updateEtlTask, deleteEtlTask, executeEtlTask, getEtlTaskHistory, getEtlTaskSourceColumns, getEtlDatasources, toggleEtlTaskSchedule, type EtlTask } from '@/api/etl'
+import { getEtlTaskPage, createEtlTask, updateEtlTask, deleteEtlTask, executeEtlTask, getEtlTaskHistory, getEtlTaskSourceColumns, getEtlDatasources, toggleEtlTaskSchedule, scanTableColumns, type EtlTask } from '@/api/etl'
 import { getDataSourcePage } from '@/api/datasource'
 
 const searchForm = reactive({ keyword: '' })
@@ -348,15 +348,36 @@ const handleDsChange = (type: 'source' | 'target') => {
 }
 
 const autoMapFields = async () => {
-  if (!formData.sourceDatasourceId || !formData.sourceTable || !formData.targetTable) {
-    ElMessage.warning('请先选择源数据源、源表和目标表')
+  if (!formData.sourceDatasourceId || !formData.sourceTable || !formData.targetDatasourceId || !formData.targetTable) {
+    ElMessage.warning('请先选择源数据源、源表、目标数据源和目标表')
     return
   }
-  // 自动从源表加载字段，与目标表做同名匹配
   try {
-    const sourceCols = await getEtlTaskSourceColumns(formData.id || 0)
-    sourceColumnList.value = sourceCols || []
-  } catch { /* ignore */ }
+    // 扫描源表字段
+    const sourceCols = await scanTableColumns(formData.sourceDatasourceId, formData.sourceTable)
+    // 扫描目标表字段
+    const targetCols = await scanTableColumns(formData.targetDatasourceId, formData.targetTable)
+    
+    const sourceColumnNames = sourceCols.map((c: any) => c.columnName as string)
+    const targetColumnNames = targetCols.map((c: any) => c.columnName as string)
+    
+    // 同名列自动映射
+    const mappings: any[] = []
+    sourceColumnNames.forEach(srcCol => {
+      if (targetColumnNames.includes(srcCol)) {
+        mappings.push({ source: srcCol, target: srcCol, transformType: 'NONE', transformRule: '' })
+      }
+    })
+    
+    if (mappings.length > 0) {
+      fieldMappingTable.value = mappings
+      ElMessage.success(`自动匹配成功，共 ${mappings.length} 个字段`)
+    } else {
+      ElMessage.warning('未找到同名字段，请手动配置映射')
+    }
+  } catch (e: any) {
+    ElMessage.error('获取字段列表失败: ' + (e.message || ''))
+  }
 }
 
 const handleSubmit = async () => {

@@ -30,7 +30,7 @@ echo.
 echo ========================================
 echo   应用正在启动...
 echo   访问地址: http://localhost:8080
-echo   默认账号: admin / admin123
+echo   默认账号: admin / 123456
 echo   按 Ctrl+C 停止应用
 echo ========================================
 echo.

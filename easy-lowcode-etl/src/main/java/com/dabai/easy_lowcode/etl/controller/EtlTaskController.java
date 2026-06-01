@@ -55,7 +55,7 @@ public class EtlTaskController {
         fillDatasourceNames(page.getRecords());
 
         PageResult<EtlTask> result = new PageResult<>(
-            page.getTotal(), page.getCurrent(), page.getSize(), page.getRecords()
+            page.getRecords(), page.getTotal(), page.getCurrent(), page.getSize()
         );
         return Result.success(result);
     }
@@ -215,6 +215,16 @@ public class EtlTaskController {
                 .orderByAsc(DataSourceConfig::getName));
         list.forEach(ds -> ds.setPassword("******"));
         return Result.success(list);
+    }
+
+    @Operation(summary = "扫描表字段", description = "根据数据源和表名扫描表的字段列表")
+    @ApiResponse(responseCode = "200", description = "扫描成功")
+    @GetMapping("/scan-columns")
+    public Result<List<Map<String, Object>>> scanColumns(
+            @Parameter(description = "数据源ID") @RequestParam Long datasourceId,
+            @Parameter(description = "表名") @RequestParam String tableName) {
+        List<Map<String, Object>> columns = etlTaskService.scanSourceColumns(datasourceId, tableName);
+        return Result.success(columns);
     }
 
     private void fillDatasourceNames(List<EtlTask> tasks) {

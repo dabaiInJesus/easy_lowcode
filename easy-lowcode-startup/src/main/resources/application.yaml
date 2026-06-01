@@ -155,10 +155,33 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus,logfile
+        base-path: /actuator
   endpoint:
     health:
       show-details: always
+      probes:
+        enabled: true
+    metrics:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    export:
+      prometheus:
+        enabled: true
+  health:
+    elasticsearch:
+      enabled: false
+    rabbit:
+      enabled: false
+    redis:
+      enabled: true
+    db:
+      enabled: true
+  info:
+    env:
+      enabled: true
 
 # SpringDoc OpenAPI 配置
 springdoc:
