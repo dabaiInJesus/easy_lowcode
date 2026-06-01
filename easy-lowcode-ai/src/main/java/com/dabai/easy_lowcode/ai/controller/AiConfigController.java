@@ -116,4 +116,29 @@ public class AiConfigController {
         list.forEach(c -> c.setApiKey(null));
         return Result.success(list);
     }
+
+    @Operation(summary = "获取AI配置详情（包含完整API Key）", description = "根据ID获取AI配置完整信息，包括解密后的API Key")
+    @ApiResponse(responseCode = "200", description = "获取成功")
+    @GetMapping("/{id}")
+    public Result<AiConfig> getById(@Parameter(description = "配置ID") @PathVariable Long id) {
+        AiConfig config = aiConfigMapper.selectById(id);
+        if (config == null) {
+            return Result.error("配置不存在");
+        }
+        if (config.getApiKey() != null && !config.getApiKey().contains("****")) {
+            try {
+                config.setApiKey(EncryptUtil.decrypt(config.getApiKey()));
+            } catch (Exception e) {
+                log.warn("API Key解密失败: {}", e.getMessage());
+            }
+        }
+        if (config.getSecretKey() != null && !config.getSecretKey().contains("****")) {
+            try {
+                config.setSecretKey(EncryptUtil.decrypt(config.getSecretKey()));
+            } catch (Exception e) {
+                log.warn("Secret Key解密失败: {}", e.getMessage());
+            }
+        }
+        return Result.success(config);
+    }
 }

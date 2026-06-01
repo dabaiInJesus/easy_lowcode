@@ -772,13 +772,14 @@ const handleNextStep = async () => {
 
 // 提交注册
 const handleSubmitRegister = async () => {
-  if (!registerFormRef.value) return
+  // 验证表单数据
+  if (!registerFormData.resourceCode || !registerFormData.apiPath) {
+    ElMessage.warning('请填写资源编码和API路径')
+    return
+  }
   
-  await registerFormRef.value.validate(async (valid) => {
-    if (!valid) return
-    
-    submitLoading.value = true
-    try {
+  submitLoading.value = true
+  try {
       // 构建字段配置
       const fieldConfig = tableColumns.value
         .filter(col => col.exactQuery || col.fuzzyQuery)
@@ -860,7 +861,6 @@ const handleSubmitRegister = async () => {
     } finally {
       submitLoading.value = false
     }
-  })
 }
 
 // 关闭注册对话框

@@ -8,7 +8,7 @@
     <!-- 创建审计日志表 -->
     <changeSet id="024-create-audit-log-table" author="system">
         <createTable tableName="sys_audit_log">
-            <column name="id" type="BIGINT">
+            <column name="id" type="BIGINT" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="user_id" type="BIGINT">

@@ -41,3 +41,10 @@ function addRule() {
 
 watch(localConfig, () => emit('update:modelValue', { rules: localConfig.rules.map((r: any) => ({ ...r })) }), { deep: true })
 </script>
+
+
+<style scoped>
+.el-form {
+  max-width: 100%;
+}
+</style>

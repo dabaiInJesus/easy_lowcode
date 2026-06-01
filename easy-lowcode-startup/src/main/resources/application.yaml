@@ -2,10 +2,29 @@ server:
   port: 8081
   servlet:
     context-path: /
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  tomcat:
+    uri-encoding: UTF-8
 
 spring:
   application:
     name: easy-lowcode
+  main:
+    allow-bean-definition-overriding: true
+  mvc:
+    servlet:
+      encoding:
+        charset: UTF-8
+        enabled: true
+        force: true
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
   
   # Spring AI 配置
   ai:
@@ -110,34 +129,40 @@ ai:
 
   # OpenAI 配置
   openai:
+    enabled: true
     api-key: ${OPENAI_API_KEY:}
     base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
     model: ${OPENAI_MODEL:gpt-3.5-turbo}
 
   # 通义千问配置
   dashscope:
+    enabled: true
     api-key: ${DASHSCOPE_API_KEY:}
     model: ${DASHSCOPE_MODEL:qwen-turbo}
 
   # 文心一言配置
   wenxin:
+    enabled: true
     api-key: ${WENXIN_API_KEY:}
     secret-key: ${WENXIN_SECRET_KEY:}
     model: ${WENXIN_MODEL:eb-instant}
 
   # Ollama 配置
   ollama:
+    enabled: true
     base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
     model: ${OLLAMA_MODEL:llama2}
 
   # DeepSeek 配置
   deepseek:
+    enabled: true
     api-key: ${DEEPSEEK_API_KEY:}
     base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com/v1}
     model: ${DEEPSEEK_MODEL:deepseek-chat}
 
   # Minimax 配置
   minimax:
+    enabled: true
     api-key: ${MINIMAX_API_KEY:}
     base-url: ${MINIMAX_BASE_URL:https://api.minimax.chat/v1}
     model: ${MINIMAX_MODEL:abab6-chat}
@@ -147,6 +172,8 @@ logging:
   level:
     root: INFO
     com.dabai.easy_lowcode: DEBUG
+    liquibase: INFO
+    liquibase.command: DEBUG
   pattern:
     console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
 

@@ -5,6 +5,7 @@ export interface DataSourceConfig {
   name: string
   code: string
   dbType: string
+  dbName?: string
   url: string
   username: string
   password: string

@@ -36,7 +36,7 @@
       + 添加处理器
     </el-button>
 
-    <el-dialog v-model="showAddDialog" title="选择处理器类型" width="500">
+    <el-dialog v-model="showAddDialog" title="选择处理器类型" width="700px" top="10vh" class="processor-type-dialog">
       <el-radio-group v-model="selectedType" style="width:100%">
         <el-radio
           v-for="bp in builtinList"
@@ -54,8 +54,10 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="showConfigDialog" :title="'配置: ' + getProcessorLabel(editingType)" width="600">
-      <component :is="getConfigForm(editingType)" v-if="editingConfig" v-model="editingConfig" />
+    <el-dialog v-model="showConfigDialog" :title="'配置: ' + getProcessorLabel(editingType)" width="850px" top="5vh" class="processor-config-dialog">
+      <div class="config-form-wrapper">
+        <component :is="getConfigForm(editingType)" v-if="editingConfig" v-model="editingConfig" />
+      </div>
       <template #footer>
         <el-button @click="showConfigDialog = false">取消</el-button>
         <el-button type="primary" @click="saveConfig">确定</el-button>
@@ -202,5 +204,74 @@ function emitUpdate() {
 <style scoped>
 .processor-item {
   transition: all 0.2s;
+}
+
+:deep(.processor-type-dialog .el-dialog__body) {
+  padding: 20px;
+  min-height: 300px;
+  max-height: 450px;
+  overflow-y: auto;
+}
+
+:deep(.processor-type-dialog .el-radio) {
+  display: block;
+  margin-bottom: 15px;
+  padding: 12px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+:deep(.processor-type-dialog .el-radio:hover) {
+  border-color: #409eff;
+  background-color: #f5f7fa;
+}
+
+:deep(.processor-type-dialog .el-radio.is-checked) {
+  border-color: #409eff;
+  background-color: #ecf5ff;
+}
+
+:deep(.processor-config-dialog .el-dialog) {
+  max-height: 90vh;
+}
+
+:deep(.processor-config-dialog .el-dialog__body) {
+  padding: 24px;
+  min-height: 350px;
+  max-height: calc(90vh - 140px);
+  overflow-y: auto;
+}
+
+:deep(.processor-config-dialog .config-form-wrapper) {
+  width: 100%;
+  padding: 10px;
+}
+
+:deep(.processor-config-dialog .config-form-wrapper .el-form) {
+  max-width: 100%;
+}
+
+:deep(.processor-config-dialog .config-form-wrapper .el-form-item) {
+  margin-bottom: 20px;
+}
+
+:deep(.processor-config-dialog .config-form-wrapper .el-form-item__label) {
+  font-weight: 500;
+  color: #303133;
+}
+
+:deep(.processor-config-dialog .config-form-wrapper .el-input),
+:deep(.processor-config-dialog .config-form-wrapper .el-select) {
+  width: 100%;
+}
+
+:deep(.processor-config-dialog .config-form-wrapper .el-button) {
+  margin-top: 8px;
+}
+
+:deep(.processor-config-dialog .config-form-wrapper p) {
+  margin-bottom: 16px;
+  line-height: 1.6;
 }
 </style>

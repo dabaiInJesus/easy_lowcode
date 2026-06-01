@@ -28,5 +28,8 @@
     <include file="db/changelog/022-add-indexes.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/023-delete-invalid-dashboard-menus.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/024-create-audit-log-table.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/025-fix-audit-log-id.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/026-fix-audit-log-sequence.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/027-remove-ai-config-provider-unique.xml" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

@@ -40,3 +40,10 @@ watch(localConfig, () => emit('update:modelValue', {
   fieldFormats: { ...localConfig.fieldFormats },
 }), { deep: true })
 </script>
+
+
+<style scoped>
+.el-form {
+  max-width: 100%;
+}
+</style>

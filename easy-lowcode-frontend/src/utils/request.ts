@@ -66,15 +66,21 @@ service.interceptors.response.use(
   (response: AxiosResponse) => {
     const res: ApiResponse<any> = response.data
 
+    console.log('[Request Interceptor] Response received:', {
+      url: response.config?.url,
+      status: response.status,
+      code: res.code,
+      message: res.message
+    })
+
     // 如果返回的状态码不是 200，则认为是错误
     if (res.code !== 200) {
-      // 检查是否设置了静默错误
       const config = response.config as CustomRequestConfig
+      console.log('[Request Interceptor] Non-200 response, rejecting with message:', res.message)
       if (!config.silentError) {
         ElMessage.error(res.message || '请求失败')
       }
 
-      // 401: 未授权，需要重新登录（总是显示）
       if (res.code === 401) {
         const userStore = useUserStore()
         userStore.clearUser()
@@ -84,17 +90,24 @@ service.interceptors.response.use(
       return Promise.reject(new Error(res.message || '请求失败'))
     }
 
-    // 返回解包后的数据（ApiResponse.data）
     return res.data
   },
   (error) => {
-    console.error('Response error:', error)
-    // 检查是否设置了静默错误
+    console.log('[Request Interceptor] Error caught:', {
+      message: error.message,
+      code: error.code,
+      status: error.response?.status,
+      responseData: error.response?.data,
+      url: error.config?.url,
+      baseURL: error.config?.baseURL
+    })
+    
+    const errMsg = error.response?.data?.message || error.message || '网络错误'
     const config = error.config as CustomRequestConfig
     if (!config?.silentError) {
-      ElMessage.error(error.message || '网络错误')
+      ElMessage.error(errMsg)
     }
-    return Promise.reject(error)
+    return Promise.reject(new Error(errMsg))
   }
 )
 

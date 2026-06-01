@@ -3,9 +3,9 @@ import request from '@/utils/request'
 export interface AiConfig {
   id?: number
   provider: string
-  configName: string
+  displayName: string
   apiKey?: string
-  apiUrl?: string
+  baseUrl?: string
   model?: string
   status?: number
   remark?: string
@@ -43,6 +43,10 @@ export function getAiConfigPage(current: number, size: number): Promise<any> {
 
 export function getAiConfigList(): Promise<AiConfig[]> {
   return request({ url: '/ai/config/list', method: 'get' })
+}
+
+export function getAiConfigById(id: number): Promise<AiConfig> {
+  return request({ url: `/ai/config/${id}`, method: 'get' })
 }
 
 export function createAiConfig(data: Partial<AiConfig>): Promise<void> {

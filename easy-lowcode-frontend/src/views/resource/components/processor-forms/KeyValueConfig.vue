@@ -33,3 +33,22 @@ function removeEntry(key: string) {
 
 watch(localConfig, () => emit('update:modelValue', { mappings: { ...localConfig.mappings } }), { deep: true })
 </script>
+
+<style scoped>
+.config-wrapper {
+  padding: 8px;
+}
+.mapping-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.mapping-row .el-input {
+  flex: 1;
+}
+.mapping-arrow {
+  color: #999;
+  font-size: 16px;
+}
+</style>

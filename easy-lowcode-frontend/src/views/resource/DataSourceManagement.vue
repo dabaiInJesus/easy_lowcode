@@ -1,4 +1,4 @@
-。<template>
+<template>
   <div class="datasource-management">
     <!-- 搜索和操作栏 -->
     <el-card class="search-card">
@@ -84,9 +84,6 @@
         <el-form-item label="数据源名称" prop="name">
           <el-input v-model="formData.name" placeholder="请输入数据源名称" />
         </el-form-item>
-        <el-form-item label="数据源编码" prop="code">
-          <el-input v-model="formData.code" placeholder="请输入数据源编码（唯一）" />
-        </el-form-item>
         <el-form-item label="数据库类型" prop="dbType">
           <el-select v-model="formData.dbType" placeholder="请选择数据库类型" style="width: 100%" @change="handleDbTypeChange">
             <el-option label="MySQL" value="mysql" />
@@ -103,12 +100,24 @@
             <el-option label="瀚高 HighGo" value="highgo" />
           </el-select>
         </el-form-item>
+        <el-form-item label="数据库名称" prop="dbName">
+          <el-input v-model="formData.dbName" placeholder="请输入数据库名称" @blur="updateUrlByDbName" />
+        </el-form-item>
+        <el-form-item label="数据源编码" prop="code">
+          <el-input v-model="formData.code" placeholder="请输入数据源编码（唯一）" />
+        </el-form-item>
         <el-form-item label="连接URL" prop="url">
           <el-input
             v-model="formData.url"
             placeholder="例如：jdbc:mysql://localhost:3306/database"
             type="textarea"
             :rows="2"
+          />
+        </el-form-item>
+        <el-form-item label="驱动类名">
+          <el-input
+            v-model="formData.driverClassName"
+            placeholder="自动识别，也可手动输入"
           />
         </el-form-item>
         <el-form-item label="用户名" prop="username">
@@ -122,13 +131,7 @@
             show-password
           />
         </el-form-item>
-        <el-form-item label="驱动类名">
-          <el-input
-            v-model="formData.driverClassName"
-            placeholder="自动识别，也可手动输入"
-          />
-        </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item label="状态" prop="status">
           <el-radio-group v-model="formData.status">
             <el-radio :value="1">启用</el-radio>
             <el-radio :value="0">禁用</el-radio>
@@ -198,10 +201,11 @@ const formData = reactive<Partial<DataSourceConfig>>({
   name: '',
   code: '',
   dbType: 'mysql',
-  url: '',
+  dbName: 'easy_lowcode',  // 数据库名称（默认值）
+  url: 'jdbc:mysql://localhost:3306/easy_lowcode?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai',
   username: '',
   password: '',
-  driverClassName: '',
+  driverClassName: 'com.mysql.cj.jdbc.Driver',  // 默认MySQL驱动
   status: 1,
   remark: '',
 })
@@ -211,8 +215,10 @@ const formRules: FormRules = {
   name: [{ required: true, message: '请输入数据源名称', trigger: 'blur' }],
   code: [{ required: true, message: '请输入数据源编码', trigger: 'blur' }],
   dbType: [{ required: true, message: '请选择数据库类型', trigger: 'change' }],
+  dbName: [{ required: true, message: '请输入数据库名称', trigger: 'blur' }],
   url: [{ required: true, message: '请输入连接URL', trigger: 'blur' }],
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  driverClassName: [{ required: true, message: '请输入驱动类名', trigger: 'blur' }],
 }
 
 // 动态密码验证规则
@@ -283,6 +289,23 @@ const handleDbTypeChange = (dbType: string) => {
     formData.driverClassName = config.driverClassName
     formData.url = config.urlTemplate
   }
+  // 新增时自动更新编码
+  if (!formData.id) {
+    formData.code = generateCode(dbType)
+  }
+  // 有数据库名称时更新URL
+  if (formData.dbName) {
+    updateUrlByDbName()
+  }
+}
+
+// 根据数据库名称更新连接URL
+const updateUrlByDbName = () => {
+  if (!formData.dbName || !formData.dbType) return
+  const config = dbTypeConfig[formData.dbType]
+  if (config) {
+    formData.url = config.urlTemplate.replace('database', formData.dbName)
+  }
 }
 
 // 加载数据
@@ -312,10 +335,19 @@ const handleReset = () => {
   handleSearch()
 }
 
+
+// 生成随机编码
+const generateCode = (dbType: string) => {
+  const timestamp = Date.now().toString(36).substring(0, 6)
+  const random = Math.random().toString(36).substring(2, 6)
+  return `${dbType}_${timestamp}${random}`
+}
+
 // 新增
 const handleAdd = () => {
   dialogTitle.value = '新增数据源'
   showPassword.value = false
+  formData.code = generateCode(formData.dbType!)  // 自动生成编码
   dialogVisible.value = true
 }
 
@@ -435,10 +467,11 @@ const handleDialogClose = () => {
     name: '',
     code: '',
     dbType: 'mysql',
-    url: '',
+    dbName: 'easy_lowcode',
+    url: 'jdbc:mysql://localhost:3306/easy_lowcode?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai',
     username: '',
     password: '',
-    driverClassName: '',
+    driverClassName: 'com.mysql.cj.jdbc.Driver',  // 默认MySQL驱动
     status: 1,
     remark: '',
   })
@@ -518,9 +551,7 @@ onMounted(() => {
 }
 
 .dialog-content {
-  max-height: calc(100vh - 180px);
-  overflow-y: auto;
-  padding-right: 10px;
+  overflow: hidden;
 }
 
 .dialog-footer {

@@ -22,3 +22,14 @@ watch(jsonStr, (nv) => {
   } catch { }
 })
 </script>
+
+<style scoped>
+.json-editor {
+  max-height: 400px;
+  overflow: auto;
+}
+.json-editor :deep(textarea) {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+}
+</style>

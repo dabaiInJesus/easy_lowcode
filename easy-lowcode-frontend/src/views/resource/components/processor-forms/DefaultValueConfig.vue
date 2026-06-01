@@ -18,3 +18,10 @@ const emit = defineEmits<{ (e: 'update:modelValue', val: Record<string, any>): v
 const localConfig = reactive({ ...props.modelValue })
 watch(localConfig, () => emit('update:modelValue', { ...localConfig }), { deep: true })
 </script>
+
+
+<style scoped>
+.el-form {
+  max-width: 100%;
+}
+</style>

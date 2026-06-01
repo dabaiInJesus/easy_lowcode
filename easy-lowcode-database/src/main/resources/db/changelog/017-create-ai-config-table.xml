@@ -27,6 +27,5 @@
             <column name="update_by" type="BIGINT" remarks="更新人"/>
             <column name="deleted" type="SMALLINT" defaultValueNumeric="0" remarks="删除标志"/>
         </createTable>
-        <addUniqueConstraint columnNames="provider" constraintName="uk_ai_provider" tableName="ai_config"/>
     </changeSet>
 </databaseChangeLog>

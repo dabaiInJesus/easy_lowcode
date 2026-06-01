@@ -54,10 +54,10 @@ public class AiModelConfig {
     public ChatModel minimaxChatModel(
             @Value("${ai.minimax.base-url:https://api.minimax.chat/v1}") String baseUrl,
             @Value("${ai.minimax.api-key:}") String apiKey,
-            @Value("${ai.minimax.model:abab6-chat}") String model) {
+            @Value("${ai.minimax.model:abab6.5s-chat}") String model) {
         log.info("初始化 Minimax ChatModel, baseUrl={}, model={}", baseUrl, model);
         OpenAiApi openAiApi = OpenAiApi.builder()
-                .baseUrl(baseUrl)
+                .baseUrl(baseUrl.endsWith("/v1") ? baseUrl : baseUrl + "/v1")
                 .apiKey(apiKey)
                 .build();
         return OpenAiChatModel.builder()
