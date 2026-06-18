@@ -24,6 +24,8 @@ import java.util.Collections;
 @Service
 @RequiredArgsConstructor
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements SysUserService {
+
+    private final JwtUtil jwtUtil;
     
     @Override
     public String login(String username, String password) {
@@ -47,7 +49,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             throw new BusinessException("用户已被禁用");
         }
         
-        String token = JwtUtil.generateToken(user.getId(), user.getUsername());
+        String token = jwtUtil.generateToken(user.getId(), user.getUsername());
         log.info("用户登录成功: {}", username);
         return token;
     }

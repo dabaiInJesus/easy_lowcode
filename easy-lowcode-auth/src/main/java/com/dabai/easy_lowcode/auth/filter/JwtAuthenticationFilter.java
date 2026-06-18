@@ -3,6 +3,7 @@ package com.dabai.easy_lowcode.auth.filter;
 import com.dabai.easy_lowcode.auth.service.SysUserService;
 import com.dabai.easy_lowcode.common.util.JwtUtil;
 import jakarta.servlet.FilterChain;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,6 +25,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final SysUserService userService;
+    private final JwtUtil jwtUtil;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -34,8 +36,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
 
-            if (JwtUtil.validateToken(token)) {
-                Long userId = JwtUtil.getUserIdFromToken(token);
+            if (jwtUtil.validateToken(token)) {
+                Long userId = jwtUtil.getUserIdFromToken(token);
 
                 if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     UserDetails userDetails = userService.loadUserById(userId);

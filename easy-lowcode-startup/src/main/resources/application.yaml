@@ -109,6 +109,11 @@ encrypt:
   aes:
     key: ${ENCRYPT_AES_KEY:1234567890123456}
 
+# JWT 配置
+jwt:
+  secret: ${JWT_SECRET:}
+  expiration: 2592000000
+
 # Sa-Token配置
 sa-token:
   token-name: satoken

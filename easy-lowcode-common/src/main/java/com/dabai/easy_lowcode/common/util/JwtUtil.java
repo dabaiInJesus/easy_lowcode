@@ -3,6 +3,8 @@ package com.dabai.easy_lowcode.common.util;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -11,36 +13,39 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
+@Component
 public class JwtUtil {
 
-    private static final String JWT_SECRET = "EasyLowcode@2024#SecretKey$For@JWT$Token$Generation";
-    private static final long JWT_EXPIRATION = 2592000000L;
+    private final SecretKey signingKey;
 
-    private static SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(JWT_SECRET.getBytes(StandardCharsets.UTF_8));
+    @Value("${jwt.expiration:2592000000}")
+    private long jwtExpiration;
+
+    public JwtUtil(@Value("${jwt.secret}") String secret) {
+        this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public static String generateToken(Long userId, String username) {
+    public String generateToken(Long userId, String username) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         claims.put("username", username);
 
         Date now = new Date();
-        Date expiration = new Date(now.getTime() + JWT_EXPIRATION);
+        Date expiration = new Date(now.getTime() + jwtExpiration);
 
         return Jwts.builder()
                 .claims(claims)
                 .subject(userId.toString())
                 .issuedAt(now)
                 .expiration(expiration)
-                .signWith(getSigningKey())
+                .signWith(signingKey)
                 .compact();
     }
 
-    public static boolean validateToken(String token) {
+    public boolean validateToken(String token) {
         try {
             Jwts.parser()
-                    .verifyWith(getSigningKey())
+                    .verifyWith(signingKey)
                     .build()
                     .parseSignedClaims(token);
             return true;
@@ -50,10 +55,10 @@ public class JwtUtil {
         }
     }
 
-    public static Long getUserIdFromToken(String token) {
+    public Long getUserIdFromToken(String token) {
         try {
             Claims claims = Jwts.parser()
-                    .verifyWith(getSigningKey())
+                    .verifyWith(signingKey)
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
@@ -64,10 +69,10 @@ public class JwtUtil {
         }
     }
 
-    public static String getUsernameFromToken(String token) {
+    public String getUsernameFromToken(String token) {
         try {
             Claims claims = Jwts.parser()
-                    .verifyWith(getSigningKey())
+                    .verifyWith(signingKey)
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();

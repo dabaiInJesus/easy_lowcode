@@ -22,7 +22,8 @@ import java.util.List;
 @Component
 public class AuthGlobalFilter implements GlobalFilter, Ordered {
     
-    private static final String JWT_SECRET = "EasyLowcode@2024#SecretKey$For@JWT$Token$Generation";
+    @Value("${jwt.secret}")
+    private String jwtSecret;
     
     @Value("${gateway.auth.whitelist:/api/auth/login,/api/auth/register}")
     private List<String> whiteList;
@@ -48,7 +49,7 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
             String token = authHeader.substring(7);
             
             var claims = Jwts.parser()
-                    .verifyWith(Keys.hmacShaKeyFor(JWT_SECRET.getBytes(StandardCharsets.UTF_8)))
+                    .verifyWith(Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8)))
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
