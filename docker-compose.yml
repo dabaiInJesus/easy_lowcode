@@ -143,6 +143,8 @@ services:
       MINIMAX_API_KEY: ${MINIMAX_API_KEY:-}
       # AI 默认供应商
       AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-}
+      # JWT
+      JWT_SECRET: ${JWT_SECRET}
       # CORS
       CORS_ORIGINS: ${CORS_ORIGINS:-**}
     networks:

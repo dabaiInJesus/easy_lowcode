@@ -111,7 +111,7 @@ encrypt:
 
 # JWT 配置
 jwt:
-  secret: ${JWT_SECRET:}
+  secret: ${JWT_SECRET}
   expiration: 2592000000
 
 # Sa-Token配置

@@ -15,6 +15,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -27,6 +28,13 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
     
     @Value("${gateway.auth.whitelist:/api/auth/login,/api/auth/register}")
     private List<String> whiteList;
+    
+    private javax.crypto.SecretKey hmacKey;
+    
+    @PostConstruct
+    public void init() {
+        this.hmacKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+    }
     
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -49,7 +57,7 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
             String token = authHeader.substring(7);
             
             var claims = Jwts.parser()
-                    .verifyWith(Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8)))
+                    .verifyWith(hmacKey)
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
