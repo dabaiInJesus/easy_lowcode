@@ -20,7 +20,7 @@ import java.util.List;
 @Tag(name = "菜单管理", description = "菜单CRUD及树形结构管理")
 @Slf4j
 @RestController
-@RequestMapping("/auth/menu")
+@RequestMapping("/api/auth/menu")
 @RequiredArgsConstructor
 public class MenuController {
     

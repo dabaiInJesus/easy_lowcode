@@ -40,10 +40,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             throw new BusinessException("用户名或密码错误");
         }
         
-        log.debug("用户输入密码: {}", password);
-        log.debug("数据库存储密码: {}", user.getPassword());
-        log.debug("BCrypt验证结果: {}", EncryptUtil.verifyPassword(password, user.getPassword()));
-        
         if (!EncryptUtil.verifyPassword(password, user.getPassword())) {
             throw new BusinessException("用户名或密码错误");
         }
