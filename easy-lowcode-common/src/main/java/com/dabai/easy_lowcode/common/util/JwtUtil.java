@@ -69,6 +69,20 @@ public class JwtUtil {
         }
     }
 
+    public Date getExpirationFromToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(signingKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            return claims.getExpiration();
+        } catch (Exception e) {
+            log.error("Failed to get expiration from token: {}", e.getMessage());
+            return null;
+        }
+    }
+
     public String getUsernameFromToken(String token) {
         try {
             Claims claims = Jwts.parser()

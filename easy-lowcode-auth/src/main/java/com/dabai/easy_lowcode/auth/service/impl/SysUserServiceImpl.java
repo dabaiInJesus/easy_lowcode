@@ -7,11 +7,13 @@ import com.dabai.easy_lowcode.auth.mapper.SysUserMapper;
 import com.dabai.easy_lowcode.auth.service.SysUserService;
 import com.dabai.easy_lowcode.common.exception.BusinessException;
 import com.dabai.easy_lowcode.common.security.LoginUser;
+import com.dabai.easy_lowcode.common.security.TokenBlacklistService;
 import com.dabai.easy_lowcode.common.util.EncryptUtil;
 import com.dabai.easy_lowcode.common.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +28,7 @@ import java.util.Collections;
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements SysUserService {
 
     private final JwtUtil jwtUtil;
+    private final TokenBlacklistService tokenBlacklistService;
     
     @Override
     public String login(String username, String password) {
@@ -56,6 +59,17 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     
     @Override
     public void logout() {
+        jakarta.servlet.http.HttpServletRequest request = 
+                ((org.springframework.web.context.request.ServletRequestAttributes) 
+                org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()).getRequest();
+        if (request != null) {
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                tokenBlacklistService.blacklist(token);
+            }
+        }
+        SecurityContextHolder.clearContext();
         log.info("用户登出成功");
     }
     
