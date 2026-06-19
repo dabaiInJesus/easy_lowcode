@@ -75,8 +75,8 @@ easy-lowcode-frontend    ← Vue 3前端（TypeScript，Element Plus，ECharts�
 ### 5. AI集成
 - **多供应商**：OpenAI、DashScope(通义千问)、DeepSeek、Ollama、Minimax
 - **对话接口**：POST /api/ai/chat、/api/ai/chat/{provider}、/api/ai/simple-chat
-- **流式聊天**：SSE (Server-Sent Events) 端点 POST /api/ai/chat/stream
-- **AI Agent**：执行Agent任务、列表、自定义创建
+- **流式聊天**（已实现）：SSE (Server-Sent Events) 端点 POST /api/ai/chat/stream
+- **AI Agent**（进行中）：执行Agent任务、列表、自定义创建
 - **AI配置管理**：数据库表存储供应商配置，支持前端UI管理
 
 ### 6. 前端基础架构
@@ -102,7 +102,7 @@ easy-lowcode-frontend    ← Vue 3前端（TypeScript，Element Plus，ECharts�
 | 数据库表 | 17+张 |
 | REST API端点 | 80+个 |
 | 测试用例 | 30+个 |
-| Liquibase变更集 | 17个 |
+| Liquibase变更集 | 17+ 个 |
 
 ## 🗺️ API 接口总览
 

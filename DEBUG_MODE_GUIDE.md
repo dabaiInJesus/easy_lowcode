@@ -37,7 +37,7 @@ mvn spring-boot:run -pl easy-lowcode-startup
    - **Name**: `EasyLowcode-Debug`
    - **Main class**: `com.dabai.easy_lowcode.EasyLowcodeApplication`
    - **Module**: `easy-lowcode-startup`
-   - **VM options**: `-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005`
+   - **VM options**: `-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005`
    - **Working directory**: `$MODULE_WORKING_DIR$`
 
 4. 点击 **Apply** → **OK**
@@ -198,7 +198,7 @@ spring:
 如果需要远程调试：
 ```bash
 mvn spring-boot:run -pl easy-lowcode-startup \
-  -Dspring-boot.run.jvmArguments="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+  -Dspring-boot.run.jvmArguments="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
 ```
 
 然后在IDEA中创建 Remote JVM Debug 配置连接到 5005 端口。

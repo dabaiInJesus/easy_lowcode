@@ -40,8 +40,8 @@ spring:
   # 数据源配置
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://127.0.0.1:5432/easy_lowcode?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
-    username: postgres
+    url: jdbc:postgresql://${DB_HOST:127.0.0.1}:${DB_PORT:5432}/easy_lowcode?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: ${DB_USER:postgres}
     password: ${DB_PASSWORD:postgres123}
   
   # Liquibase 数据库版本管理配置
@@ -67,12 +67,12 @@ spring:
           max-idle: 10
           min-idle: 0
 
-  # RocketMQ配置（已禁用：当前无消费者/生产者使用）
-  # rocketmq:
-  #   name-server: ${ROCKETMQ_NAMESERVER:localhost:9876}
-  #   producer:
-  #     group: easy-lowcode-producer
-  #     send-message-timeout: 3000
+  # RocketMQ配置
+  rocketmq:
+    name-server: ${ROCKETMQ_NAMESERVER:localhost:9876}
+    producer:
+      group: easy-lowcode-producer
+      send-message-timeout: 3000
   
   # Flowable配置（已禁用：当前未使用工作流引擎）
   # flowable:
@@ -181,6 +181,9 @@ logging:
     liquibase.command: DEBUG
   pattern:
     console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
+    file: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
+  file:
+    name: logs/easy-lowcode.log
 
 # Actuator 配置
 management:

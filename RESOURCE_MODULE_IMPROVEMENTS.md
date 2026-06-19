@@ -152,7 +152,7 @@ curl -X POST http://localhost:8081/api/collector/datasource/test-connection \
     "dbType": "postgresql",
     "url": "jdbc:postgresql://localhost:5432/easy_lowcode",
     "username": "postgres",
-    "password": "thinker",
+    "password": "${POSTGRES_PASSWORD}",
     "driverClassName": "org.postgresql.Driver"
   }'
 

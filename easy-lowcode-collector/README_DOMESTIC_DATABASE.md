@@ -177,7 +177,9 @@ datasource:
   driverClassName: com.highgo.jdbc.Driver
 ```
 
-## 启用数据库驱动
+## ⚠️ 重要：启用数据库驱动
+
+> **注意**：`easy-lowcode-collector/pom.xml` 中的国产数据库驱动依赖**默认被注释掉**。使用前需要手动取消对应数据库驱动的注释。
 
 在 `easy-lowcode-collector/pom.xml` 中，根据需要取消相应数据库驱动的注释：
 

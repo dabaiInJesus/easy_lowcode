@@ -30,7 +30,7 @@ easy-lowcode-gateway (网关模块 - 独立部署)
 - **Maven 3.6+**: https://maven.apache.org/
 - **PostgreSQL 17**: https://www.postgresql.org/
 - **Redis 6+**: https://redis.io/
-- **RocketMQ 4.9+**: https://rocketmq.apache.org/
+- **RocketMQ 5.3**: https://rocketmq.apache.org/
 
 ### 2. 配置环境变量
 
@@ -52,13 +52,7 @@ export MAVEN_HOME=/opt/maven
 CREATE DATABASE easy_lowcode WITH ENCODING 'UTF8';
 ```
 
-### 2. 执行初始化脚本
-
-```bash
-psql -U postgres -d easy_lowcode -f sql/init.sql
-```
-
-或者使用图形化工具（如 pgAdmin、DBeaver）执行 `sql/init.sql` 文件。
+数据库使用 Liquibase 自动管理迁移，启动时自动执行，无需手动执行 SQL 脚本。
 
 ### 3. 验证数据
 
@@ -100,11 +94,11 @@ redis-server
 
 ```bash
 # 1. 下载 RocketMQ
-wget https://archive.apache.org/dist/rocketmq/4.9.4/rocketmq-all-4.9.4-bin-release.zip
-unzip rocketmq-all-4.9.4-bin-release.zip
+wget https://archive.apache.org/dist/rocketmq/5.3.0/rocketmq-all-5.3.0-bin-release.zip
+unzip rocketmq-all-5.3.0-bin-release.zip
 
 # 2. 启动 NameServer
-cd rocketmq-4.9.4
+cd rocketmq-5.3.0
 nohup sh bin/mqnamesrv &
 
 # 3. 启动 Broker
@@ -153,7 +147,7 @@ java -jar easy-lowcode-startup/target/easy-lowcode-startup-1.0.0-SNAPSHOT.jar
 
 ### 3. 验证启动
 
-访问 http://localhost:8080/actuator/health
+访问 http://localhost:8081/actuator/health
 
 应该返回：
 ```json
@@ -168,7 +162,7 @@ java -jar easy-lowcode-startup/target/easy-lowcode-startup-1.0.0-SNAPSHOT.jar
 
 ```bash
 # 1. 登录获取 token
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:8081/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"123456"}'
 
@@ -176,7 +170,7 @@ curl -X POST http://localhost:8080/api/auth/login \
 # {"code":200,"message":"登录成功","data":{"token":"xxx"},"timestamp":1234567890}
 
 # 2. 使用 token 访问受保护接口
-curl -X GET http://localhost:8080/api/auth/current \
+curl -X GET http://localhost:8081/api/auth/current \
   -H "Authorization: Bearer {your_token}"
 ```
 
@@ -184,7 +178,7 @@ curl -X GET http://localhost:8080/api/auth/current \
 
 1. 导入项目中的 API 集合（待创建）
 2. 设置环境变量：
-   - `base_url`: http://localhost:8080
+   - `base_url`: http://localhost:8081
    - `token`: {{从登录接口获取}}
 3. 发送请求
 
@@ -480,7 +474,7 @@ logging:
     name: /var/log/easy-lowcode/app.log
 ```
 
-### Docker 部署（待实现）
+### Docker 部署 ✅
 
 ```dockerfile
 FROM openjdk:21-jdk-slim
@@ -495,7 +489,7 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 1. ✅ 后端聚合工程架构搭建
 2. ✅ 基础模块创建
 3. ✅ 认证授权功能实现
-4. ⏳ 前端项目开发（Vue 3 + Vite）
+4. ✅ 前端项目开发（Vue 3 + Vite）
 5. ⏳ 代码生成器开发
 6. ⏳ 表单设计器开发
 7. ⏳ 流程设计器集成

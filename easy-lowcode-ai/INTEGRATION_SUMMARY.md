@@ -56,8 +56,7 @@ easy-lowcode-ai 模块已成功集成 Spring AI Alibaba 1.1.2.0，并扩展支�
 
 ### 6. 文档和示例 ✅
 
-- ✅ 创建 `README.md` - 完整的功能说明文档
-- ✅ 创建 `QUICK_START.md` - 快速启动指南
+- ✅ 创建 `README.md` - 完整的功能说明文档（已合并 QUICK_START.md 内容）
 - ✅ 创建 `CONFIG_EXAMPLE.yaml` - 配置示例文件
 - ✅ 创建集成测试 `AiModuleIntegrationTest.java`
 
@@ -255,8 +254,7 @@ mvn test -pl easy-lowcode-ai
 6. `easy-lowcode-ai/src/main/java/com/dabai/easy_lowcode/ai/controller/AiAgentController.java`
 7. `easy-lowcode-ai/src/test/java/com/dabai/easy_lowcode/ai/AiModuleIntegrationTest.java`
 8. `easy-lowcode-ai/README.md`
-9. `easy-lowcode-ai/QUICK_START.md`
-10. `easy-lowcode-ai/CONFIG_EXAMPLE.yaml`
+9. `easy-lowcode-ai/CONFIG_EXAMPLE.yaml`
 
 ### 修改文件
 

@@ -49,7 +49,7 @@
 
 ### 代码贡献
 
-1. Fork 本仓库
+1. Fork 本仓库 (https://github.com/anomalyco/easy_lowcode)
 2. 创建您的特性分支 (`git checkout -b feature/AmazingFeature`)
 3. 提交您的更改 (`git commit -m 'Add some AmazingFeature'`)
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
@@ -75,7 +75,7 @@ git clone https://github.com/YOUR_USERNAME/easy_lowcode.git
 cd easy_lowcode
 
 # 添加上游仓库
-git remote add upstream https://github.com/ORIGINAL_OWNER/easy_lowcode.git
+git remote add upstream https://github.com/anomalyco/easy_lowcode.git
 ```
 
 ### 3. 保持同步

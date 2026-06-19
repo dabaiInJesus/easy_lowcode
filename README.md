@@ -94,7 +94,7 @@ cd easy-lowcode-startup && mvn spring-boot:run
 
 启动后访问 Swagger UI：
 - 单体模式: http://localhost:8081/swagger-ui.html
-- 网关模式: http://localhost:8080/swagger-ui.html
+- 网关模式: http://localhost:8081/swagger-ui.html
 
 ## 环境变量
 
@@ -106,39 +106,14 @@ cd easy-lowcode-startup && mvn spring-boot:run
 | `DEEPSEEK_API_KEY` | ⭐推荐 | DeepSeek API Key |
 | `REDIS_PASSWORD` | ❌ | Redis 密码（留空无密码） |
 | `CORS_ORIGINS` | ❌ | CORS 允许的来源（默认 **） |
+| `JWT_SECRET` | ✅ | JWT 签名密钥 |
+| `ENCRYPT_AES_KEY` | ✅ | AES 加密密钥（敏感数据加密） |
+| `AI_DEFAULT_PROVIDER` | ⭐推荐 | AI 默认供应商 |
+| `MINIMAX_API_KEY` | ⭐推荐 | MiniMax API Key |
 
 ## 后续规划
 
 1. **前端项目**: Vue 3 + Vite + Element Plus
-2. **代码生成器**: 根据数据库表自动生成前后端代码
-3. **表单设计器**: 可视化表单设计
-4. **流程设计器**: BPMN 流程设计
-5. **报表设计器**: 可视化报表设计
-6. **大屏设计器**: 拖拽式大屏设计
-7. **API设计器**: RESTful API 可视化配置
-
-## 许可证
-
-MIT License
-- 使用 Lombok 简化代码
-- 统一使用 Result 封装返回结果
-- 异常统一由 GlobalExceptionHandler 处理
-- 实体类继承 BaseEntity
-- Mapper 继承 BaseMapper
-
-### 权限控制
-
-使用 Sa-Token 注解：
-
-```java
-@SaCheckLogin  // 需要登录
-@SaCheckRole("admin")  // 需要admin角色
-@SaCheckPermission("system:user:list")  // 需要特定权限
-```
-
-## 后续规划
-
-1. **前端项目**: 创建 Vue 3 + Vite + Element Plus 前端项目
 2. **代码生成器**: 根据数据库表自动生成前后端代码
 3. **表单设计器**: 可视化表单设计
 4. **流程设计器**: BPMN 流程设计

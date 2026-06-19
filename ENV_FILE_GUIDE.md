@@ -46,6 +46,12 @@ AI_DEFAULT_PROVIDER=minimax
 
 # CORS 配置
 CORS_ORIGINS=**
+
+# JWT 密钥（必须配置）
+JWT_SECRET=your-jwt-secret-key
+
+# AES 加密密钥（必须配置，敏感数据加密）
+ENCRYPT_AES_KEY=your-aes-encryption-key
 ```
 
 ## 🚀 使用方式

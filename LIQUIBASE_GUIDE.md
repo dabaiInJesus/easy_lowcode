@@ -10,9 +10,9 @@
 
 - **数据库**: PostgreSQL
 - **地址**: 127.0.0.1:5432
-- **数据库名**: thinker
+- **数据库名**: easy_lowcode
 - **用户名**: postgres
-- **密码**: postgres
+- **密码**: ${DB_PASSWORD:postgres123}
 
 ### Liquibase 配置
 
@@ -40,7 +40,7 @@ easy-lowcode-database/src/main/resources/db/changelog/
 ### 1. 创建数据库
 
 ```bash
-psql -U postgres -c "CREATE DATABASE thinker WITH ENCODING 'UTF8';"
+psql -U postgres -c "CREATE DATABASE easy_lowcode WITH ENCODING 'UTF8';"
 ```
 
 ### 2. 启动应用

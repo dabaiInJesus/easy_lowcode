@@ -35,14 +35,14 @@ Easy Lowcode 是一个基于 Spring Boot 3 + Vue 3 的前后端分离低代码�
 | Spring Boot | 3.5.5 | 核心框架 |
 | MyBatis Plus | 3.5.5 | ORM 框架 |
 | Sa-Token | 1.37.0 | 权限认证 |
-| Flowable | 7.0.1 | 工作流引擎 |
+| Flowable | 7.0.1 | 工作流引擎（禁用中） |
 | Spring AI | 1.1.4 | AI 集成 |
 | PostgreSQL | 17 | 主数据库 |
 | Redis | 6+ | 缓存/会话存储 |
-| RocketMQ | 4.9+ | 消息队列 |
+| RocketMQ | 5.3 | 消息队列 |
 | Spring Batch | 3.x | 批处理 |
 
-### 前端技术栈（待实现）
+### 前端技术栈
 
 | 技术 | 版本 | 说明 |
 |------|------|------|
@@ -63,7 +63,7 @@ Easy Lowcode 是一个基于 Spring Boot 3 + Vue 3 的前后端分离低代码�
 
 ### 可选软件
 
-- **RocketMQ**: 4.9 或更高版本（消息队列功能需要）
+- **RocketMQ**: 5.3（消息队列功能需要）
 - **Node.js**: 18+（前端开发需要）
 
 ### 环境检查
@@ -102,13 +102,7 @@ chmod +x start.sh
 CREATE DATABASE easy_lowcode WITH ENCODING 'UTF8';
 ```
 
-#### 2. 初始化数据
-
-```bash
-psql -U postgres -d easy_lowcode -f sql/init.sql
-```
-
-#### 3. 修改配置
+#### 2. 修改配置（可选）
 
 编辑 `easy-lowcode-startup/src/main/resources/application.yaml`：
 
@@ -126,7 +120,7 @@ spring:
       password: your_redis_password
 ```
 
-#### 4. 编译并运行
+#### 3. 编译并运行
 
 ```bash
 # 编译项目
@@ -137,9 +131,9 @@ cd easy-lowcode-startup
 mvn spring-boot:run
 ```
 
-#### 5. 访问应用
+#### 4. 访问应用
 
-打开浏览器访问：http://localhost:8080
+打开浏览器访问：http://localhost:8081
 
 **默认账号：**
 - 用户名：admin
@@ -172,10 +166,6 @@ easy_lowcode/
 ├── easy-lowcode-etl/             # ETL 模块
 ├── easy-lowcode-gateway/         # API 网关模块
 ├── easy-lowcode-startup/         # 启动模块
-│
-├── sql/                          # 数据库脚本
-│   └── init.sql                  # 初始化脚本
-│
 ├── README.md                     # 项目说明
 ├── DEVELOPMENT.md                # 开发文档
 ├── PROJECT_SUMMARY.md            # 项目总结
@@ -189,12 +179,12 @@ easy_lowcode/
 - ✅ 用户登录/登出
 - ✅ Token 管理（基于 Sa-Token）
 - ✅ 获取当前用户信息
-- ⏳ 用户管理（CRUD）
-- ⏳ 角色管理（CRUD）
-- ⏳ 菜单管理（CRUD）
-- ⏳ 部门管理（CRUD）
-- ⏳ 权限分配
-- ⏳ 第三方应用管理
+- ✅ 用户管理（CRUD）
+- ✅ 角色管理（CRUD）
+- ✅ 菜单管理（CRUD）
+- ✅ 部门管理（CRUD）
+- ✅ 权限分配
+- ✅ 第三方应用管理
 
 ### 2. 数据采集（基础已搭建）
 
@@ -236,7 +226,7 @@ easy_lowcode/
 #### 登录
 
 ```bash
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:8081/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"123456"}'
 ```
@@ -256,7 +246,7 @@ curl -X POST http://localhost:8080/api/auth/login \
 #### 获取当前用户
 
 ```bash
-curl -X GET http://localhost:8080/api/auth/current \
+curl -X GET http://localhost:8081/api/auth/current \
   -H "Authorization: Bearer {your_token}"
 ```
 
@@ -322,7 +312,7 @@ public class XxxController {
 1. PostgreSQL 是否已启动
 2. 数据库 `easy_lowcode` 是否已创建
 3. `application.yaml` 中的数据库配置是否正确
-4. 是否已执行 `sql/init.sql` 初始化脚本
+4. 数据库连接配置是否正确
 
 ### Q2: Redis 连接失败？
 
