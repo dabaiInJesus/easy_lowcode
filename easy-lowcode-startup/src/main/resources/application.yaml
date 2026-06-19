@@ -67,18 +67,18 @@ spring:
           max-idle: 10
           min-idle: 0
 
-  # RocketMQ配置
-  rocketmq:
-    name-server: ${ROCKETMQ_NAMESERVER:localhost:9876}
-    producer:
-      group: easy-lowcode-producer
-      send-message-timeout: 3000
+  # RocketMQ配置（已禁用：当前无消费者/生产者使用）
+  # rocketmq:
+  #   name-server: ${ROCKETMQ_NAMESERVER:localhost:9876}
+  #   producer:
+  #     group: easy-lowcode-producer
+  #     send-message-timeout: 3000
   
-  # Flowable配置
-  flowable:
-    async-executor-activate: true
-    database-schema-update: true
-    check-process-definitions: false
+  # Flowable配置（已禁用：当前未使用工作流引擎）
+  # flowable:
+  #   async-executor-activate: true
+  #   database-schema-update: true
+  #   check-process-definitions: false
   
 # DevTools 热重载配置 (禁用以避免模块依赖问题)
     devtools:
