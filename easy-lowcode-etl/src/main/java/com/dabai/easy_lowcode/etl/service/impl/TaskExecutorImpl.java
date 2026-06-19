@@ -10,13 +10,14 @@ import com.dabai.easy_lowcode.etl.service.TaskStateManager;
 import com.dabai.easy_lowcode.etl.service.TransformRuleProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -34,28 +35,30 @@ public class TaskExecutorImpl implements TaskExecutor {
     private final EtlTaskLogService etlTaskLogService;
     private final TransformRuleProcessor transformRuleProcessor;
     private final TaskStateManager taskStateManager;
+    @Qualifier("etlExecutor")
+    private final Executor etlExecutor;
 
     @Override
-    @Async("etlExecutor")
     public void executeAsync(EtlTask task, DataSourceConfig sourceDs, DataSourceConfig targetDs, Long logId) {
-        try {
-            Future<?> future = java.util.concurrent.Executors.newSingleThreadExecutor().submit(() ->
-                    executeEtl(task, sourceDs, targetDs, logId));
-            taskStateManager.registerTask(task.getId(), future);
-            future.get();
-        } catch (java.util.concurrent.CancellationException e) {
-            log.warn("ETL任务被中断: taskId={}", task.getId());
-            etlTaskLogService.updateLastLogStatus(task.getId(), "STOPPED");
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.warn("ETL任务被中断: taskId={}", task.getId());
-            etlTaskLogService.updateLastLogStatus(task.getId(), "STOPPED");
-        } catch (Exception e) {
-            log.error("ETL任务执行异常: taskId={}", task.getId(), e);
-            etlTaskLogService.updateLastLogStatus(task.getId(), "FAILED");
-        } finally {
+        CompletableFuture<Void> future = CompletableFuture.runAsync(
+                () -> executeEtl(task, sourceDs, targetDs, logId), etlExecutor);
+        taskStateManager.registerTask(task.getId(), future);
+        future.whenComplete((result, ex) -> {
             taskStateManager.unregisterTask(task.getId());
-        }
+            if (ex != null) {
+                if (ex instanceof java.util.concurrent.CancellationException) {
+                    log.warn("ETL任务被中断: taskId={}", task.getId());
+                    etlTaskLogService.updateLastLogStatus(task.getId(), "STOPPED");
+                } else if (ex.getCause() instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                    log.warn("ETL任务被中断: taskId={}", task.getId());
+                    etlTaskLogService.updateLastLogStatus(task.getId(), "STOPPED");
+                } else {
+                    log.error("ETL任务执行异常: taskId={}", task.getId(), ex);
+                    etlTaskLogService.updateLastLogStatus(task.getId(), "FAILED");
+                }
+            }
+        });
     }
 
     @Override

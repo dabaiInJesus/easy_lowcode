@@ -15,6 +15,11 @@ public interface TaskStateManager {
     void registerTask(Long taskId, Future<?> future);
 
     /**
+     * 获取运行中的任务Future
+     */
+    Future<?> getRunningTask(Long taskId);
+
+    /**
      * 停止指定任务
      */
     boolean stopTask(Long taskId, Runnable onStop);
