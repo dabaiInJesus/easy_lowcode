@@ -213,6 +213,26 @@ GitHub Actions 工作流:
 - `docker-build`: Docker镜像构建（main分支）
 - `security-scan`: Trivy安全扫描
 
+## 提交规范
+
+**每次大改动必须通过所有测试才能 commit。** 执行顺序：
+
+```bash
+# 1. 后端测试
+mvn test
+
+# 2. 前端测试
+cd easy-lowcode-frontend && npm run test
+
+# 3. 前端类型检查
+npx vue-tsc --noEmit
+
+# 4. 全部通过后才可 commit
+git add . && git commit -m "feat: ..."
+```
+
+任何测试失败 → 修复后再 commit，禁止跳过。
+
 ## Security Notes
 
 - JWT secret must be configured via `JWT_SECRET` env var (never hardcode)
