@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/easy_lowcode_test
+    username: postgres
+    password: ${DB_PASSWORD:test}
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+jwt:
+  secret: test-secret-key-for-unit-tests-only-32chars!
+
+logging:
+  level:
+    root: WARN
