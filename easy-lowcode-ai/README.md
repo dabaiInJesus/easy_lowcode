@@ -506,8 +506,11 @@ grep "DeepSeek" logs/easy-lowcode-ai.log
 @Component
 public class CustomAgent {
 
-    @Autowired
-    private AgentExecutor agentExecutor;
+    private final AgentExecutor agentExecutor;
+
+    public CustomAgent(AgentExecutor agentExecutor) {
+        this.agentExecutor = agentExecutor;
+    }
 
     public String executeTask(String task) {
         Object result = agentExecutor.execute(task);

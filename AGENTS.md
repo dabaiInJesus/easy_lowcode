@@ -8,7 +8,7 @@
 easy_lowcode/
 ├── easy-lowcode-common          # 公共模块 - 工具类、常量、异常处理
 ├── easy-lowcode-database        # 数据库模块 - MyBatisPlus配置、Liquibase迁移
-├── easy-lowcode-auth            # 认证授权模块 - Sa-Token、用户/角色/权限管理
+├── easy-lowcode-auth            # 认证授权模块 - Spring Security、用户/角色/权限管理
 ├── easy-lowcode-ai              # AI模块 - 多Provider对话/Agent/配置管理
 ├── easy-lowcode-collector       # 数据采集模块 - 多数据源配置、数据同步
 ├── easy-lowcode-resource        # 资源查询模块 - 动态SQL、数据权限
@@ -102,11 +102,10 @@ cd easy-lowcode-startup && mvn spring-boot:run
 - 实体类继承 `BaseEntity`
 - Mapper 继承 `BaseMapper`
 
-### 权限控制（Sa-Token）
+### 权限控制（Spring Security + JWT）
 ```java
-@SaCheckLogin                    // 需要登录
-@SaCheckRole("admin")           // 需要admin角色
-@SaCheckPermission("system:user:list")  // 需要特定权限
+@PreAuthorize("hasRole('admin')")     // 需要 admin 角色
+@PreAuthorize("hasAuthority('system:user:list')")  // 需要特定权限
 ```
 
 ### 数据库
@@ -803,12 +802,11 @@ const data: any = await request(...)  // 禁止
 #### 2. 认证与鉴权
 
 ```java
-@SaCheckLogin                    // 需要登录（大多数接口）
-@SaCheckRole("admin")           // 需要 admin 角色
-@SaCheckPermission("system:user:list")  // 需要特定权限
+@PreAuthorize("hasRole('admin')")           // 需要 admin 角色
+@PreAuthorize("hasAuthority('system:user:list')")  // 需要特定权限
 ```
 
-- Controller 层方法默认加 `@SaCheckLogin`
+- Controller 层方法默认加 `@PreAuthorize` 注解
 - 敏感操作（创建、删除）加具体权限注解
 - 权限标识格式: `{模块}:{资源}:{操作}`（如 `system:user:create`）
 

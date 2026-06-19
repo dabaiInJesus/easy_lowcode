@@ -67,7 +67,7 @@ public class ApiManagement extends BaseEntity {
     /**
      * 是否需要认证 (0-否 1-是)
      */
-    private Integer authRequired = 0;
+    private Boolean authRequired = false;
     
     /**
      * 限流次数/分钟

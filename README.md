@@ -7,9 +7,9 @@
 ### 后端技术
 - **核心框架**: Spring Boot 3.5.5
 - **ORM框架**: MyBatis Plus 3.5.5
-- **权限认证**: Sa-Token 1.37.0
+- **权限认证**: Spring Security 6.x + JWT (jjwt 0.12.5)
 - **工作流引擎**: Flowable 7.0.1
-- **AI集成**: Spring AI 1.1.4（支持通义千问/OpenAI/DeepSeek/MiniMax/Ollama等）
+- **AI集成**: Spring AI 1.1.2（支持通义千问/OpenAI/DeepSeek/MiniMax/Ollama等）
 - **数据库**: PostgreSQL 17 + pgvector
 - **消息队列**: RocketMQ 5.3
 - **批处理**: Spring Batch
@@ -29,7 +29,7 @@
 easy_lowcode/
 ├── easy-lowcode-common          # 公共模块 - 工具类、常量、异常处理等
 ├── easy-lowcode-database        # 数据库模块 - MyBatisPlus配置、通用Mapper、Liquibase迁移
-├── easy-lowcode-auth            # 认证授权模块 - Sa-Token、用户/角色/权限管理
+├── easy-lowcode-auth            # 认证授权模块 - Spring Security、用户/角色/权限管理
 ├── easy-lowcode-ai              # AI模块 - 多Provider对话/Agent/配置管理
 ├── easy-lowcode-collector       # 数据采集模块 - 多数据源配置、数据同步
 ├── easy-lowcode-resource        # 资源查询模块 - 动态SQL、数据权限
@@ -37,6 +37,7 @@ easy_lowcode/
 ├── easy-lowcode-etl             # ETL模块 - SpringBatch任务配置
 ├── easy-lowcode-gateway          # API网关 - 统一入口、CORS
 ├── easy-lowcode-startup          # 启动模块 - 单体运行入口
+├── easy-lowcode-frontend        # 前端项目 - Vue 3 + Vite + Element Plus
 ├── docker-compose.yml           # Docker Compose（PostgreSQL + Redis + RocketMQ + App）
 ├── Dockerfile                   # 应用镜像构建
 └── .env.example                 # 环境变量示例
@@ -92,9 +93,7 @@ cd easy-lowcode-startup && mvn spring-boot:run
 
 ## API 文档
 
-启动后访问 Swagger UI：
-- 单体模式: http://localhost:8081/swagger-ui.html
-- 网关模式: http://localhost:8081/swagger-ui.html
+启动后访问 Swagger UI：http://localhost:8081/swagger-ui.html
 
 ## 环境变量
 
@@ -110,16 +109,16 @@ cd easy-lowcode-startup && mvn spring-boot:run
 | `ENCRYPT_AES_KEY` | ✅ | AES 加密密钥（敏感数据加密） |
 | `AI_DEFAULT_PROVIDER` | ⭐推荐 | AI 默认供应商 |
 | `MINIMAX_API_KEY` | ⭐推荐 | MiniMax API Key |
+| `ROCKETMQ_NAMESERVER` | ❌ | RocketMQ NameServer 地址（默认 localhost:9876） |
 
 ## 后续规划
 
-1. **前端项目**: Vue 3 + Vite + Element Plus
-2. **代码生成器**: 根据数据库表自动生成前后端代码
-3. **表单设计器**: 可视化表单设计
-4. **流程设计器**: BPMN 流程设计
-5. **报表设计器**: 可视化报表设计
-6. **大屏设计器**: 拖拽式大屏设计
-7. **API设计器**: RESTful API 可视化配置
+1. **代码生成器**: 根据数据库表自动生成前后端代码
+2. **表单设计器**: 可视化表单设计
+3. **流程设计器**: BPMN 流程设计
+4. **报表设计器**: 可视化报表设计
+5. **大屏设计器**: 拖拽式大屏设计
+6. **API设计器**: RESTful API 可视化配置
 
 ## 许可证
 

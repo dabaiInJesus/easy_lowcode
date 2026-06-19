@@ -114,17 +114,8 @@ jwt:
   secret: ${JWT_SECRET}
   expiration: 2592000000
 
-# Sa-Token配置
-sa-token:
-  token-name: satoken
-  timeout: 2592000
-  activity-timeout: -1
-  is-concurrent: true
-  is-share: false
-  token-style: uuid
-  is-log: false
-  is-read-cookie: false
-  is-read-header: true
+# JWT 配置（由 jjwt 库处理，上述 jwt.secret 已配置）
+# 无额外 Sa-Token 配置
 
 # AI 配置（所有 key 必须通过环境变量配置，禁止硬编码）
 ai:

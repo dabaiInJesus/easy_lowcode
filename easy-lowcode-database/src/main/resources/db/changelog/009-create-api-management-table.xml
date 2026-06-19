@@ -6,6 +6,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
     <changeSet id="009-create-api-management-table" author="system">
+        <validCheckSum>ANY</validCheckSum>
         <createTable tableName="collector_api_management" remarks="API管理表">
             <column name="id" type="BIGINT" remarks="主键ID">
                 <constraints primaryKey="true" nullable="false"/>
@@ -39,7 +40,7 @@
             
             <column name="version" type="VARCHAR(20)" defaultValue="v1" remarks="API版本"/>
             
-            <column name="auth_required" type="INT" defaultValueNumeric="0" remarks="是否需要认证(0-否 1-是)"/>
+            <column name="auth_required" type="BOOLEAN" defaultValueBoolean="false" remarks="是否需要认证"/>
             
             <column name="rate_limit" type="INT" remarks="限流次数/分钟"/>
             

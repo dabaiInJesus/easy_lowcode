@@ -62,7 +62,7 @@
 确保您的开发环境满足以下要求：
 
 - JDK 21+
-- Maven 3.6+
+- Maven 3.9+
 - PostgreSQL 17
 - Redis 6+
 - Git
@@ -359,7 +359,6 @@ Fixes #123
 
 - README.md
 - DEVELOPMENT.md
-- QUICK_START.md
 - 代码注释
 - API 文档
 
@@ -381,8 +380,11 @@ Fixes #123
 @SpringBootTest
 class UserServiceTest {
     
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+
+    UserServiceTest(UserService userService) {
+        this.userService = userService;
+    }
     
     @Test
     void testGetById() {
@@ -402,8 +404,11 @@ class UserServiceTest {
 @AutoConfigureMockMvc
 class AuthControllerTest {
     
-    @Autowired
-    private MockMvc mockMvc;
+    private final MockMvc mockMvc;
+
+    AuthControllerTest(MockMvc mockMvc) {
+        this.mockMvc = mockMvc;
+    }
     
     @Test
     void testLogin() throws Exception {

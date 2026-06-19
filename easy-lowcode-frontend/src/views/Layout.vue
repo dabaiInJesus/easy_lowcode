@@ -25,29 +25,29 @@
         <!-- 动态菜单 -->
         <template v-for="menu in menuStore.visibleMenus" :key="menu.id">
           <!-- 有子菜单 -->
-          <el-sub-menu v-if="menu.children && menu.children.length > 0" :index="menu.path">
+          <el-sub-menu v-if="menu.children && menu.children.length > 0" :index="String(menu.path || menu.id)">
             <template #title>
-              <el-icon v-if="menu.icon && iconMap[menu.icon]">
-                <component :is="iconMap[menu.icon]" />
+              <el-icon>
+                <component :is="iconMap[menu.icon] || defaultIcon" />
               </el-icon>
               <span>{{ menu.menuName }}</span>
             </template>
-            <el-menu-item 
-              v-for="child in menu.children" 
-              :key="child.id" 
-              :index="child.path"
+            <el-menu-item
+              v-for="child in menu.children"
+              :key="child.id"
+              :index="String(child.path || child.id)"
             >
-              <el-icon v-if="child.icon && iconMap[child.icon]">
-                <component :is="iconMap[child.icon]" />
+              <el-icon>
+                <component :is="iconMap[child.icon] || defaultIcon" />
               </el-icon>
               <template #title>{{ child.menuName }}</template>
             </el-menu-item>
           </el-sub-menu>
-          
+
           <!-- 无子菜单 -->
-          <el-menu-item v-else :index="menu.path">
-            <el-icon v-if="menu.icon && iconMap[menu.icon]">
-              <component :is="iconMap[menu.icon]" />
+          <el-menu-item v-else :index="String(menu.path || menu.id)">
+            <el-icon>
+              <component :is="iconMap[menu.icon] || defaultIcon" />
             </el-icon>
             <template #title>{{ menu.menuName }}</template>
           </el-menu-item>
@@ -119,6 +119,22 @@ import {
   Link,
   Odometer,
   UserFilled,
+  Cpu,
+  ChatLineRound,
+  Box,
+  Histogram,
+  PieChart,
+  DataAnalysis,
+  Files,
+  Folder,
+  Coin,
+  SetUp,
+  DataBoard,
+  TrendCharts,
+  Promotion,
+  Share,
+  HomeFilled,
+  Menu,
 } from '@element-plus/icons-vue'
 
 const iconMap: Record<string, any> = {
@@ -140,7 +156,39 @@ const iconMap: Record<string, any> = {
   ai: Odometer,
   config: Tools,
   chat: ChatDotRound,
+  Setting,
+  User,
+  List,
+  Grid,
+  Document,
+  Connection,
+  Sort,
+  ChatDotRound,
+  Tools,
+  Operation,
+  Monitor,
+  DataLine,
+  Link,
+  Odometer,
+  UserFilled,
+  Cpu,
+  ChatLineRound,
+  Box,
+  Histogram,
+  PieChart,
+  DataAnalysis,
+  Files,
+  Folder,
+  Coin,
+  SetUp,
+  DataBoard,
+  TrendCharts,
+  Promotion,
+  Share,
+  HomeFilled,
 }
+
+const defaultIcon = Menu  // fallback icon
 
 const router = useRouter()
 const route = useRoute()

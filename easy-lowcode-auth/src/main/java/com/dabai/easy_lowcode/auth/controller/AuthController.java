@@ -195,38 +195,6 @@ public class AuthController {
         return Result.success(statistics);
     }
     
-    @Operation(summary = "获取菜单列表", description = "获取所有菜单列表")
-    @ApiResponse(responseCode = "200", description = "获取成功")
-    @GetMapping("/menu/list")
-    public Result<List<com.dabai.easy_lowcode.auth.entity.SysMenu>> getMenuList() {
-        List<com.dabai.easy_lowcode.auth.entity.SysMenu> menuList = menuMapper.selectList(null);
-        return Result.success(menuList);
-    }
-    
-    @Operation(summary = "创建菜单", description = "创建新菜单")
-    @ApiResponse(responseCode = "200", description = "创建成功")
-    @PostMapping("/menu")
-    public Result<Void> createMenu(@RequestBody com.dabai.easy_lowcode.auth.entity.SysMenu menu) {
-        menuMapper.insert(menu);
-        return Result.success("创建成功");
-    }
-    
-    @Operation(summary = "更新菜单", description = "更新菜单信息")
-    @ApiResponse(responseCode = "200", description = "更新成功")
-    @PutMapping("/menu")
-    public Result<Void> updateMenu(@RequestBody com.dabai.easy_lowcode.auth.entity.SysMenu menu) {
-        menuMapper.updateById(menu);
-        return Result.success("更新成功");
-    }
-    
-    @Operation(summary = "删除菜单", description = "根据ID删除菜单")
-    @ApiResponse(responseCode = "200", description = "删除成功")
-    @DeleteMapping("/menu/{id}")
-    public Result<Void> deleteMenu(@Parameter(description = "菜单ID") @PathVariable Long id) {
-        menuMapper.deleteById(id);
-        return Result.success("删除成功");
-    }
-    
     @Operation(summary = "获取部门列表", description = "获取所有部门列表")
     @ApiResponse(responseCode = "200", description = "获取成功")
     @GetMapping("/dept/list")

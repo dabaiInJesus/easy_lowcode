@@ -7,7 +7,7 @@
 
     <!-- 数据源配置表 -->
     <changeSet id="006-create-datasource-table" author="dabai">
-        <createTable tableName="collector_datasource" remarks="数据源配置表" ifNotExists="true">
+        <createTable tableName="collector_datasource" remarks="数据源配置表">
             <column name="id" type="BIGINT">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -58,7 +58,7 @@
 
     <!-- 表资源注册表 -->
     <changeSet id="006-create-table-resource" author="dabai">
-        <createTable tableName="collector_table_resource" remarks="表资源注册表" ifNotExists="true">
+        <createTable tableName="collector_table_resource" remarks="表资源注册表">
             <column name="id" type="BIGINT">
                 <constraints primaryKey="true" nullable="false"/>
             </column>

@@ -54,6 +54,18 @@ CREATE DATABASE easy_lowcode WITH ENCODING 'UTF8';
 
 数据库使用 Liquibase 自动管理迁移，启动时自动执行，无需手动执行 SQL 脚本。
 
+### 2. 配置 Liquibase
+
+Liquibase 已集成在项目中，启动时自动扫描 `classpath:db/changelog/db.changelog-master.xml` 并执行所有挂起的变更集。无需手动执行任何 SQL 脚本。
+
+```yaml
+# application.yaml（默认已配置）
+spring:
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
+```
+
 ### 3. 验证数据
 
 ```sql
@@ -390,13 +402,13 @@ java -version  # 应该是 21+
 - 检查 `application.yaml` 中的 Redis 配置
 - 测试连接: `redis-cli ping` (应返回 PONG)
 
-### 4. Sa-Token 配置问题
+### 4. JWT 认证配置问题
 
 **问题**: Token 验证失败
 
 **解决**:
 - 检查请求头是否包含 `Authorization: Bearer {token}`
-- 确认 Sa-Token 配置正确
+- 确认 JWT 配置正确（`jwt.secret` 环境变量）
 - 查看日志输出
 
 ## 调试技巧
@@ -411,11 +423,13 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 ```
 
-### 2. 开启 Sa-Token 日志
+### 2. 开启安全日志
 
 ```yaml
-sa-token:
-  is-log: true
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.dabai.easy_lowcode.auth: DEBUG
 ```
 
 ### 3. 远程调试
@@ -452,7 +466,7 @@ java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 \
 
 ```yaml
 server:
-  port: 8080
+  port: 8081
 
 spring:
   datasource:
@@ -480,7 +494,7 @@ logging:
 FROM openjdk:21-jdk-slim
 WORKDIR /app
 COPY easy-lowcode-startup/target/*.jar app.jar
-EXPOSE 8080
+EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
 
@@ -493,9 +507,9 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 5. ⏳ 代码生成器开发
 6. ⏳ 表单设计器开发
 7. ⏳ 流程设计器集成
-8. ⏳ ETL 功能完善
-9. ⏳ 数据采集功能完善
-10. ⏳ 可视化大屏功能开发
+8. ✅ ETL 功能完善
+9. ✅ 数据采集功能完善
+10. ✅ 可视化大屏功能开发
 
 ## 技术支持
 

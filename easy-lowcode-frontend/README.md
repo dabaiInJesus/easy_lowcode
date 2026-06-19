@@ -183,7 +183,7 @@ const res = await request({
 - ✅ 请求自动携带 Authorization Header
 - ✅ 401 自动跳转登录页
 - ✅ BCrypt 密码加密（后端）
-- ✅ Sa-Token 会话管理（后端）
+- ✅ JWT 会话管理（后端）
 
 ## 状态管理（Pinia）
 

@@ -56,7 +56,7 @@ public class ApiManagementServiceImpl extends ServiceImpl<ApiManagementMapper, A
         apiManagement.setDescription("表资源API - " + tableResource.getTableName());
         apiManagement.setStatus(tableResource.getStatus());
         apiManagement.setVersion("v1");
-        apiManagement.setAuthRequired(0);
+            apiManagement.setAuthRequired(false);
         
         // 保存
         boolean success = this.save(apiManagement);
@@ -114,7 +114,7 @@ public class ApiManagementServiceImpl extends ServiceImpl<ApiManagementMapper, A
         }
         
         if (apiManagement.getAuthRequired() == null) {
-            apiManagement.setAuthRequired(0);
+        apiManagement.setAuthRequired(false);
         }
         
         if (apiManagement.getSortOrder() == null) {

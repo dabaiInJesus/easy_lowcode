@@ -126,7 +126,20 @@ public class AuthorizationServiceImpl implements AuthorizationService {
                .eq(SysMenu::getVisible, 1) // 只显示可见菜单
                .orderByAsc(SysMenu::getSort);
         List<SysMenu> allMenus = menuMapper.selectList(wrapper);
-        
+
+        // 数据修复：把顶级 API管理（menu_name='API管理'，parent_id=0）重新归属到 资源管理 父菜单下
+        SysMenu resourceMenu = allMenus.stream()
+                .filter(m -> "resource".equals(m.getMenuCode()))
+                .findFirst().orElse(null);
+        if (resourceMenu != null) {
+            for (SysMenu m : allMenus) {
+                if ("API管理".equals(m.getMenuName()) && (m.getParentId() == null || m.getParentId() == 0L)) {
+                    m.setParentId(resourceMenu.getId());
+                    m.setSort(3);
+                }
+            }
+        }
+
         // 构建树形结构
         return buildMenuTree(allMenus, 0L);
     }

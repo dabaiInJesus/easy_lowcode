@@ -3,8 +3,8 @@ import { ref, computed } from 'vue'
 import { getMenuTree } from '@/api/auth'
 import router from '@/router'
 
-// 静态导入所有组件，用于动态路由
-const AllComponents = {
+// 组件路径映射 - 后端返回的 component 字段映射到前端动态 import
+const componentMap: Record<string, () => Promise<any>> = {
   // 系统管理
   'system/UserManagement': () => import('../views/system/UserManagement.vue'),
   'system/RoleManagement': () => import('../views/system/RoleManagement.vue'),
@@ -12,19 +12,32 @@ const AllComponents = {
   'system/DeptManagement': () => import('../views/system/DeptManagement.vue'),
   'system/AppManagement': () => import('../views/system/AppManagement.vue'),
   'system/AuthManagement': () => import('../views/system/AuthManagement.vue'),
+  'system/user/index': () => import('../views/system/UserManagement.vue'),
+  'system/role/index': () => import('../views/system/RoleManagement.vue'),
+  'system/menu/index': () => import('../views/system/MenuManagement.vue'),
+  'system/dept/index': () => import('../views/system/DeptManagement.vue'),
+  'system/app/index': () => import('../views/system/AppManagement.vue'),
+  'system/auth/index': () => import('../views/system/AuthManagement.vue'),
   // 资源管理
   'resource/DataSourceManagement': () => import('../views/resource/DataSourceManagement.vue'),
   'resource/TableResourceManagement': () => import('../views/resource/TableResourceManagement.vue'),
   'resource/ApiManagement': () => import('../views/resource/ApiManagement.vue'),
+  'resource/datasource/index': () => import('../views/resource/DataSourceManagement.vue'),
+  'resource/table/index': () => import('../views/resource/TableResourceManagement.vue'),
+  'resource/api/index': () => import('../views/resource/ApiManagement.vue'),
   // ETL
   'etl/EtlTaskManagement': () => import('../views/etl/EtlTaskManagement.vue'),
+  'etl/task/index': () => import('../views/etl/EtlTaskManagement.vue'),
   // 数据大屏
   'dashboard/DashboardManagement': () => import('../views/dashboard/DashboardManagement.vue'),
   'dashboard/DashboardDesigner': () => import('../views/dashboard/DashboardDesigner.vue'),
   'dashboard/DashboardView': () => import('../views/dashboard/DashboardView.vue'),
+  'dashboard/manage/index': () => import('../views/dashboard/DashboardManagement.vue'),
   // AI
   'ai/ChatView': () => import('../views/ai/ChatView.vue'),
   'ai/AiConfigManagement': () => import('../views/ai/AiConfigManagement.vue'),
+  'ai/chat/index': () => import('../views/ai/ChatView.vue'),
+  'ai/config/index': () => import('../views/ai/AiConfigManagement.vue'),
 }
 
 export interface MenuItem {
@@ -145,7 +158,7 @@ export const useMenuStore = defineStore('menu', () => {
           // 处理子菜单
           menu.children.forEach(child => {
             if (child.path && child.component) {
-              const loader = AllComponents[child.component as keyof typeof AllComponents]
+              const loader = componentMap[child.component]
               if (!loader) {
                 console.warn(`组件不存在: ${child.component}`)
                 return
@@ -168,7 +181,7 @@ export const useMenuStore = defineStore('menu', () => {
 
       // 没有子菜单的菜单
       if (menu.path && menu.component) {
-        const loader = AllComponents[menu.component as keyof typeof AllComponents]
+        const loader = componentMap[menu.component]
         if (!loader) {
           console.warn(`组件不存在: ${menu.component}`)
           return

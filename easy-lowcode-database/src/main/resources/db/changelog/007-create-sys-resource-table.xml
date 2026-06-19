@@ -7,7 +7,7 @@
 
     <!-- 系统资源表 -->
     <changeSet id="007-create-sys-resource-table" author="dabai">
-        <createTable tableName="sys_resource" remarks="系统资源表" ifNotExists="true">
+        <createTable tableName="sys_resource" remarks="系统资源表">
             <column name="id" type="BIGINT">
                 <constraints primaryKey="true" nullable="false"/>
             </column>

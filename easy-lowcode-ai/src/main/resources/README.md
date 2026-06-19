@@ -134,6 +134,6 @@ echo $DASHSCOPE_API_KEY
 
 ## 更多信息
 
-- 详细配置说明：参见项目根目录的 `CONFIG_EXAMPLE.yaml`
-- 快速开始指南：参见 `QUICK_START.md`
+- 详细配置说明：参见 `easy-lowcode-ai/src/main/resources/application-ai.yml`
+- 快速开始指南：参见 `easy-lowcode-ai/README.md`
 - 完整文档：参见 `README.md`

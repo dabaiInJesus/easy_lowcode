@@ -10,9 +10,9 @@
 |---|---|---|
 | 核心框架 | Spring Boot | 3.5.5 |
 | ORM框架 | MyBatis Plus | 3.5.5 |
-| 权限认证 | Sa-Token | 1.37.0 |
+| 权限认证 | Spring Security + JWT | 6.x + jjwt 0.12.5 |
 | 工作流引擎 | Flowable | 7.0.1 |
-| AI集成 | Spring AI / DashScope / DeepSeek / Ollama | 1.1.4 |
+| AI集成 | Spring AI / DashScope / DeepSeek / Ollama | 1.1.2 |
 | 数据库 | PostgreSQL 17（+ MySQL/Oracle/SQL Server/达梦等12种） | - |
 | 消息队列 | RocketMQ | 5.3.0 |
 | 批处理 | Spring Batch | - |
@@ -28,7 +28,7 @@ easy-lowcode-common      ← 公共模块（工具类、异常、统一返回、
     ↑
 easy-lowcode-database    ← 数据库模块（通用实体、Mapper、MyBatis配置、Liquibase）
     ↑
-    ├── easy-lowcode-auth        ← 认证授权（用户/角色/菜单/部门CRUD，Sa-Token）
+    ├── easy-lowcode-auth        ← 认证授权（用户/角色/菜单/部门CRUD，Spring Security）
     ├── easy-lowcode-collector   ← 数据采集（多数据源配置/测试/扫描，表资源注册，API管理）
     ├── easy-lowcode-resource    ← 资源查询（动态数据查询，字段白名单安全加固）
     ├── easy-lowcode-etl         ← ETL配置（源→目标数据抽取/转换/加载，异步执行）
@@ -87,7 +87,7 @@ easy-lowcode-frontend    ← Vue 3前端（TypeScript，Element Plus，ECharts�
 
 ### 7. 基础设施
 - Docker Compose：PostgreSQL 17 + pgvector + Redis + RocketMQ
-- Liquibase：17个数据库表变更集，覆盖所有模块
+- Liquibase：28个数据库表变更集，覆盖所有模块
 - Actuator 监控端点
 - 异步线程池（通用 + ETL专用）
 
@@ -102,7 +102,7 @@ easy-lowcode-frontend    ← Vue 3前端（TypeScript，Element Plus，ECharts�
 | 数据库表 | 17+张 |
 | REST API端点 | 80+个 |
 | 测试用例 | 30+个 |
-| Liquibase变更集 | 17+ 个 |
+| Liquibase变更集 | 28 个 |
 
 ## 🗺️ API 接口总览
 
@@ -168,7 +168,7 @@ easy-lowcode-frontend    ← Vue 3前端（TypeScript，Element Plus，ECharts�
 3. **可扩展性**
    - 工厂模式：AiServiceFactory 支持动态添加AI供应商
    - 数据库类型模板模式：12种数据库的SQL方言统一管理
-   - Liquibase 数据库版本管理：17个变更集可追溯
+   - Liquibase 数据库版本管理：28个变更集可追溯
 
 ## ⏳ 后续规划
 

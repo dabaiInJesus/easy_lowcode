@@ -14,6 +14,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.springframework.test.util.ReflectionTestUtils;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -27,7 +29,6 @@ class SysRoleServiceImplTest {
     @Mock
     private SysRoleMapper sysRoleMapper;
 
-    @InjectMocks
     private SysRoleServiceImpl sysRoleService;
 
     private SysRole adminRole;
@@ -35,6 +36,8 @@ class SysRoleServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        sysRoleService = new SysRoleServiceImpl();
+        ReflectionTestUtils.setField(sysRoleService, "baseMapper", sysRoleMapper);
         adminRole = new SysRole();
         adminRole.setId(1L);
         adminRole.setRoleName("管理员");

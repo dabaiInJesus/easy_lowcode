@@ -289,8 +289,8 @@
         </el-form-item>
         <el-form-item label="是否需要认证">
           <el-radio-group v-model="registerFormData.authRequired">
-            <el-radio :value="0">否</el-radio>
-            <el-radio :value="1">是</el-radio>
+            <el-radio :value="false">否</el-radio>
+            <el-radio :value="true">是</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="限流次数/分钟">
@@ -353,8 +353,8 @@
         </el-form-item>
         <el-form-item label="是否需要认证">
           <el-radio-group v-model="editFormData.authRequired">
-            <el-radio :value="0">否</el-radio>
-            <el-radio :value="1">是</el-radio>
+            <el-radio :value="false">否</el-radio>
+            <el-radio :value="true">是</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="限流次数/分钟">
@@ -668,7 +668,7 @@ const handleRegisterDialogClose = () => {
     apiType: 'EXTERNAL',
     description: '',
     version: 'v1',
-    authRequired: 0,
+  authRequired: false,
     rateLimit: 0,
     status: 1,
     sortOrder: 0,

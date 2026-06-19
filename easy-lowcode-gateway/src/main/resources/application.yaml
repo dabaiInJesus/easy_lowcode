@@ -135,16 +135,6 @@ spring:
 jwt:
   secret: ${JWT_SECRET}
 
-# Sa-Token 配置
-sa-token:
-  token-name: satoken
-  timeout: 86400
-  active-timeout: -1
-  is-concurrent: true
-  is-share: false
-  token-style: uuid
-  is-log: false
-
 # Gateway 认证白名单
 gateway:
   auth:

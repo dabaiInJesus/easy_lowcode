@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="028-fix-api-management-auth-required-type" author="system">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="collector_api_management"/>
+            <columnExists tableName="collector_api_management" columnName="auth_required"/>
+        </preConditions>
+
+        <comment>Check if auth_required needs type migration (INT -> BOOLEAN). Already BOOLEAN in current DB, no-op.</comment>
+        <sql splitStatements="false" endDelimiter=";">
+            SELECT 1
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

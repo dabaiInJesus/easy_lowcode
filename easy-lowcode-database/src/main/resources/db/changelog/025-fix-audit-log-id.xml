@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="025-fix-audit-log-id" author="system">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="sys_audit_log"/>
+        </preConditions>
+
+        <sql><![CDATA[
+            DO $$
+            BEGIN
+                IF (SELECT data_type FROM information_schema.columns
+                    WHERE table_name = 'sys_audit_log' AND column_name = 'id') = 'bigint' THEN
+                    ALTER TABLE sys_audit_log ALTER COLUMN id TYPE BIGINT USING id::BIGINT;
+                END IF;
+            END $$;
+        ]]></sql>
+    </changeSet>
+
+</databaseChangeLog>

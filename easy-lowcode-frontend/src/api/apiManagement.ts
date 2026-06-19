@@ -12,7 +12,7 @@ export interface ApiManagement {
   responseConfig?: string
   status?: number
   version?: string
-  authRequired?: number
+  authRequired?: boolean
   rateLimit?: number
   sortOrder?: number
   createTime?: string
