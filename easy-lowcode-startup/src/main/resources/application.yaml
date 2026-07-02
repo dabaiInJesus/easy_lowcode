@@ -114,7 +114,7 @@ encrypt:
 
 # JWT 配置
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:easy-lowcode-jwt-secret-key-2024-very-long-string}
   expiration: 2592000000
 
 # JWT 配置（由 jjwt 库处理，上述 jwt.secret 已配置）
