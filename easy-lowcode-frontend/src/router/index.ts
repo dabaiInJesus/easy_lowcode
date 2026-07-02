@@ -108,6 +108,30 @@ const router = createRouter({
           ],
         },
         {
+          path: 'resource-query',
+          meta: { title: '资源查询' },
+          children: [
+            {
+              path: 'single',
+              name: 'singleResourceSearch',
+              component: () => import('../views/resource/SingleResourceSearch.vue'),
+              meta: { title: '单资源查询' },
+            },
+            {
+              path: 'multi',
+              name: 'multiResourceSearch',
+              component: () => import('../views/resource/MultiResourceSearch.vue'),
+              meta: { title: '多资源统一搜索' },
+            },
+            {
+              path: 'fulltext',
+              name: 'fullTextSearch',
+              component: () => import('../views/resource/FullTextSearch.vue'),
+              meta: { title: '全文检索' },
+            },
+          ],
+        },
+        {
           path: 'dashboard',
           meta: { title: '数据大屏' },
           children: [

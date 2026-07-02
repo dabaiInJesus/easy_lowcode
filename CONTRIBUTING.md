@@ -414,7 +414,7 @@ class AuthControllerTest {
     void testLogin() throws Exception {
         mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"username\":\"admin\",\"password\":\"123456\"}"))
+                .content("{\"username\":\"admin\",\"password\":\"admin123\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200));
     }

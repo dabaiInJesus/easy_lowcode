@@ -176,7 +176,7 @@ java -jar easy-lowcode-startup/target/easy-lowcode-startup-1.0.0-SNAPSHOT.jar
 # 1. 登录获取 token
 curl -X POST http://localhost:8081/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"123456"}'
+  -d '{"username":"admin","password":"admin123"}'
 
 # 响应示例
 # {"code":200,"message":"登录成功","data":{"token":"xxx"},"timestamp":1234567890}

@@ -5,7 +5,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
 
-    <!-- 插入默认管理员用户 (密码: 123456) -->
+    <!-- 插入默认管理员用户 (密码: 123456，实际密码通过 031 changeset 更新为 admin123) -->
     <changeSet id="001-insert-admin-user" author="dabai">
         <insert tableName="sys_user">
             <column name="id" valueNumeric="1"/>

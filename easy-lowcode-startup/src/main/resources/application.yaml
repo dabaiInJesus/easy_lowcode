@@ -80,10 +80,13 @@ spring:
   #   database-schema-update: true
   #   check-process-definitions: false
   
-# DevTools 热重载配置 (禁用以避免模块依赖问题)
+# DevTools 热重载配置
     devtools:
       restart:
-        enabled: false
+        enabled: true
+        additional-paths: src/main/java
+      livereload:
+        enabled: true
   # 自由标记模板缓存（开发时关闭）
   freemarker:
     cache: false

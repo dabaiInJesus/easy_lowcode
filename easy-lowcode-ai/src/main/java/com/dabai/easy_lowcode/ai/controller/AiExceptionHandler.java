@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
  * AI 模块全局异常处理器
  */
 @Slf4j
-@RestControllerAdvice
+@RestControllerAdvice(basePackages = "com.dabai.easy_lowcode.ai.controller")
 public class AiExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)

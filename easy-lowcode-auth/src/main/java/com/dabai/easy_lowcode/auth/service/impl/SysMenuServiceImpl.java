@@ -37,11 +37,9 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
      */
     private List<SysMenu> buildTree(List<SysMenu> menus, Long parentId) {
         return menus.stream()
-                .filter(menu -> menu.getParentId().equals(parentId))
-                .peek(menu -> {
-                    List<SysMenu> children = buildTree(menus, menu.getId());
-                    // 这里可以设置子菜单，但实体中没有children字段
-                    // 如果需要返回树形结构，需要创建一个VO类
+                .filter(menu -> {
+                    Long pid = menu.getParentId();
+                    return parentId.equals(pid != null ? pid : 0L);
                 })
                 .collect(Collectors.toList());
     }
