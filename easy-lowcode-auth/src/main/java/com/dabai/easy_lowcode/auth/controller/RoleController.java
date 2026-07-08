@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.dabai.easy_lowcode.auth.entity.SysRole;
 import com.dabai.easy_lowcode.auth.service.SysRoleService;
 import com.dabai.easy_lowcode.common.result.Result;
+import org.springframework.security.access.prepost.PreAuthorize;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -23,6 +24,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/auth/role")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class RoleController {
     
     private final SysRoleService roleService;

@@ -2,6 +2,7 @@ package com.dabai.easy_lowcode.auth.controller;
 
 import com.dabai.easy_lowcode.auth.service.AuthorizationService;
 import com.dabai.easy_lowcode.common.result.Result;
+import org.springframework.security.access.prepost.PreAuthorize;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -20,6 +21,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth/authorization")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class AuthorizationController {
     
     private final AuthorizationService authorizationService;

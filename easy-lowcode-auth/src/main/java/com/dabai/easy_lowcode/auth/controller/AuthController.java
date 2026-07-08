@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dabai.easy_lowcode.auth.entity.SysUser;
 import com.dabai.easy_lowcode.auth.service.SysUserService;
 import com.dabai.easy_lowcode.common.result.PageResult;
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.dabai.easy_lowcode.common.result.Result;
 import com.dabai.easy_lowcode.common.util.EncryptUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,6 +29,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class AuthController {
     
     private final SysUserService userService;
@@ -38,6 +40,7 @@ public class AuthController {
     @Operation(summary = "用户登录", description = "使用用户名和密码登录系统，返回token")
     @ApiResponse(responseCode = "200", description = "登录成功")
     @PostMapping("/login")
+    @PreAuthorize("permitAll()")
     public Result<Map<String, Object>> login(@Valid @RequestBody LoginRequest request) {
         String token = userService.login(request.getUsername(), request.getPassword());
         
@@ -50,6 +53,7 @@ public class AuthController {
     @Operation(summary = "用户登出", description = "退出当前登录")
     @ApiResponse(responseCode = "200", description = "登出成功")
     @PostMapping("/logout")
+    @PreAuthorize("permitAll()")
     public Result<Void> logout() {
         userService.logout();
         return Result.success("登出成功", null);

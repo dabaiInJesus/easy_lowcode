@@ -3,6 +3,7 @@ package com.dabai.easy_lowcode.dashboard.controller;
 import com.dabai.easy_lowcode.collector.entity.DataSourceConfig;
 import com.dabai.easy_lowcode.collector.mapper.DataSourceConfigMapper;
 import com.dabai.easy_lowcode.common.result.Result;
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.dabai.easy_lowcode.dashboard.dto.TextToSqlRequest;
 import com.dabai.easy_lowcode.dashboard.dto.TextToSqlResponse;
 import com.dabai.easy_lowcode.dashboard.engine.SqlEngine;
@@ -30,6 +31,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/dataview")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class DataViewController {
 
     private final TextToSqlService textToSqlService;

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dabai.easy_lowcode.collector.entity.DataSourceConfig;
 import com.dabai.easy_lowcode.collector.mapper.DataSourceConfigMapper;
 import com.dabai.easy_lowcode.common.result.PageResult;
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.dabai.easy_lowcode.common.result.Result;
 import com.dabai.easy_lowcode.etl.entity.EtlTask;
 import com.dabai.easy_lowcode.etl.service.EtlTaskService;
@@ -29,6 +30,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/etl/task")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class EtlTaskController {
 
     private final EtlTaskService etlTaskService;

@@ -7,6 +7,7 @@ import com.dabai.easy_lowcode.common.result.Result;
 import com.dabai.easy_lowcode.resource.entity.SysResource;
 import com.dabai.easy_lowcode.resource.model.QueryTemplate;
 import com.dabai.easy_lowcode.resource.service.DynamicDataService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.dabai.easy_lowcode.resource.service.ResourceExecutionService;
 import com.dabai.easy_lowcode.resource.service.SysResourceService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,6 +29,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/resource")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class SysResourceController {
     
     private final SysResourceService resourceService;

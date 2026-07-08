@@ -7,6 +7,7 @@ import com.dabai.easy_lowcode.common.result.Result;
 import com.dabai.easy_lowcode.dashboard.entity.Dashboard;
 import com.dabai.easy_lowcode.dashboard.entity.DashboardChart;
 import com.dabai.easy_lowcode.dashboard.service.DashboardService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -26,6 +27,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/dashboard")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class DashboardController {
 
     private final DashboardService dashboardService;

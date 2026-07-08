@@ -3,6 +3,7 @@ package com.dabai.easy_lowcode.collector.controller;
 import com.dabai.easy_lowcode.collector.entity.UnifiedKeyMapping;
 import com.dabai.easy_lowcode.collector.service.UnifiedKeyMappingService;
 import com.dabai.easy_lowcode.common.result.Result;
+import org.springframework.security.access.prepost.PreAuthorize;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/collector/unified-key-mapping")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class UnifiedKeyMappingController {
 
     private final UnifiedKeyMappingService mappingService;

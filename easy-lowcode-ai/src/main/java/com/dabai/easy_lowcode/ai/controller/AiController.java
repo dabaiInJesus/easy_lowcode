@@ -6,6 +6,7 @@ import com.dabai.easy_lowcode.ai.enums.AiProvider;
 import com.dabai.easy_lowcode.ai.factory.AiServiceFactory;
 import com.dabai.easy_lowcode.ai.service.AiService;
 import com.dabai.easy_lowcode.common.result.Result;
+import org.springframework.security.access.prepost.PreAuthorize;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -44,6 +45,7 @@ import java.util.concurrent.Executors;
 @RequestMapping("/api/ai")
 @RequiredArgsConstructor
 @Validated
+@PreAuthorize("isAuthenticated()")
 public class AiController {
 
     private final AiServiceFactory aiServiceFactory;
@@ -189,6 +191,7 @@ public class AiController {
     @Operation(summary = "获取支持的AI厂商列表", description = "获取所有已配置和可用的AI厂商信息")
     @ApiResponse(responseCode = "200", description = "获取成功")
     @GetMapping("/providers")
+    @PreAuthorize("permitAll()")
     public Result<Map<String, Object>> getProviders() {
         List<AiProvider> supported = aiServiceFactory.getSupportedProviders();
 
@@ -209,6 +212,7 @@ public class AiController {
     @Operation(summary = "测试AI连接", description = "测试指定AI厂商的连接是否正常")
     @ApiResponse(responseCode = "200", description = "测试完成")
     @PostMapping("/test")
+    @PreAuthorize("permitAll()")
     public Result<Map<String, Object>> testConnection(@RequestBody Map<String, String> request) {
         String providerCode = request.get("provider");
         String apiKey = request.get("apiKey");
@@ -372,6 +376,7 @@ public class AiController {
     @Operation(summary = "AI服务健康检查", description = "检查AI服务的运行状态")
     @ApiResponse(responseCode = "200", description = "检查完成")
     @GetMapping("/health")
+    @PreAuthorize("permitAll()")
     public Result<Map<String, Object>> health() {
         Map<String, Object> health = new HashMap<>();
         List<AiProvider> supported = aiServiceFactory.getSupportedProviders();

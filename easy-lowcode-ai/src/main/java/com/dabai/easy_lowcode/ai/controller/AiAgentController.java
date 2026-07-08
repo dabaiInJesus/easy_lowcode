@@ -2,6 +2,7 @@ package com.dabai.easy_lowcode.ai.controller;
 
 import com.dabai.easy_lowcode.ai.service.AiAgentService;
 import com.dabai.easy_lowcode.common.result.Result;
+import org.springframework.security.access.prepost.PreAuthorize;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -23,6 +24,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/ai/agent")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class AiAgentController {
 
     private final AiAgentService aiAgentService;

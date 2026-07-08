@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dabai.easy_lowcode.collector.entity.DataSourceConfig;
 import com.dabai.easy_lowcode.collector.service.DataSourceConfigService;
 import com.dabai.easy_lowcode.common.result.PageResult;
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.dabai.easy_lowcode.common.result.Result;
 import com.dabai.easy_lowcode.common.util.EncryptUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,6 +29,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/collector/datasource")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class DataSourceConfigController {
     
     private final DataSourceConfigService dataSourceConfigService;

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dabai.easy_lowcode.collector.entity.FulltextDocument;
 import com.dabai.easy_lowcode.collector.service.FulltextDocumentService;
 import com.dabai.easy_lowcode.common.result.Result;
+import org.springframework.security.access.prepost.PreAuthorize;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/collector/fulltext")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class FulltextDocumentController {
 
     private final FulltextDocumentService documentService;

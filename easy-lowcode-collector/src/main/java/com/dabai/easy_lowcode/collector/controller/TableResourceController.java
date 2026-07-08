@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dabai.easy_lowcode.collector.entity.TableResource;
 import com.dabai.easy_lowcode.collector.mapper.TableResourceMapper;
 import com.dabai.easy_lowcode.collector.service.DataPreviewService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.dabai.easy_lowcode.collector.service.TableResourceService;
 import com.dabai.easy_lowcode.common.result.PageResult;
 import com.dabai.easy_lowcode.common.result.Result;
@@ -27,6 +28,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/collector/table-resource")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class TableResourceController {
     
     private final TableResourceService tableResourceService;

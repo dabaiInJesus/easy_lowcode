@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dabai.easy_lowcode.collector.entity.ApiManagement;
 import com.dabai.easy_lowcode.collector.mapper.ApiManagementMapper;
 import com.dabai.easy_lowcode.collector.service.ApiManagementService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.dabai.easy_lowcode.common.result.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -24,6 +25,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/collector/api-management")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class ApiManagementController {
     
     private final ApiManagementService apiManagementService;

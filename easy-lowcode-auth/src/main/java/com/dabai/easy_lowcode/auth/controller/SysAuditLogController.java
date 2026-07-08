@@ -3,6 +3,7 @@ package com.dabai.easy_lowcode.auth.controller;
 import com.dabai.easy_lowcode.auth.service.SysAuditLogService;
 import com.dabai.easy_lowcode.common.result.PageResult;
 import com.dabai.easy_lowcode.common.result.Result;
+import org.springframework.security.access.prepost.PreAuthorize;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,6 +19,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth/audit")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class SysAuditLogController {
 
     private final SysAuditLogService auditLogService;

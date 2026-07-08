@@ -6,6 +6,7 @@ import com.dabai.easy_lowcode.ai.config.AiConfigRefresher;
 import com.dabai.easy_lowcode.ai.entity.AiConfig;
 import com.dabai.easy_lowcode.ai.mapper.AiConfigMapper;
 import com.dabai.easy_lowcode.common.result.PageResult;
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.dabai.easy_lowcode.common.result.Result;
 import com.dabai.easy_lowcode.common.util.EncryptUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,6 +28,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/ai/config")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class AiConfigController {
 
     private final AiConfigMapper aiConfigMapper;

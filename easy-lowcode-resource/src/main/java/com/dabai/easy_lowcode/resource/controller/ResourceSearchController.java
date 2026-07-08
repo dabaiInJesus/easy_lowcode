@@ -3,6 +3,7 @@ package com.dabai.easy_lowcode.resource.controller;
 import com.dabai.easy_lowcode.common.result.Result;
 import com.dabai.easy_lowcode.resource.model.FieldConfig;
 import com.dabai.easy_lowcode.resource.service.ResourceSearchService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.dabai.easy_lowcode.resource.service.ResourceSearchService.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -25,6 +26,7 @@ import java.util.Set;
 @RestController
 @RequestMapping("/api/resource/search")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class ResourceSearchController {
 
     private final ResourceSearchService searchService;
