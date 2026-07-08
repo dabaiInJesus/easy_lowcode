@@ -774,19 +774,18 @@ const data: any = await request(...)  // 禁止
 
 #### 12. Git Commit 规范
 
-使用 Conventional Commits:
+- **语言**: 必须使用**中文**编写 commit message
+- **格式**: `<type>: <简短中文描述>`（不超过 72 字符）
 
 | 类型 | 说明 | 示例 |
 |------|------|------|
-| `feat` | 新功能 | `feat: add role management CRUD` |
-| `fix` | Bug 修复 | `fix: fix role code generation NPE` |
-| `refactor` | 重构 | `refactor: extract query builder` |
-| `style` | 样式调整 | `style: adjust table column width` |
-| `docs` | 文档 | `docs: update API documentation` |
-| `test` | 测试 | `test: add role service unit test` |
-| `chore` | 构建/工具 | `chore: update maven dependencies` |
-
-提交信息格式: `<type>: <简短描述>`（不超过 72 字符）
+| `feat` | 新功能 | `feat: 新增角色管理CRUD` |
+| `fix` | Bug 修复 | `fix: 修复角色编码生成空指针` |
+| `refactor` | 重构 | `refactor: 抽取查询构建器` |
+| `style` | 样式调整 | `style: 调整表格列宽` |
+| `docs` | 文档 | `docs: 更新API文档` |
+| `test` | 测试 | `test: 新增角色服务单元测试` |
+| `chore` | 构建/工具 | `chore: 更新Maven依赖` |
 
 ---
 
@@ -816,3 +815,412 @@ const data: any = await request(...)  // 禁止
 - 敏感数据（手机号、身份证）传输需脱敏处理
 - SQL 参数必须使用 MyBatis Plus 参数绑定，禁止拼接字符串
 - API 返回结果不暴露密码、Token 等敏感信息
+
+---
+
+### 四、资源模块开发规范 (configJson / Processor / Template)
+
+#### 1. configJson 配置结构
+
+```java
+// ConfigJson.java — 资源配置的根对象
+@Data
+public class ConfigJson {
+    private List<FieldConfig> fields;
+    private List<ProcessorConfig> parameterProcessors;
+    private List<ProcessorConfig> resultProcessors;
+    private List<QueryTemplate> queryTemplates;
+    private DisplaySettings displaySettings;
+}
+```
+
+- `fields`: 字段定义列表（名称、类型、是否可查询、是否返回、查询组件类型）
+- `parameterProcessors`: SQL 执行前的参数处理器链
+- `resultProcessors`: SQL 执行后的结果处理器链
+- `queryTemplates`: 可选的多个 SQL 模板（支持占位符）
+- `displaySettings`: 查询结果的列表列配置和详情页配置
+
+configJson 作为 JSON 存储在 `table_resource.config_json` 字段，前端在 `TableResourceManagement.vue` 中以标签页形式进行可视化编辑。
+
+#### 2. 新增处理器步骤
+
+```java
+// 1. 实现 Processor 接口
+@Component
+public class MyProcessor implements ParameterProcessor {
+    @Override
+    public String type() { return "my_processor"; }       // 唯一类型标识
+
+    @Override
+    public int order() { return 5; }                      // 执行顺序
+
+    @Override
+    public boolean enabled() { return true; }
+
+    @Override
+    public Map<String, Object> process(Map<String, Object> params,
+                                        Map<String, Object> config) {
+        // config 来自 configJson 中该处理器的 config 字段
+        return params;
+    }
+}
+
+// 2. 配置前端表单组件 (如需要)
+// 在 src/views/resource/components/processor-forms/ 下新建 .vue
+// 在 types/tableResource.ts 的 processorFormComponentMap 中注册
+```
+
+| 步骤 | 说明 |
+|------|------|
+| 创建 Java 类 | 实现 `ParameterProcessor` 或 `ResultProcessor`，加 `@Component` |
+| 注册到 `ProcessorRegistry` | 自动扫描，无需手动注册 |
+| 创建前端配置表单 | 在 `processor-forms/` 下新建组件 |
+| 注册组件映射 | 在 `processorFormComponentMap` 中添加 type → 组件映射 |
+| 添加到 configJson | 前端处理器编辑器中选择该类型即可 |
+
+#### 3. 模板语法
+
+```
+{{fieldName}}         → 参数替换（自动参数化绑定防注入）
+{{#if fieldName}}     → 条件包含（参数非空时渲染）
+  SQL片段
+{{/if}}
+{{#unless fieldName}} → 条件排除（参数为空时渲染）
+  SQL片段
+{{/unless}}
+```
+
+- 模板存储在 `queryTemplates` 列表中，可配置多个
+- 前端单资源查询时用户可切换模板
+- SQL 注入防护：关键词黑名单 + 列白名单 + 参数化绑定三重防护
+
+#### 4. 资源查询规范
+
+| 场景 | 使用方式 |
+|------|---------|
+| 单资源精确查询 | `POST /api/resource/search/single`，传 resourceCode + params + templateName |
+| 多资源统一 Key 查询 | `POST /api/resource/search/multi`，传 keyName + keyValue |
+| 多资源关键词查询 | `POST /api/resource/search/keyword`，传 resourceCodes + keyword |
+| 全文检索 | `POST /api/resource/search/fulltext`，传 query + indexName |
+
+---
+
+### 五、数据可视化开发规范 (Dashboard / Chart)
+
+#### 1. 大屏设计器架构
+
+```
+DashboardDesigner.vue
+  ├── 左侧：图表列表（从 dashboard_chart 读取）
+  ├── 中间：vue-grid-layout 画布（拖拽调整位置/大小）
+  └── 右侧：图表属性面板（标题、类型、数据源、SQL）
+```
+
+- 大屏数据 = 大屏定义（dashboard）+ 关联图表列表（dashboard_chart）
+- 布局使用 `vue-grid-layout`，位置/大小信息存储在 `dashboard_chart.x/y/w/h` 字段
+- 刷新机制：大屏配置 `refresh_interval`，前端轮询查询每个图表数据
+
+#### 2. 新增图表类型步骤
+
+```java
+// 1. ChartRecommendService 中扩展推荐逻辑（如需要AI推荐）
+//    在 recommendChartType(List<ColumnInfo> columns) 方法中
+//    新增 chartType 的检测规则
+
+// 2. 前端 DashboardDesigner 渲染对应图表
+//    ECharts 配置在 DashboardView.vue 的 renderChart 函数中
+//    根据 chartType 映射到不同的 ECharts option
+```
+
+| 步骤 | 说明 |
+|------|------|
+| 后端 | `ChartRecommendService` 规则引擎（按字段类型推荐） |
+| 前端 | `DashboardDesigner` 选择图表类型，`DashboardView` 渲染 ECharts |
+| 数据源 | `SqlEngine.execute()` 执行 SQL 获取数据 |
+| 缓存 | `ChartCacheService` Redis 缓存，Key = chartId + sql md5 |
+
+#### 3. SQL 引擎使用规范
+
+```java
+// 获取数据源对应的 SQL 引擎
+SqlEngine engine = sqlEngineFactory.getEngine(datasourceId);
+
+// 执行 SQL 查询
+List<Map<String, Object>> result = engine.execute(datasourceId, sql, params);
+
+// 测试连接
+engine.testConnection(datasource);
+
+// 获取表字段
+List<ColumnInfo> columns = engine.getColumns(datasource, tableName);
+```
+
+- 支持 MySQL、PostgreSQL、Oracle、SQLServer、Hive
+- 引擎按 datasourceId 缓存，复用 JDBC 连接
+- 数据源密码解密使用 `ENCRYPT_AES_KEY`
+
+---
+
+### 六、数据采集开发规范
+
+#### 1. 数据源管理
+
+```java
+// 新增数据源类型
+// 1. pom.xml 添加 JDBC 驱动依赖
+// 2. application.yaml 配置连接池（如需要）
+// 3. SqlEngineFactory 注册新类型
+```
+
+| 数据库 | JDBC 驱动 | 已支持 |
+|--------|-----------|--------|
+| MySQL | `mysql-connector-j` | ✅ |
+| PostgreSQL | `postgresql` | ✅ |
+| Oracle | `ojdbc11` | ✅ |
+| SQLServer | `mssql-jdbc` | ✅ |
+| 达梦 | `DmJdbcDriver` | ❌（注释待启用） |
+| 人大金仓 | `kingbase8` | ❌（注释待启用） |
+
+#### 2. 全文检索接入
+
+```yaml
+fulltext:
+  search:
+    type: meilisearch    # 或 elasticsearch
+    meilisearch:
+      host: http://localhost:7700
+      api-key: ""
+    elasticsearch:
+      host: http://localhost:9200
+      api-key: ""
+  storage:
+    type: minio          # 或 s3, local
+    minio:
+      endpoint: http://localhost:9000
+      access-key: minioadmin
+      secret-key: minioadmin
+      bucket: easy-lowcode-docs
+    s3:
+      region: us-east-1
+      bucket: easy-lowcode-docs
+    local:
+      path: ./data/docs
+```
+
+接入流程：上传文件 → StorageService 存储 → TikaContentExtractor 提取文本 → SearchService 索引
+
+#### 3. 搜索引擎接入规范
+
+```java
+// 实现 SearchService 接口
+@Component
+public class CustomSearchService implements SearchService {
+    @Override
+    public List<Map<String, Object>> search(String index, String query,
+                                            Map<String, Object> options) {
+        // 实现搜索逻辑
+    }
+
+    @Override
+    public void indexDocument(String index, String id, Map<String, Object> doc) {
+        // 实现文档索引
+    }
+
+    @Override
+    public void deleteDocument(String index, String id) {
+        // 实现文档删除
+    }
+}
+```
+
+#### 4. 存储后端接入规范
+
+```java
+// 实现 StorageService 接口
+@Component
+public class CustomStorageService implements StorageService {
+    @Override
+    public String upload(String fileName, byte[] content, String contentType) {
+        // 返回存储路径
+    }
+
+    @Override
+    public byte[] download(String path) { ... }
+
+    @Override
+    public void delete(String path) { ... }
+
+    @Override
+    public String getUrl(String path) { ... }
+}
+```
+
+---
+
+### 七、前端页面开发规范
+
+#### 1. 动态菜单注册
+
+添加一个新页面需要执行 3 步：
+
+**Step 1: 后端 — 菜单表插入**
+```xml
+<!-- db/changelog/xxx-add-new-menu.xml -->
+<insert tableName="sys_menu">
+  <column name="id" valueComputed="true"/>
+  <column name="menu_name" value="新功能"/>
+  <column name="parent_id" value="上级菜单ID"/>
+  <column name="path" value="module/feature"/>
+  <column name="component" value="module/FeaturePage.vue"/>
+  <column name="permission" value="module:feature:list"/>
+  <column name="menu_type" value="C"/>
+  <column name="sort" value="1"/>
+  <column name="icon" value="Setting"/>
+</insert>
+```
+
+**Step 2: 前端 — 注册组件映射**
+```typescript
+// stores/menu.ts — componentMap 中添加映射
+const componentMap: Record<string, Component> = {
+  'system/UserManagement.vue': defineAsyncComponent(() => import('@/views/system/UserManagement.vue')),
+  'module/FeaturePage.vue': defineAsyncComponent(() => import('@/views/module/FeaturePage.vue')),
+}
+```
+
+**Step 3: 前端 — 创建页面组件**
+```vue
+<script setup lang="ts">
+// 使用 useCommon 快速生成 CRUD 页面
+import { useCommon } from '@/composables/useCommon'
+import { featureApi } from '@/api/feature'
+
+const { tableData, loading, pagination, searchForm,
+        handleSearch, handleCreate, handleEdit, handleDelete } =
+  useCommon(featureApi, { silentError: false })
+</script>
+```
+
+#### 2. API 文件命名与导出
+
+```typescript
+// ✅ api/feature.ts — 按业务模块拆分
+import { createCrudApi } from './base'
+import request from '@/utils/request'
+import type { FeatureInfo } from '@/types/feature'
+
+// 标准 CRUD 使用工厂函数一行生成
+export const featureApi = createCrudApi<FeatureInfo>('/module/feature')
+
+// 自定义接口单独写
+export function customRequest(data: Params): Promise<Result> {
+  return request({ url: '/module/feature/custom', method: 'post', data })
+}
+```
+
+- 文件名 = 模块名小写（feature.ts）
+- 导出变量 = 模块名 + Api（featureApi）
+- 偏好使用 `createCrudApi` 工厂函数
+- 自定义接口使用具名函数导出
+
+#### 3. 页面组件命名约定
+
+| 场景 | 命名 | 示例 |
+|------|------|------|
+| 列表页 (CRUD) | `{Feature}Management.vue` | `UserManagement.vue` |
+| 配置页 | `{Feature}Config.vue` | `UnifiedKeyManagement.vue` |
+| 设计器 | `{Feature}Designer.vue` | `DashboardDesigner.vue` |
+| 查看页 | `{Feature}View.vue` | `DashboardView.vue` |
+| 搜索页 | `{Feature}Search.vue` | `SingleResourceSearch.vue` |
+
+#### 4. 本地组件 vs 公共组件
+
+```
+components/           # 公共通用组件（跨模块复用）
+├── TableCard.vue      # 表格卡片 + 分页
+├── SearchCard.vue     # 搜索表单卡片
+├── DialogForm.vue     # 弹窗表单
+├── ActionButtons.vue  # 操作按钮组
+└── StatusTag.vue      # 状态标签
+
+views/{module}/components/   # 模块局部组件（仅当前模块使用）
+└── processor-forms/          # 处理器配置表单
+```
+
+- 公共组件放在 `src/components/`，模块局部组件放在 `views/{module}/components/`
+- 公共组件必须加完善的 Props/Emits 类型声明
+- 局部组件文件命名使用 camelCase
+
+#### 5. Store 模式
+
+```typescript
+// stores/feature.ts
+export const useFeatureStore = defineStore('feature', () => {
+  // state — 用 ref/reactive
+  const list = ref<FeatureInfo[]>([])
+
+  // getters — 用 computed
+  const activeList = computed(() => list.value.filter(i => i.status === 1))
+
+  // actions — 用普通函数
+  async function fetchList() {
+    list.value = await featureApi.getList()
+  }
+
+  return { list, activeList, fetchList }
+})
+```
+
+- 命名: `use{Name}Store`
+- 语法: 优先 setup 方式（函数式）
+- 职责: 只管理全局状态，组件内部状态用 `ref` 或 composable
+
+---
+
+### 八、版本演进路线图
+
+#### MVP (当前版本 v1.0.0-SNAPSHOT)
+
+| 模块 | 状态 |
+|------|------|
+| 系统管理（用户/角色/菜单/部门） | ✅ 完成 |
+| 数据采集（多数据源 CRUD + 测试连接） | ✅ 完成 |
+| 资源管理（表资源 configJson 完整配置 + 处理器链 + API 注册） | ✅ 完成 |
+| 资源查询（单资源/多资源统一 Key/全文检索） | ✅ 完成 |
+| 数据可视化（大屏设计器 + 图表管理 + Text-to-SQL） | ✅ 完成 |
+| AI 模块（多 Provider 对话 + 会话管理） | ✅ 完成 |
+| ETL（Spring Batch 任务 + 同步配置） | ✅ 完成 |
+
+#### v1.1 规划
+
+| 特性 | 说明 |
+|------|------|
+| 代码生成器 | 基于表资源自动生成 Controller/Service/Mapper/前端 CRUD 页面 |
+| 可视化 ETL 编排 | 拖拽式 ETL 流程设计 |
+| 大屏模板市场 | 预置大屏模板，一键导入 |
+| 数据导出增强 | PDF/Excel 带格式导出查询结果 |
+| 操作审计日志 | 所有敏感操作记录日志 |
+
+#### v1.2 规划
+
+| 特性 | 说明 |
+|------|------|
+| 表单设计器 | 拖拽式表单设计 + 数据绑定 + 表单渲染引擎 |
+| 流程设计器 | Flowable 可视化 BPMN 设计器 |
+| 多租户支持 | SaaS 多租户数据隔离 |
+| LDAP/OAuth2 集成 | 企业级身份认证集成 |
+| 在线文件预览 | PDF/Word/Excel 在线预览 |
+
+#### 后端构建
+
+```bash
+mvn clean install -DskipTests
+```
+
+#### 前端构建
+
+```bash
+cd easy-lowcode-frontend && npm ci && npm run build
+```
+
+> 关于项目更详细的技术决策和架构设计，请参考 `docs/architecture.md`。
