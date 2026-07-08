@@ -212,6 +212,34 @@ management:
     env:
       enabled: true
 
+# 全文检索配置
+easy-lowcode:
+  search:
+    engine: meilisearch  # meilisearch | elasticsearch
+    meilisearch:
+      host: http://localhost:7700
+      api-key: ${MEILISEARCH_API_KEY:}
+      index-name: fulltext_docs
+    elasticsearch:
+      host: localhost:9200
+      username: ${ES_USERNAME:}
+      password: ${ES_PASSWORD:}
+  storage:
+    type: minio  # minio | s3 | local
+    minio:
+      endpoint: http://localhost:9000
+      access-key: ${MINIO_ACCESS_KEY:minioadmin}
+      secret-key: ${MINIO_SECRET_KEY:minioadmin}
+      bucket: easy-lowcode-files
+    s3:
+      endpoint: ${S3_ENDPOINT:}
+      region: us-east-1
+      access-key: ${AWS_ACCESS_KEY:}
+      secret-key: ${AWS_SECRET_KEY:}
+      bucket: easy-lowcode-files
+    local:
+      path: ${LOCAL_STORAGE_PATH:./data/files}
+
 # SpringDoc OpenAPI 配置
 springdoc:
   api-docs:

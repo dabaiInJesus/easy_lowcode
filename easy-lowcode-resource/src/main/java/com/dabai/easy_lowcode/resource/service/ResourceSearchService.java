@@ -82,6 +82,24 @@ public interface ResourceSearchService {
      * @return 字段配置列表
      */
     List<FieldConfig> getResourceFields(String resourceCode);
+
+    /**
+     * 获取资源完整字段信息（含显示配置）
+     *
+     * @param resourceCode 资源编码
+     * @return fields + configJson 的 Map
+     */
+    Map<String, Object> getResourceFieldInfo(String resourceCode);
+
+    /**
+     * 统一Key搜索 - 根据统一Key跨资源精确查询
+     *
+     * @param unifiedKey 统一Key，如 email
+     * @param value 查询值
+     * @param params 分页参数
+     * @return 搜索结果
+     */
+    SearchResult unifiedKeySearch(String unifiedKey, String value, SearchParams params);
     
     // ==================== 内部类 ====================
     
@@ -96,7 +114,9 @@ public interface ResourceSearchService {
         private Map<String, Object> filters; // field -> value
         private List<String> selectFields; // 指定返回字段
         private String keyword; // 全文检索关键词
-        
+        private String templateName; // 查询模板名称
+        private Map<String, Object> templateParams; // 模板参数
+
         public Integer getPage() { return page; }
         public void setPage(Integer page) { this.page = page; }
         public Integer getPageSize() { return pageSize; }
@@ -111,6 +131,10 @@ public interface ResourceSearchService {
         public void setSelectFields(List<String> selectFields) { this.selectFields = selectFields; }
         public String getKeyword() { return keyword; }
         public void setKeyword(String keyword) { this.keyword = keyword; }
+        public String getTemplateName() { return templateName; }
+        public void setTemplateName(String templateName) { this.templateName = templateName; }
+        public Map<String, Object> getTemplateParams() { return templateParams; }
+        public void setTemplateParams(Map<String, Object> templateParams) { this.templateParams = templateParams; }
     }
     
     /**

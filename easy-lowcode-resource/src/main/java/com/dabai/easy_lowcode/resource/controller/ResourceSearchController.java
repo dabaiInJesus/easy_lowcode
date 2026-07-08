@@ -130,6 +130,21 @@ public class ResourceSearchController {
         return Result.success(result);
     }
 
+    @Operation(summary = "统一Key搜索", description = "根据统一Key跨资源精确查询，如按邮箱查询所有包含邮箱字段的资源")
+    @ApiResponse(responseCode = "200", description = "搜索成功")
+    @PostMapping("/unified")
+    public Result<SearchResult> unifiedSearch(@RequestBody UnifiedSearchRequest request) {
+        if (request.getUnifiedKey() == null || request.getUnifiedKey().isEmpty()) {
+            return Result.error("请指定统一Key");
+        }
+        if (request.getValue() == null || request.getValue().isEmpty()) {
+            return Result.error("请输入查询值");
+        }
+        SearchParams params = request.getParams() != null ? request.getParams() : new SearchParams();
+        SearchResult result = searchService.unifiedKeySearch(request.getUnifiedKey(), request.getValue(), params);
+        return Result.success(result);
+    }
+
     @Operation(summary = "导出搜索结果为CSV", description = "将搜索结果导出为CSV文件")
     @ApiResponse(responseCode = "200", description = "导出成功")
     @PostMapping("/export/{resourceCode}")
@@ -179,12 +194,12 @@ public class ResourceSearchController {
         }
     }
 
-    @Operation(summary = "获取资源字段列表", description = "获取指定资源的字段配置，用于前端构建查询表单")
+    @Operation(summary = "获取资源字段列表", description = "获取指定资源的字段配置（含显示配置），用于前端构建查询表单")
     @ApiResponse(responseCode = "200", description = "获取成功")
     @GetMapping("/fields/{resourceCode}")
-    public Result<List<FieldConfig>> getResourceFields(@Parameter(description = "资源编码") @PathVariable String resourceCode) {
-        List<FieldConfig> fields = searchService.getResourceFields(resourceCode);
-        return Result.success(fields);
+    public Result<Map<String, Object>> getResourceFields(@Parameter(description = "资源编码") @PathVariable String resourceCode) {
+        Map<String, Object> result = searchService.getResourceFieldInfo(resourceCode);
+        return Result.success(result);
     }
 
     public static class MultiSearchRequest {
@@ -228,6 +243,19 @@ public class ResourceSearchController {
         public void setResourceCodes(List<String> resourceCodes) { this.resourceCodes = resourceCodes; }
         public String getKeyword() { return keyword; }
         public void setKeyword(String keyword) { this.keyword = keyword; }
+        public SearchParams getParams() { return params; }
+        public void setParams(SearchParams params) { this.params = params; }
+    }
+
+    public static class UnifiedSearchRequest {
+        private String unifiedKey;
+        private String value;
+        private SearchParams params = new SearchParams();
+
+        public String getUnifiedKey() { return unifiedKey; }
+        public void setUnifiedKey(String unifiedKey) { this.unifiedKey = unifiedKey; }
+        public String getValue() { return value; }
+        public void setValue(String value) { this.value = value; }
         public SearchParams getParams() { return params; }
         public void setParams(SearchParams params) { this.params = params; }
     }

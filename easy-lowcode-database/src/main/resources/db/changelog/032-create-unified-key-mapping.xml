@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="032-create-unified-key-mapping" author="dabai">
+        <validCheckSum>ANY</validCheckSum>
+
+        <createTable tableName="collector_unified_key_mapping" remarks="统一Key映射表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="unified_key" type="VARCHAR(50)" remarks="统一Key，如 email, phone, name">
+                <constraints nullable="false"/>
+            </column>
+            <column name="display_name" type="VARCHAR(100)" remarks="显示名称，如 '邮箱'"/>
+            <column name="description" type="VARCHAR(500)" remarks="说明"/>
+            <column name="resource_code" type="VARCHAR(100)" remarks="表资源编码">
+                <constraints nullable="false"/>
+            </column>
+            <column name="field_name" type="VARCHAR(100)" remarks="该资源对应的字段名">
+                <constraints nullable="false"/>
+            </column>
+            <column name="data_type" type="VARCHAR(20)" defaultValue="string" remarks="数据类型：string/number/date"/>
+            <column name="query_type" type="VARCHAR(20)" defaultValue="exact" remarks="查询方式：exact/fuzzy/range"/>
+            <column name="sort_order" type="INT" defaultValueNumeric="0" remarks="排序号"/>
+            <column name="deleted" type="INT" defaultValueNumeric="0" remarks="删除标志"/>
+            <column name="create_time" type="DATETIME" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间">
+                <constraints nullable="false"/>
+            </column>
+            <column name="update_time" type="DATETIME" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间">
+                <constraints nullable="false"/>
+            </column>
+            <column name="create_by" type="BIGINT" remarks="创建人"/>
+            <column name="update_by" type="BIGINT" remarks="更新人"/>
+        </createTable>
+
+        <addUniqueConstraint columnNames="unified_key, resource_code, field_name"
+                             constraintName="uk_unified_key_mapping"
+                             tableName="collector_unified_key_mapping"/>
+
+        <createIndex indexName="idx_ukm_unified_key" tableName="collector_unified_key_mapping">
+            <column name="unified_key"/>
+        </createIndex>
+
+        <createIndex indexName="idx_ukm_resource_code" tableName="collector_unified_key_mapping">
+            <column name="resource_code"/>
+        </createIndex>
+
+        <comment>统一Key映射表，将不同资源中的同义字段映射到统一的Key下，实现跨资源统一查询</comment>
+    </changeSet>
+</databaseChangeLog>

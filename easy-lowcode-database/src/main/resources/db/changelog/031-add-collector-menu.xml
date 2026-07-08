@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="031-add-collector-menu" author="dabai">
+        <validCheckSum>ANY</validCheckSum>
+
+        <!-- 1. 创建顶级目录菜单：数据采集 -->
+        <sql>
+            INSERT INTO sys_menu (id, parent_id, menu_name, menu_code, menu_type, path, component, perms, icon, sort, visible, deleted, create_time, update_time, create_by, update_by)
+            SELECT
+                COALESCE((SELECT MAX(id) FROM sys_menu), 0) + 1,
+                0,
+                '数据采集',
+                'data_collection',
+                1,
+                '/collection',
+                'Layout',
+                NULL,
+                'Collection',
+                6,
+                1,
+                0,
+                NOW(),
+                NOW(),
+                1,
+                1
+            WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_code = 'data_collection');
+        </sql>
+
+        <!-- 2. 数据源管理：从 resource 父菜单下迁移/复制到 数据采集 下 -->
+        <sql>
+            INSERT INTO sys_menu (id, parent_id, menu_name, menu_code, menu_type, path, component, perms, icon, sort, visible, deleted, create_time, update_time, create_by, update_by)
+            SELECT
+                COALESCE((SELECT MAX(id) FROM sys_menu), 0) + 1,
+                (SELECT id FROM sys_menu WHERE menu_code = 'data_collection' LIMIT 1),
+                '数据源管理',
+                'collector_datasource',
+                2,
+                '/collection/datasource',
+                'resource/DataSourceManagement',
+                'collector:datasource:list',
+                'Connection',
+                1,
+                1,
+                0,
+                NOW(),
+                NOW(),
+                1,
+                1
+            WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_code = 'collector_datasource');
+        </sql>
+
+        <!-- 3. 表资源管理 -->
+        <sql>
+            INSERT INTO sys_menu (id, parent_id, menu_name, menu_code, menu_type, path, component, perms, icon, sort, visible, deleted, create_time, update_time, create_by, update_by)
+            SELECT
+                COALESCE((SELECT MAX(id) FROM sys_menu), 0) + 1,
+                (SELECT id FROM sys_menu WHERE menu_code = 'data_collection' LIMIT 1),
+                '表资源管理',
+                'collector_table_resource',
+                2,
+                '/collection/table',
+                'resource/TableResourceManagement',
+                'collector:table:list',
+                'DataBoard',
+                2,
+                1,
+                0,
+                NOW(),
+                NOW(),
+                1,
+                1
+            WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_code = 'collector_table_resource');
+        </sql>
+
+        <!-- 4. API管理 -->
+        <sql>
+            INSERT INTO sys_menu (id, parent_id, menu_name, menu_code, menu_type, path, component, perms, icon, sort, visible, deleted, create_time, update_time, create_by, update_by)
+            SELECT
+                COALESCE((SELECT MAX(id) FROM sys_menu), 0) + 1,
+                (SELECT id FROM sys_menu WHERE menu_code = 'data_collection' LIMIT 1),
+                'API管理',
+                'collector_api',
+                2,
+                '/collection/api',
+                'resource/ApiManagement',
+                'collector:api:list',
+                'Link',
+                3,
+                1,
+                0,
+                NOW(),
+                NOW(),
+                1,
+                1
+            WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_code = 'collector_api');
+        </sql>
+
+        <!-- 5. 分配admin角色权限 -->
+        <sql>
+            INSERT INTO sys_role_menu (role_id, menu_id)
+            SELECT 1, id FROM sys_menu
+            WHERE menu_code IN ('data_collection', 'collector_datasource', 'collector_table_resource', 'collector_api')
+            AND NOT EXISTS (SELECT 1 FROM sys_role_menu WHERE role_id = 1 AND menu_id = sys_menu.id);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

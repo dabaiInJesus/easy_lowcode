@@ -124,10 +124,41 @@ const router = createRouter({
               meta: { title: '多资源统一搜索' },
             },
             {
+              path: 'unified-key',
+              name: 'unifiedKeyManagement',
+              component: () => import('../views/resource/UnifiedKeyManagement.vue'),
+              meta: { title: '统一Key管理' },
+            },
+            {
               path: 'fulltext',
               name: 'fullTextSearch',
               component: () => import('../views/resource/FullTextSearch.vue'),
               meta: { title: '全文检索' },
+            },
+          ],
+        },
+        // ---- 数据采集 ----
+        {
+          path: 'collection',
+          meta: { title: '数据采集' },
+          children: [
+            {
+              path: 'datasource',
+              name: 'collectionDatasource',
+              component: () => import('../views/resource/DataSourceManagement.vue'),
+              meta: { title: '数据源管理' },
+            },
+            {
+              path: 'table',
+              name: 'collectionTableResource',
+              component: () => import('../views/resource/TableResourceManagement.vue'),
+              meta: { title: '表资源管理' },
+            },
+            {
+              path: 'api',
+              name: 'collectionApi',
+              component: () => import('../views/resource/ApiManagement.vue'),
+              meta: { title: 'API管理' },
             },
           ],
         },

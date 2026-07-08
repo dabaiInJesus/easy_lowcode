@@ -1,10 +1,14 @@
 package com.dabai.easy_lowcode.resource.service.impl;
 
 import com.dabai.easy_lowcode.collector.entity.TableResource;
+import com.dabai.easy_lowcode.collector.entity.UnifiedKeyMapping;
 import com.dabai.easy_lowcode.collector.mapper.TableResourceMapper;
+import com.dabai.easy_lowcode.collector.service.UnifiedKeyMappingService;
 import com.dabai.easy_lowcode.common.exception.BusinessException;
 import com.dabai.easy_lowcode.database.model.DataSourceInfo;
 import com.dabai.easy_lowcode.database.service.DataSourceProvider;
+import com.dabai.easy_lowcode.resource.model.ConfigJson;
+import com.dabai.easy_lowcode.resource.model.ConfigParser;
 import com.dabai.easy_lowcode.resource.model.FieldConfig;
 import com.dabai.easy_lowcode.resource.service.*;
 import lombok.RequiredArgsConstructor;
@@ -29,12 +33,39 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
     private final ResourceSchemaService schemaService;
     private final ResourceResultProcessor resultProcessor;
     private final ResourceCacheManager cacheManager;
+    private final ResourceExecutionService executionService;
+    private final UnifiedKeyMappingService unifiedKeyMappingService;
 
     @Override
     public SearchResult singleSearch(String resourceCode, SearchParams params) {
         TableResource tableResource = tableResourceMapper.selectByResourceCode(resourceCode);
         if (tableResource == null) {
             throw new BusinessException("资源不存在: " + resourceCode);
+        }
+
+        // 如果指定了模板名称，委托给模板执行引擎
+        if (params.getTemplateName() != null && !params.getTemplateName().isEmpty()) {
+            Map<String, Object> execParams = new HashMap<>();
+            if (params.getFilters() != null) execParams.putAll(params.getFilters());
+            if (params.getKeyword() != null && !params.getKeyword().isEmpty()) {
+                execParams.put("keyword", params.getKeyword());
+            }
+            if (params.getTemplateParams() != null) execParams.putAll(params.getTemplateParams());
+            execParams.put("_page", String.valueOf(params.getPage() != null ? params.getPage() : 1));
+            execParams.put("_size", String.valueOf(params.getPageSize() != null ? Math.min(params.getPageSize(), 100) : 20));
+            if (params.getOrderField() != null && !params.getOrderField().isEmpty()) {
+                execParams.put("_order", params.getOrderField());
+                execParams.put("_sort", params.getOrderDirection() != null ? params.getOrderDirection() : "ASC");
+            }
+
+            List<Map<String, Object>> records = executionService.executeQuery(resourceCode, execParams, params.getTemplateName());
+            long total = records.size();
+
+            // 模板执行已包含处理器链和显示格式化，直接包装结果
+            SearchResult result = new SearchResult(total, params.getPage() != null ? params.getPage() : 1,
+                    params.getPageSize() != null ? Math.min(params.getPageSize(), 100) : 20, records);
+            result.setSourceResource(resourceCode);
+            return result;
         }
 
         DataSourceInfo dataSource = dataSourceProvider.getById(tableResource.getDatasourceId());
@@ -66,14 +97,26 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
             String countSql = sqlBuilderService.buildCountSql(tableResource.getTableName(), whereClauses);
             long total = executeCount(conn, countSql, whereValues);
 
-            List<String> selectCols = new ArrayList<>(allowedColumns);
+            // 支持 selectFields 筛选返回列
+            List<String> selectCols;
+            if (params.getSelectFields() != null && !params.getSelectFields().isEmpty()) {
+                selectCols = params.getSelectFields().stream()
+                        .filter(col -> allowedColumns.contains(col.toLowerCase()))
+                        .toList();
+                if (selectCols.isEmpty()) {
+                    selectCols = new ArrayList<>(allowedColumns);
+                }
+            } else {
+                selectCols = new ArrayList<>(allowedColumns);
+            }
+
             String selectSql = sqlBuilderService.buildSelectSql(
                     tableResource.getTableName(), selectCols, whereClauses,
                     params.getOrderField(), params.getOrderDirection(),
                     dataSource.getDbType(), pageSize, offset);
 
             List<Map<String, Object>> records = executeQuery(conn, selectSql, whereValues);
-            records.forEach(r -> r.put("_resourceCode", resourceCode));
+            records.forEach(r -> r.put("_sourceResource", resourceCode));
 
             resultProcessor.applyResultPipeline(resourceCode, records);
 
@@ -319,6 +362,67 @@ public class ResourceSearchServiceImpl implements ResourceSearchService {
             log.error("获取资源字段失败: {}", resourceCode, e);
             throw new BusinessException("获取字段信息失败: " + e.getMessage());
         }
+    }
+
+    @Override
+    public Map<String, Object> getResourceFieldInfo(String resourceCode) {
+        List<FieldConfig> fields = getResourceFields(resourceCode);
+        ConfigJson configJson = executionService.getConfig(resourceCode);
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("resourceCode", resourceCode);
+        result.put("fields", fields);
+        result.put("configJson", configJson);
+        return result;
+    }
+
+    @Override
+    public SearchResult unifiedKeySearch(String unifiedKey, String value, SearchParams params) {
+        List<UnifiedKeyMapping> mappings = unifiedKeyMappingService.getMappingsByKey(unifiedKey);
+        if (mappings.isEmpty()) {
+            throw new BusinessException("统一Key '" + unifiedKey + "' 未配置映射");
+        }
+
+        List<Map<String, Object>> allRecords = new ArrayList<>();
+        long total = 0;
+        int page = params.getPage() != null ? params.getPage() : 1;
+        int pageSize = params.getPageSize() != null ? Math.min(params.getPageSize(), 100) : 20;
+
+        for (UnifiedKeyMapping mapping : mappings) {
+            try {
+                SearchParams singleParams = new SearchParams();
+                singleParams.setPage(1);
+                singleParams.setPageSize(pageSize);
+                singleParams.setFilters(Map.of(mapping.getFieldName(), value));
+                if (params.getSelectFields() != null) {
+                    singleParams.setSelectFields(params.getSelectFields());
+                }
+
+                SearchResult result = singleSearch(mapping.getResourceCode(), singleParams);
+                for (Map<String, Object> record : result.getRecords()) {
+                    record.put("_sourceResource", mapping.getResourceCode());
+                    record.put("_unifiedKey", unifiedKey);
+                    record.put("_unifiedValue", value);
+                }
+                allRecords.addAll(result.getRecords());
+                total += result.getTotal();
+            } catch (Exception e) {
+                log.warn("统一Key搜索失败: {} - {}: {}", mapping.getResourceCode(), mapping.getFieldName(), e.getMessage());
+            }
+        }
+
+        int offset = (page - 1) * pageSize;
+        int endIdx = Math.min(offset + pageSize, allRecords.size());
+        List<Map<String, Object>> pageRecords = offset < allRecords.size()
+                ? allRecords.subList(offset, endIdx)
+                : Collections.emptyList();
+
+        SearchResult result = new SearchResult(total, page, pageSize, new ArrayList<>(pageRecords));
+        List<String> sources = mappings.stream()
+                .map(UnifiedKeyMapping::getResourceCode)
+                .distinct()
+                .toList();
+        result.setSourceResources(sources);
+        return result;
     }
 
     private SqlBuilderService.WhereClauseResult buildJoinWhereClause(

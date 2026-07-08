@@ -33,5 +33,8 @@
     <include file="db/changelog/027-remove-ai-config-provider-unique.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/028-fix-api-management-auth-required-type.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/029-fix-api-menu-parent.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/031-add-collector-menu.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/032-create-unified-key-mapping.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/033-create-fulltext-tables.xml" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>
