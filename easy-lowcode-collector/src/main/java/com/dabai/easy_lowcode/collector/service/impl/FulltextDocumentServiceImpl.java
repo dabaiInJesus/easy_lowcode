@@ -1,6 +1,8 @@
 package com.dabai.easy_lowcode.collector.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.dabai.easy_lowcode.collector.entity.FulltextDocument;
 import com.dabai.easy_lowcode.collector.mapper.FulltextDocumentMapper;
@@ -14,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.*;
 
@@ -29,16 +32,18 @@ public class FulltextDocumentServiceImpl extends ServiceImpl<FulltextDocumentMap
     @Override
     @Transactional(rollbackFor = Exception.class)
     public FulltextDocument uploadFile(String fileName, long fileSize, InputStream content, String contentType, String resourceCode) {
-        // 1. 存储文件
-        String storagePath = storageService.upload(fileName, content, fileSize, contentType);
+        // 1. 读取内容到字节数组（同时用于存储和Tika，避免两次网络往返）
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        byte[] data = new byte[8192];
+        int n;
+        try { while ((n = content.read(data, 0, data.length)) != -1) buffer.write(data, 0, n); } catch (Exception e) { throw new RuntimeException("读取文件失败", e); }
+        byte[] fileBytes = buffer.toByteArray();
 
-        // 2. 重新获取流用于Tika解析
-        InputStream downloadStream = storageService.download(storagePath);
+        // 2. 存储文件
+        String storagePath = storageService.upload(fileName, new java.io.ByteArrayInputStream(fileBytes), fileSize, contentType);
 
-        // 3. Tika提取内容
-        TikaContentExtractor.TikaResult tikaResult = tikaExtractor.extract(downloadStream, fileName);
-
-        try { downloadStream.close(); } catch (Exception ignored) {}
+        // 3. Tika提取内容（使用内存中的字节数组，无需重新下载）
+        TikaContentExtractor.TikaResult tikaResult = tikaExtractor.extract(new java.io.ByteArrayInputStream(fileBytes), fileName);
 
         // 4. 保存记录
         FulltextDocument doc = new FulltextDocument();
@@ -115,7 +120,9 @@ public class FulltextDocumentServiceImpl extends ServiceImpl<FulltextDocumentMap
         storageService.delete(doc.getStoragePath());
 
         // 逻辑删除记录
-        removeById(id);
+        lambdaUpdate().set(FulltextDocument::getDeleted, 1)
+                .eq(FulltextDocument::getId, id)
+                .update();
     }
 
     @Override
@@ -149,9 +156,12 @@ public class FulltextDocumentServiceImpl extends ServiceImpl<FulltextDocumentMap
         } catch (Exception e) {
             log.warn("搜索引擎不可用，降级为数据库LIKE搜索: {}", e.getMessage());
             // 降级方案
-            List<FulltextDocument> docs = baseMapper.searchByContentLike(keyword, pageSize);
-            long total = count(new LambdaQueryWrapper<FulltextDocument>()
-                    .like(FulltextDocument::getContentText, keyword));
+            IPage<FulltextDocument> mpPage = new Page<>(page, pageSize);
+            List<FulltextDocument> docs = baseMapper.searchByContentLike(mpPage, keyword);
+            long total = mpPage.getTotal();
+            if (docs.isEmpty() && total > 0) {
+                docs = baseMapper.searchByContentLike(new Page<>(1, pageSize), keyword);
+            }
 
             List<Map<String, Object>> records = new ArrayList<>();
             for (FulltextDocument doc : docs) {
@@ -176,7 +186,7 @@ public class FulltextDocumentServiceImpl extends ServiceImpl<FulltextDocumentMap
 
     @Override
     public List<FulltextDocument> listPendingIndex(int limit) {
-        return baseMapper.selectPendingIndex(limit);
+        return baseMapper.selectPendingIndex(new Page<>(1, limit));
     }
 
     private String truncateWithKeyword(String text, String keyword, int maxLen) {

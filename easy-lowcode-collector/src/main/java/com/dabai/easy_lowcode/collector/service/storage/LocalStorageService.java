@@ -16,7 +16,7 @@ import java.time.format.DateTimeFormatter;
 
 @Slf4j
 @Service
-@ConditionalOnProperty(name = "easy-lowcode.storage.type", havingValue = "local", matchIfMissing = true)
+@ConditionalOnProperty(name = "easy-lowcode.storage.type", havingValue = "local", matchIfMissing = false)
 public class LocalStorageService implements StorageService {
 
     @Setter

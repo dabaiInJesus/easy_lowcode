@@ -21,7 +21,7 @@ import java.util.List;
 @Tag(name = "部门管理", description = "部门CRUD及树形结构管理")
 @Slf4j
 @RestController
-@RequestMapping("/auth/dept")
+@RequestMapping("/api/auth/dept")
 @RequiredArgsConstructor
 public class DeptController {
     

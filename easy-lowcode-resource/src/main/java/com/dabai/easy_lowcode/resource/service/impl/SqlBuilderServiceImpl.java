@@ -110,7 +110,8 @@ public class SqlBuilderServiceImpl implements SqlBuilderService {
         if (db.contains("mysql") || db.contains("postgresql") || db.contains("tidb") || db.contains("gbase")) {
             return " LIMIT " + limit + " OFFSET " + offset;
         } else if (db.contains("oracle") || db.contains("dm")) {
-            return " AND ROWNUM <= " + limit;
+            // Oracle 12c+ 支持标准 OFFSET/FETCH
+            return " OFFSET " + offset + " ROWS FETCH NEXT " + limit + " ROWS ONLY";
         } else if (db.contains("sqlserver")) {
             return " OFFSET " + offset + " ROWS FETCH NEXT " + limit + " ROWS ONLY";
         }

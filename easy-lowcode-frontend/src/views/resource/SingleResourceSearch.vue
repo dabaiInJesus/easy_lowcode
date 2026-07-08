@@ -174,8 +174,8 @@ async function onResourceChange() {
   searchParams.templateName = ''
   searchParams.keyword = ''
   searchParams.page = 1
-  filterValues.value = {}
-  templateParamValues.value = {}
+  Object.keys(filterValues).forEach(k => delete filterValues[k])
+  Object.keys(templateParamValues).forEach(k => delete templateParamValues[k])
   templates.value = []
   fieldConfigs.value = []
   displaySettings.value = {}

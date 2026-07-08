@@ -69,7 +69,7 @@
       <p style="margin-bottom:12px;color:#666">
         以下是根据字段名相似度自动检测到的可能映射，请勾选后点击"确认添加"。
       </p>
-      <el-table :data="suggestions" border stripe size="small" v-loading="suggestLoading" max-height="500">
+      <el-table :data="suggestions" border stripe size="small" v-loading="suggestLoading" max-height="500" row-key="fieldName" @selection-change="onSuggestionSelect">
         <el-table-column type="selection" width="50" />
         <el-table-column prop="resourceCode" label="资源编码" width="150" />
         <el-table-column prop="resourceName" label="资源名称" width="150" />
@@ -110,7 +110,12 @@ const showAutoMapDialog = ref(false)
 const autoMapKey = ref('')
 const autoMapDisplayName = ref('')
 const suggestions = ref<any[]>([])
+const selectedSuggestions = ref<any[]>([])
 const suggestLoading = ref(false)
+
+function onSuggestionSelect(rows: any[]) {
+  selectedSuggestions.value = rows
+}
 
 async function loadKeys() {
   loading.value = true
@@ -125,14 +130,28 @@ async function loadKeys() {
   finally { loading.value = false }
 }
 
-function saveKey() {
+async function saveKey() {
   if (!keyForm.unifiedKey || !keyForm.displayName) {
     ElMessage.warning('请填写完整信息')
     return
   }
-  ElMessage.success('保存成功（映射数据请在查看映射中添加）')
-  showAddKeyDialog.value = false
-  loadKeys()
+  try {
+    await createMapping({
+      unifiedKey: keyForm.unifiedKey,
+      displayName: keyForm.displayName,
+      description: keyForm.description,
+      resourceCode: '',
+      fieldName: '',
+      dataType: 'string',
+      queryType: 'exact',
+    })
+    ElMessage.success('保存成功')
+    showAddKeyDialog.value = false
+    editingKey.value = null
+    loadKeys()
+  } catch (e: any) {
+    ElMessage.error(e.message || '保存失败')
+  }
 }
 
 function editKey(row: UnifiedKeyMapping) {
@@ -185,9 +204,7 @@ async function showAutoMap(row: UnifiedKeyMapping) {
 }
 
 async function confirmSuggestions() {
-  const tableRef = document.querySelector('.el-dialog .el-table')
-  if (!tableRef) return
-  const selected = suggestions.value.filter(() => true)
+  const selected = selectedSuggestions.value
   const mappings: UnifiedKeyMapping[] = selected.map((s: any) => ({
     unifiedKey: autoMapKey.value,
     displayName: autoMapDisplayName.value,

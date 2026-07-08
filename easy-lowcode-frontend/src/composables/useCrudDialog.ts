@@ -37,7 +37,7 @@ export function useCrudDialog<T extends { id?: string | number }>(
     updateFn,
     deleteFn,
     initialFormData = {} as Partial<T>,
-    successMessage = 'Operation successful',
+    successMessage = '操作成功',
   } = options
 
   const dialogVisible = ref(false) as Ref<boolean>
@@ -48,21 +48,21 @@ export function useCrudDialog<T extends { id?: string | number }>(
 
   function openAdd(): void {
     dialogMode.value = 'add'
-    dialogTitle.value = 'Add'
+    dialogTitle.value = '新增'
     resetForm()
     dialogVisible.value = true
   }
 
   function openEdit(row: T): void {
     dialogMode.value = 'edit'
-    dialogTitle.value = 'Edit'
+    dialogTitle.value = '编辑'
     Object.assign(formData, row)
     dialogVisible.value = true
   }
 
   function openView(row: T): void {
     dialogMode.value = 'view'
-    dialogTitle.value = 'Details'
+    dialogTitle.value = '详情'
     Object.assign(formData, row)
     dialogVisible.value = true
   }
@@ -107,16 +107,16 @@ export function useCrudDialog<T extends { id?: string | number }>(
     const displayName = rowName || `ID: ${id}`
     try {
       await ElMessageBox.confirm(
-        `Are you sure you want to delete "${displayName}"? This action cannot be undone.`,
-        'Confirm Delete',
+        `确定删除 "${displayName}" 吗？此操作不可撤销。`,
+        '确认删除',
         {
-          confirmButtonText: 'Delete',
-          cancelButtonText: 'Cancel',
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
           type: 'warning',
         }
       )
       await deleteFn(id)
-      ElMessage.success('Deleted successfully')
+      ElMessage.success('删除成功')
       await fetchList?.()
     } catch {
       // User cancelled

@@ -1091,13 +1091,34 @@ const componentMap: Record<string, Component> = {
 **Step 3: 前端 — 创建页面组件**
 ```vue
 <script setup lang="ts">
-// 使用 useCommon 快速生成 CRUD 页面
-import { useCommon } from '@/composables/useCommon'
+// 使用 useTable + useCrudDialog 快速生成 CRUD 页面
+import { usePagination, useSearchForm, useConfirmDelete } from '@/composables/useTable'
+import { useCrudDialog } from '@/composables/useCrudDialog'
 import { featureApi } from '@/api/feature'
+import { onMounted } from 'vue'
 
-const { tableData, loading, pagination, searchForm,
-        handleSearch, handleCreate, handleEdit, handleDelete } =
-  useCommon(featureApi, { silentError: false })
+const { pagination, loading, handleSizeChange, handleCurrentChange, resetPagination } = usePagination()
+const { form, searchForm, handleSearch, handleReset } = useSearchForm({ keyword: '' })
+const { handleDelete, deleteLoading } = useConfirmDelete(featureApi.delete)
+const { dialogVisible, dialogTitle, dialogMode, formData, submitting,
+        openAdd, openEdit, openView, closeDialog, handleSubmit } =
+  useCrudDialog({
+    fetchList: fetchData,
+    createFn: featureApi.create,
+    updateFn: featureApi.update,
+    deleteFn: featureApi.delete,
+  })
+
+async function fetchData() {
+  loading.value = true
+  try {
+    const res = await featureApi.getPage({ current: pagination.current, size: pagination.size, ...searchForm })
+    tableData.value = res.records
+    pagination.total = res.total
+  } finally { loading.value = false }
+}
+
+onMounted(() => fetchData())
 </script>
 ```
 

@@ -113,7 +113,7 @@ public class MeilisearchSearchService implements SearchService {
                     .setAttributesToHighlight(new String[]{"content"});
 
             if (resourceCode != null && !resourceCode.isEmpty()) {
-                requestBuilder.setFilter("resourceCode = " + resourceCode);
+                requestBuilder.setFilter("resourceCode = \"" + resourceCode.replace("\"", "\\\"") + "\"");
             }
 
             SearchResult result = index.search(requestBuilder.build());

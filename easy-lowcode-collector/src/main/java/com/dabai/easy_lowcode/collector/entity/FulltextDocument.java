@@ -1,14 +1,14 @@
 package com.dabai.easy_lowcode.collector.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.dabai.easy_lowcode.database.entity.BaseEntity;
 import lombok.Data;
-
-import java.time.LocalDateTime;
+import lombok.EqualsAndHashCode;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @TableName("collector_fulltext_document")
-public class FulltextDocument {
-    private Long id;
+public class FulltextDocument extends BaseEntity {
     private String fileName;
     private String fileType;
     private Long fileSize;
@@ -19,9 +19,4 @@ public class FulltextDocument {
     private String searchEngine;
     private Integer indexed;
     private String indexError;
-    private Integer deleted;
-    private LocalDateTime createTime;
-    private LocalDateTime updateTime;
-    private Long createBy;
-    private Long updateBy;
 }

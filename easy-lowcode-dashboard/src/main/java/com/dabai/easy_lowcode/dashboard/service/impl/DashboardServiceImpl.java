@@ -5,7 +5,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.dabai.easy_lowcode.collector.entity.DataSourceConfig;
 import com.dabai.easy_lowcode.collector.mapper.DataSourceConfigMapper;
 import com.dabai.easy_lowcode.common.exception.BusinessException;
-import com.dabai.easy_lowcode.common.util.EncryptUtil;
+import com.dabai.easy_lowcode.dashboard.engine.SqlEngine;
+import com.dabai.easy_lowcode.dashboard.engine.SqlEngineFactory;
 import com.dabai.easy_lowcode.dashboard.entity.ChartDataSource;
 import com.dabai.easy_lowcode.dashboard.entity.Dashboard;
 import com.dabai.easy_lowcode.dashboard.entity.DashboardChart;
@@ -19,10 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -38,6 +35,7 @@ public class DashboardServiceImpl extends ServiceImpl<DashboardMapper, Dashboard
     private final ChartDataSourceMapper chartDataSourceMapper;
     private final DataSourceConfigMapper dataSourceConfigMapper;
     private final ChartCacheService chartCacheService;
+    private final SqlEngineFactory sqlEngineFactory;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -239,47 +237,13 @@ public class DashboardServiceImpl extends ServiceImpl<DashboardMapper, Dashboard
         DataSourceConfig ds = dataSourceConfigMapper.selectById(datasourceId);
         if (ds == null) throw new BusinessException("数据源不存在");
 
-        List<Map<String, Object>> result = new ArrayList<>();
-        Connection conn = null;
-        Statement stmt = null;
-        ResultSet rs = null;
-
         try {
-            String pwd;
-            try {
-                pwd = EncryptUtil.decrypt(ds.getPassword());
-            } catch (Exception e) {
-                pwd = ds.getPassword();
-            }
-
-            Class.forName(ds.getDriverClassName());
-            conn = DriverManager.getConnection(ds.getUrl(), ds.getUsername(), pwd);
-            stmt = conn.createStatement();
-
-            // 限制条数
-            String finalSql = sql;
-            if (limit != null && limit > 0) {
-                finalSql = "SELECT * FROM (" + sql + ") t LIMIT " + limit;
-            }
-
-            rs = stmt.executeQuery(finalSql);
-            int colCount = rs.getMetaData().getColumnCount();
-            while (rs.next()) {
-                Map<String, Object> row = new LinkedHashMap<>();
-                for (int i = 1; i <= colCount; i++) {
-                    row.put(rs.getMetaData().getColumnName(i), rs.getObject(i));
-                }
-                result.add(row);
-            }
+            SqlEngine engine = sqlEngineFactory.getEngine(ds);
+            return engine.execute(sql, limit);
         } catch (Exception e) {
             log.error("图表查询失败: datasourceId={}, sql={}", datasourceId, sql, e);
             throw new BusinessException("查询失败: " + e.getMessage());
-        } finally {
-            if (rs != null) try { rs.close(); } catch (Exception ignore) {}
-            if (stmt != null) try { stmt.close(); } catch (Exception ignore) {}
-            if (conn != null) try { conn.close(); } catch (Exception ignore) {}
         }
-        return result;
     }
 
     @Override
