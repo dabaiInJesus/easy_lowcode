@@ -110,6 +110,7 @@ public class DashboardController {
     @Operation(summary = "删除大屏", description = "删除大屏及其所有图表")
     @ApiResponse(responseCode = "200", description = "删除成功")
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> delete(@Parameter(description = "大屏ID") @PathVariable Long id) {
         Dashboard dashboard = dashboardService.getById(id);
         if (dashboard == null) return Result.error("大屏不存在");

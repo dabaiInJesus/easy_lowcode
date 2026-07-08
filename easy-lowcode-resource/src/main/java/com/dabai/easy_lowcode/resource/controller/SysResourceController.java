@@ -110,6 +110,7 @@ public class SysResourceController {
     @Operation(summary = "创建资源", description = "创建新资源")
     @ApiResponse(responseCode = "200", description = "创建成功")
     @PostMapping
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> create(@RequestBody SysResource resource) {
         resourceService.save(resource);
         return Result.success("创建成功");
@@ -118,6 +119,7 @@ public class SysResourceController {
     @Operation(summary = "更新资源", description = "更新资源信息")
     @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> update(@RequestBody SysResource resource) {
         resourceService.updateById(resource);
         return Result.success("更新成功");
@@ -126,6 +128,7 @@ public class SysResourceController {
     @Operation(summary = "删除资源", description = "删除资源（需确保无子资源）")
     @ApiResponse(responseCode = "200", description = "删除成功")
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> delete(@Parameter(description = "资源ID") @PathVariable Long id) {
         LambdaQueryWrapper<SysResource> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysResource::getParentId, id);
@@ -157,6 +160,7 @@ public class SysResourceController {
     @Operation(summary = "为角色分配资源", description = "为指定角色分配资源权限")
     @ApiResponse(responseCode = "200", description = "分配成功")
     @PostMapping("/role/{roleId}")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> assignResources(
             @Parameter(description = "角色ID") @PathVariable Long roleId,
             @RequestBody List<Long> resourceIds) {

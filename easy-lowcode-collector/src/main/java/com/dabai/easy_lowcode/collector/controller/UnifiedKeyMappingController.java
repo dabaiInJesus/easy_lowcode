@@ -83,6 +83,7 @@ public class UnifiedKeyMappingController {
 
     @Operation(summary = "删除映射")
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> delete(@PathVariable Long id) {
         mappingService.removeById(id);
         return Result.success("删除成功");

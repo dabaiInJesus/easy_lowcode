@@ -77,6 +77,7 @@ public class ApiManagementController {
     @Operation(summary = "注册外部接口API", description = "注册一个新的外部接口API")
     @ApiResponse(responseCode = "200", description = "注册成功")
     @PostMapping("/register-external")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> registerExternalApi(@RequestBody ApiManagement apiManagement) {
         try {
             boolean success = apiManagementService.registerExternalApi(apiManagement);
@@ -94,6 +95,7 @@ public class ApiManagementController {
     @Operation(summary = "更新API信息", description = "更新API的配置信息")
     @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> update(
             @Parameter(description = "API ID") @PathVariable Long id,
             @RequestBody ApiManagement apiManagement) {
@@ -109,6 +111,7 @@ public class ApiManagementController {
     @Operation(summary = "删除API", description = "根据ID删除API")
     @ApiResponse(responseCode = "200", description = "删除成功")
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> delete(@Parameter(description = "API ID") @PathVariable Long id) {
         boolean removed = apiManagementService.removeById(id);
         return removed ? Result.success("删除成功") : Result.error("删除失败");
@@ -117,6 +120,7 @@ public class ApiManagementController {
     @Operation(summary = "批量删除API", description = "批量删除多个API")
     @ApiResponse(responseCode = "200", description = "批量删除成功")
     @DeleteMapping("/batch")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> batchDelete(@RequestBody List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return Result.error("请选择要删除的API");
@@ -128,6 +132,7 @@ public class ApiManagementController {
     @Operation(summary = "启用/禁用API", description = "切换API的启用或禁用状态")
     @ApiResponse(responseCode = "200", description = "操作成功")
     @PutMapping("/{id}/status")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> updateStatus(
             @Parameter(description = "API ID") @PathVariable Long id,
             @Parameter(description = "状态（1启用/0禁用）") @RequestParam Integer status) {

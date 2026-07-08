@@ -55,6 +55,7 @@ public class AiConfigController {
     @ApiResponse(responseCode = "200", description = "保存成功")
     @PostMapping
     @Transactional
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> save(@RequestBody AiConfig config) {
         if (config.getApiKey() != null && !config.getApiKey().contains("****")) {
             try { config.setApiKey(EncryptUtil.encrypt(config.getApiKey())); } catch (Exception e) {
@@ -79,6 +80,7 @@ public class AiConfigController {
     @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping
     @Transactional
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> update(@RequestBody AiConfig config) {
         AiConfig existing = aiConfigMapper.selectById(config.getId());
         if (config.getApiKey() != null && !config.getApiKey().contains("****")) {
@@ -103,6 +105,7 @@ public class AiConfigController {
     @Operation(summary = "删除AI配置", description = "删除AI供应商配置")
     @ApiResponse(responseCode = "200", description = "删除成功")
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> delete(@Parameter(description = "配置ID") @PathVariable Long id) {
         aiConfigMapper.deleteById(id);
         return Result.success("配置已删除");

@@ -41,6 +41,7 @@ public class DeptController {
     @Operation(summary = "创建部门", description = "创建新部门，自动生成部门编码")
     @ApiResponse(responseCode = "200", description = "创建成功")
     @PostMapping
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> createDept(@RequestBody SysDept dept) {
         if (dept.getDeptCode() == null || dept.getDeptCode().trim().isEmpty()) {
             dept.setDeptCode(generateDeptCode(dept.getDeptName()));
@@ -71,6 +72,7 @@ public class DeptController {
     @Operation(summary = "更新部门", description = "更新部门信息")
     @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> updateDept(@RequestBody SysDept dept) {
         LambdaQueryWrapper<SysDept> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysDept::getDeptCode, dept.getDeptCode())
@@ -86,6 +88,7 @@ public class DeptController {
     @Operation(summary = "删除部门", description = "删除部门（需确保无子部门且无关联用户）")
     @ApiResponse(responseCode = "200", description = "删除成功")
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> deleteDept(@Parameter(description = "部门ID") @PathVariable Long id) {
         LambdaQueryWrapper<SysDept> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysDept::getParentId, id);

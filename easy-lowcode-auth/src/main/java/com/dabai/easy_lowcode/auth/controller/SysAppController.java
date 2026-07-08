@@ -74,6 +74,7 @@ public class SysAppController {
     @Operation(summary = "创建应用", description = "创建新应用")
     @ApiResponse(responseCode = "200", description = "创建成功")
     @PostMapping
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> create(@RequestBody SysApp app) {
         sysAppService.save(app);
         return Result.success();
@@ -82,6 +83,7 @@ public class SysAppController {
     @Operation(summary = "更新应用", description = "更新应用信息")
     @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> update(@RequestBody SysApp app) {
         sysAppService.updateById(app);
         return Result.success();
@@ -90,6 +92,7 @@ public class SysAppController {
     @Operation(summary = "删除应用", description = "根据ID删除应用")
     @ApiResponse(responseCode = "200", description = "删除成功")
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> delete(@Parameter(description = "应用ID") @PathVariable Long id) {
         sysAppService.removeById(id);
         return Result.success();

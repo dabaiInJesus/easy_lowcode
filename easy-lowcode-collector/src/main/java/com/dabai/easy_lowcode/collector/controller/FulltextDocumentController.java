@@ -96,6 +96,7 @@ public class FulltextDocumentController {
 
     @Operation(summary = "删除文档")
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> delete(@PathVariable Long id) {
         documentService.deleteDocument(id);
         return Result.success("删除成功");

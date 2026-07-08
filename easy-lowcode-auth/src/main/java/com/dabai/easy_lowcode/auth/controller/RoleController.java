@@ -41,6 +41,7 @@ public class RoleController {
     @Operation(summary = "创建角色", description = "创建新角色，自动生成角色编码")
     @ApiResponse(responseCode = "200", description = "创建成功")
     @PostMapping
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> createRole(@RequestBody SysRole role) {
         if (role.getRoleCode() == null || role.getRoleCode().trim().isEmpty()) {
             role.setRoleCode(generateRoleCode(role.getRoleName()));
@@ -67,6 +68,7 @@ public class RoleController {
     @Operation(summary = "更新角色", description = "更新角色信息")
     @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> updateRole(@RequestBody SysRole role) {
         LambdaQueryWrapper<SysRole> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysRole::getRoleCode, role.getRoleCode())
@@ -82,6 +84,7 @@ public class RoleController {
     @Operation(summary = "删除角色", description = "删除角色（需确保无关联用户）")
     @ApiResponse(responseCode = "200", description = "删除成功")
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> deleteRole(@Parameter(description = "角色ID") @PathVariable Long id) {
         Integer userCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM sys_user_role WHERE role_id = ?", Integer.class, id);

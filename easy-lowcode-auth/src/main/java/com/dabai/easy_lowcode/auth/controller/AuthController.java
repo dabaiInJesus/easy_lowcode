@@ -109,6 +109,7 @@ public class AuthController {
     @Operation(summary = "创建用户", description = "创建新用户，密码会自动使用BCrypt加密")
     @ApiResponse(responseCode = "200", description = "创建成功")
     @PostMapping("/user")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> createUser(@RequestBody SysUser user) {
         if (user.getPassword() != null) {
             user.setPassword(EncryptUtil.bcrypt(user.getPassword()));
@@ -120,6 +121,7 @@ public class AuthController {
     @Operation(summary = "更新用户", description = "更新用户信息（不允许修改密码）")
     @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping("/user")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> updateUser(@RequestBody SysUser user) {
         user.setPassword(null);
         userService.updateById(user);
@@ -129,6 +131,7 @@ public class AuthController {
     @Operation(summary = "删除用户", description = "根据ID删除用户")
     @ApiResponse(responseCode = "200", description = "删除成功")
     @DeleteMapping("/user/{id}")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> deleteUser(@Parameter(description = "用户ID") @PathVariable Long id) {
         userService.removeById(id);
         return Result.success("删除成功");
@@ -137,6 +140,7 @@ public class AuthController {
     @Operation(summary = "重置密码", description = "管理员重置指定用户的密码")
     @ApiResponse(responseCode = "200", description = "密码重置成功")
     @PostMapping("/user/{id}/reset-password")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> resetPassword(
             @Parameter(description = "用户ID") @PathVariable Long id,
             @RequestBody Map<String, String> params) {
@@ -210,6 +214,7 @@ public class AuthController {
     @Operation(summary = "创建部门", description = "创建新部门")
     @ApiResponse(responseCode = "200", description = "创建成功")
     @PostMapping("/dept")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> createDept(@RequestBody com.dabai.easy_lowcode.auth.entity.SysDept dept) {
         deptMapper.insert(dept);
         return Result.success("创建成功");
@@ -218,6 +223,7 @@ public class AuthController {
     @Operation(summary = "更新部门", description = "更新部门信息")
     @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping("/dept")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> updateDept(@RequestBody com.dabai.easy_lowcode.auth.entity.SysDept dept) {
         deptMapper.updateById(dept);
         return Result.success("更新成功");
@@ -226,6 +232,7 @@ public class AuthController {
     @Operation(summary = "删除部门", description = "根据ID删除部门")
     @ApiResponse(responseCode = "200", description = "删除成功")
     @DeleteMapping("/dept/{id}")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> deleteDept(@Parameter(description = "部门ID") @PathVariable Long id) {
         deptMapper.deleteById(id);
         return Result.success("删除成功");

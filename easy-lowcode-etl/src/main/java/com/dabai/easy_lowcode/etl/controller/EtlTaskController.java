@@ -77,6 +77,7 @@ public class EtlTaskController {
     @Operation(summary = "创建任务", description = "创建新的ETL任务")
     @ApiResponse(responseCode = "200", description = "创建成功")
     @PostMapping
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> create(@RequestBody EtlTask task) {
         try {
             boolean success = etlTaskService.createTask(task);
@@ -92,6 +93,7 @@ public class EtlTaskController {
     @Operation(summary = "更新任务", description = "更新ETL任务配置")
     @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> update(@RequestBody EtlTask task) {
         try {
             boolean success = etlTaskService.updateTask(task);
@@ -107,6 +109,7 @@ public class EtlTaskController {
     @Operation(summary = "删除任务", description = "删除ETL任务并取消调度")
     @ApiResponse(responseCode = "200", description = "删除成功")
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> delete(@Parameter(description = "任务ID") @PathVariable Long id) {
         EtlTask task = etlTaskService.getById(id);
         if (task == null) {
@@ -120,6 +123,7 @@ public class EtlTaskController {
     @Operation(summary = "启停调度", description = "开启或关闭任务的定时调度")
     @ApiResponse(responseCode = "200", description = "操作成功")
     @PutMapping("/{id}/schedule")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> toggleSchedule(
             @Parameter(description = "任务ID") @PathVariable Long id,
             @Parameter(description = "是否启用调度") @RequestParam boolean enabled) {
@@ -134,6 +138,7 @@ public class EtlTaskController {
     @Operation(summary = "执行任务", description = "立即执行一次ETL任务")
     @ApiResponse(responseCode = "200", description = "任务已提交")
     @PostMapping("/{id}/execute")
+    @PreAuthorize("hasRole('admin')")
     public Result<Long> execute(@Parameter(description = "任务ID") @PathVariable Long id) {
         try {
             Long logId = etlTaskService.executeTask(id);
@@ -146,6 +151,7 @@ public class EtlTaskController {
     @Operation(summary = "停止任务", description = "停止正在执行的ETL任务")
     @ApiResponse(responseCode = "200", description = "停止信号已发送")
     @PostMapping("/{id}/stop")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> stop(@Parameter(description = "任务ID") @PathVariable Long id) {
         etlTaskService.stopTask(id);
         return Result.success("停止信号已发送");

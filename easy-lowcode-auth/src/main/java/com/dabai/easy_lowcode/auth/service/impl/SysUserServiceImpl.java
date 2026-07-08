@@ -12,12 +12,16 @@ import com.dabai.easy_lowcode.common.util.EncryptUtil;
 import com.dabai.easy_lowcode.common.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * 用户服务实现
@@ -29,6 +33,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
     private final JwtUtil jwtUtil;
     private final TokenBlacklistService tokenBlacklistService;
+    private final JdbcTemplate jdbcTemplate;
     
     @Override
     public String login(String username, String password) {
@@ -84,6 +89,37 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         if (user == null) {
             return null;
         }
+
+        Set<SimpleGrantedAuthority> authorities = new HashSet<>();
+
+        // Load user's roles from sys_user_role
+        String roleSql = "SELECT r.role_code FROM sys_role r " +
+                "INNER JOIN sys_user_role ur ON r.id = ur.role_id " +
+                "WHERE ur.user_id = ? AND r.deleted = 0";
+        List<String> roleCodes = jdbcTemplate.queryForList(roleSql, String.class, userId);
+
+        for (String roleCode : roleCodes) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + roleCode));
+        }
+
+        // Load permissions from menus assigned via roles
+        if (!roleCodes.isEmpty()) {
+            String permSql = "SELECT DISTINCT m.perms FROM sys_menu m " +
+                    "INNER JOIN sys_role_menu rm ON m.id = rm.menu_id " +
+                    "INNER JOIN sys_user_role ur ON rm.role_id = ur.role_id " +
+                    "WHERE ur.user_id = ? AND m.deleted = 0 " +
+                    "AND m.perms IS NOT NULL AND m.perms != ''";
+            List<String> perms = jdbcTemplate.queryForList(permSql, String.class, userId);
+            for (String perm : perms) {
+                authorities.add(new SimpleGrantedAuthority(perm));
+            }
+        }
+
+        // Fallback: if no roles assigned, give basic ROLE_USER
+        if (authorities.isEmpty()) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+        }
+
         return new LoginUser(
                 user.getId(),
                 user.getUsername(),
@@ -92,7 +128,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 true,
                 true,
                 true,
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                authorities
         );
     }
     

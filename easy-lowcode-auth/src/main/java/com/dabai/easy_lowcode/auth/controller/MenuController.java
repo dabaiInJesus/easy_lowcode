@@ -39,6 +39,7 @@ public class MenuController {
     @Operation(summary = "创建菜单", description = "创建新菜单，自动生成菜单编码")
     @ApiResponse(responseCode = "200", description = "创建成功")
     @PostMapping
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> createMenu(@RequestBody SysMenu menu) {
         if (menu.getMenuCode() == null || menu.getMenuCode().trim().isEmpty()) {
             menu.setMenuCode(generateMenuCode(menu.getMenuName()));
@@ -57,6 +58,7 @@ public class MenuController {
     @Operation(summary = "更新菜单", description = "更新菜单信息")
     @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> updateMenu(@RequestBody SysMenu menu) {
         LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysMenu::getMenuCode, menu.getMenuCode())
@@ -72,6 +74,7 @@ public class MenuController {
     @Operation(summary = "删除菜单", description = "删除菜单（需确保无子菜单）")
     @ApiResponse(responseCode = "200", description = "删除成功")
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> deleteMenu(@Parameter(description = "菜单ID") @PathVariable Long id) {
         LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysMenu::getParentId, id);

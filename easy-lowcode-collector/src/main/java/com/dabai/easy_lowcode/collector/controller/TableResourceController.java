@@ -101,6 +101,7 @@ public class TableResourceController {
     @Operation(summary = "注册表资源", description = "注册数据库表为API资源")
     @ApiResponse(responseCode = "200", description = "注册成功")
     @PostMapping
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> register(@RequestBody TableResource tableResource) {
         log.info("收到注册请求: {}", tableResource);
         
@@ -155,6 +156,7 @@ public class TableResourceController {
     @Operation(summary = "更新表资源", description = "更新表资源配置信息")
     @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> update(@RequestBody TableResource tableResource) {
         if (tableResource.getId() == null) {
             return Result.error("资源ID不能为空");
@@ -194,6 +196,7 @@ public class TableResourceController {
     @Operation(summary = "删除表资源", description = "删除表资源（需确保无关联API）")
     @ApiResponse(responseCode = "200", description = "删除成功")
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> delete(@Parameter(description = "表资源ID") @PathVariable Long id) {
         TableResource resource = tableResourceService.getById(id);
         if (resource == null) {
@@ -220,6 +223,7 @@ public class TableResourceController {
     @Operation(summary = "生成API接口", description = "为指定表资源生成API接口")
     @ApiResponse(responseCode = "200", description = "生成成功")
     @PostMapping("/{id}/generate-api")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> generateApi(@Parameter(description = "表资源ID") @PathVariable Long id) {
         TableResource resource = tableResourceService.getById(id);
         if (resource == null) {
@@ -260,6 +264,7 @@ public class TableResourceController {
     @Operation(summary = "批量删除表资源", description = "批量删除多个表资源")
     @ApiResponse(responseCode = "200", description = "批量删除成功")
     @DeleteMapping("/batch")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> batchDelete(@RequestBody List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return Result.error("请选择要删除的资源");
@@ -272,6 +277,7 @@ public class TableResourceController {
     @Operation(summary = "批量生成API接口", description = "批量为多个表资源生成API接口")
     @ApiResponse(responseCode = "200", description = "批量生成完成")
     @PostMapping("/batch-generate-api")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> batchGenerateApi(@RequestBody List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return Result.error("请选择要生成API的资源");

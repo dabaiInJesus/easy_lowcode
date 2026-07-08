@@ -77,6 +77,7 @@ public class AuthorizationController {
     @Operation(summary = "为用户分配角色", description = "为指定用户分配一个或多个角色")
     @ApiResponse(responseCode = "200", description = "分配成功")
     @PostMapping("/user/{userId}/roles")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> assignRolesToUser(
             @Parameter(description = "用户ID") @PathVariable Long userId,
             @RequestBody AssignRolesRequest request) {
@@ -105,6 +106,7 @@ public class AuthorizationController {
     @Operation(summary = "为角色分配菜单", description = "为指定角色分配菜单权限")
     @ApiResponse(responseCode = "200", description = "分配成功")
     @PostMapping("/role/{roleId}/menus")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> assignMenusToRole(
             @Parameter(description = "角色ID") @PathVariable Long roleId,
             @RequestBody AssignMenusRequest request) {
@@ -124,6 +126,7 @@ public class AuthorizationController {
 
     @Operation(summary = "清理无效的菜单", description = "删除大屏设计等无效菜单项（路径为/dashboard/design但没有对应路由）")
     @DeleteMapping("/menus/cleanup")
+    @PreAuthorize("hasRole('admin')")
     public Result<Integer> cleanupInvalidMenus() {
         int count = authorizationService.cleanupInvalidMenus();
         return Result.success(count);

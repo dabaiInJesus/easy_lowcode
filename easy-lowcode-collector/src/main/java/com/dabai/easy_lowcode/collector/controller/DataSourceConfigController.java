@@ -76,6 +76,7 @@ public class DataSourceConfigController {
     @Operation(summary = "创建数据源", description = "创建新的数据源配置")
     @ApiResponse(responseCode = "200", description = "创建成功")
     @PostMapping
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> create(@RequestBody DataSourceConfig config) {
         if (config.getName() == null || config.getName().trim().isEmpty()) {
             return Result.error("数据源名称不能为空");
@@ -131,6 +132,7 @@ public class DataSourceConfigController {
     @Operation(summary = "更新数据源", description = "更新数据源配置信息")
     @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> update(@RequestBody DataSourceConfig config) {
         if (config.getId() == null) {
             return Result.error("数据源ID不能为空");
@@ -182,6 +184,7 @@ public class DataSourceConfigController {
     @Operation(summary = "删除数据源", description = "删除数据源（需确保无关联表资源）")
     @ApiResponse(responseCode = "200", description = "删除成功")
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('admin')")
     public Result<Void> delete(@Parameter(description = "数据源ID") @PathVariable Long id) {
         DataSourceConfig config = dataSourceConfigService.getById(id);
         if (config == null) {

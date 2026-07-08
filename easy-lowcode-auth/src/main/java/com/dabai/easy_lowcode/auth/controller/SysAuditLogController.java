@@ -45,6 +45,7 @@ public class SysAuditLogController {
 
     @Operation(summary = "清理历史日志", description = "删除指定天数之前的审计日志")
     @DeleteMapping("/clean")
+    @PreAuthorize("hasRole('admin')")
     public Result<?> clean(@Parameter(description = "保留天数") @RequestParam(defaultValue = "90") Integer days) {
         int count = auditLogService.deleteBeforeDays(days);
         return Result.success("已清理 " + count + " 条历史日志");
