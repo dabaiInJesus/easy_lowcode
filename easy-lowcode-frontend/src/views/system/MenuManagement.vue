@@ -86,6 +86,17 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <!-- 分页 -->
+      <div class="pagination-wrapper">
+        <el-pagination
+          v-model:current-page="pagination.current"
+          v-model:page-size="pagination.size"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="pagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+        />
+      </div>
     </el-card>
 
     <!-- 新增/编辑对话框 -->
@@ -256,7 +267,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { Plus, Search, Refresh } from '@element-plus/icons-vue'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { getMenuList, createMenu, updateMenu, deleteMenu } from '@/api/auth'
@@ -577,6 +588,7 @@ const dialogVisible = ref(false)
 const submitLoading = ref(false)
 const isEdit = ref(false)
 const formRef = ref<FormInstance>()
+const pagination = reactive({ current: 1, size: 20, total: 0 })
 
 // 过滤表单
 const filterForm = ref({
@@ -633,7 +645,12 @@ const filteredTableData = computed(() => {
     })
   }
 
-  return data
+  // 更新分页总数
+  pagination.total = data.length
+
+  // 分页
+  const start = (pagination.current - 1) * pagination.size
+  return data.slice(start, start + pagination.size)
 })
 
 // 过滤处理
@@ -730,12 +747,25 @@ const loadMenus = async () => {
   try {
     const res: any = await getMenuList()
     // 响应拦截器已经解包，res 就是数组
-    tableData.value = res || []
+    // 扁平化树形结构，显示所有菜单
+    tableData.value = flattenMenuTree(res || [])
   } catch (error) {
     ElMessage.error('加载菜单列表失败')
   } finally {
     loading.value = false
   }
+}
+
+// 扁平化菜单树
+function flattenMenuTree(menus: any[]): any[] {
+  const result: any[] = []
+  for (const menu of menus) {
+    result.push(menu)
+    if (menu.children && menu.children.length > 0) {
+      result.push(...flattenMenuTree(menu.children))
+    }
+  }
+  return result
 }
 
 // 新增菜单
@@ -879,6 +909,12 @@ onMounted(() => {
   padding: 12px 16px;
   background: #fafafa;
   border-radius: 4px;
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
 }
 
 .form-tip {

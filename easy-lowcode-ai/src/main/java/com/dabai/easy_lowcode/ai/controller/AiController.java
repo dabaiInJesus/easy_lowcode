@@ -20,9 +20,11 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.ollama.api.OllamaApi;
 import org.springframework.ai.ollama.api.OllamaChatOptions;
+import com.openai.client.OpenAIClient;
+import com.openai.client.OpenAIClientImpl;
+import com.openai.core.ClientOptions;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -356,13 +358,15 @@ public class AiController {
 
         return switch (provider) {
             case OPENAI, DASHSCOPE, DEEPSEEK, MINIMAX, WENXIN, HUNYUAN, ZHIPU, MOONSHOT -> {
-                OpenAiApi openAiApi = OpenAiApi.builder()
-                        .baseUrl(normalizedUrl)
-                        .apiKey(apiKey != null ? apiKey : "")
-                        .build();
+                OpenAIClient client = new OpenAIClientImpl(
+                        ClientOptions.builder()
+                                .apiKey(apiKey != null ? apiKey : "")
+                                .baseUrl(normalizedUrl)
+                                .build()
+                );
                 yield OpenAiChatModel.builder()
-                        .openAiApi(openAiApi)
-                        .defaultOptions(OpenAiChatOptions.builder().model(modelName).build())
+                        .openAiClient(client)
+                        .options(OpenAiChatOptions.builder().model(modelName).build())
                         .build();
             }
             case OLLAMA -> {
@@ -373,7 +377,7 @@ public class AiController {
                         .build();
                 yield OllamaChatModel.builder()
                         .ollamaApi(ollamaApi)
-                        .defaultOptions(OllamaChatOptions.builder().model(modelName).build())
+                        .options(OllamaChatOptions.builder().model(modelName).build())
                         .build();
             }
         };

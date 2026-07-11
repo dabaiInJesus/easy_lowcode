@@ -117,6 +117,12 @@ const router = createRouter({
               component: () => import('../views/resource/ApiManagement.vue'),
               meta: { title: 'API管理' },
             },
+            {
+              path: 'dashboard',
+              name: 'resourceDashboard',
+              component: () => import('../views/dashboard/DashboardManagement.vue'),
+              meta: { title: '大屏配置' },
+            },
           ],
         },
         {

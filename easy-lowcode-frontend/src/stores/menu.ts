@@ -65,6 +65,7 @@ const componentMap: Record<string, () => Promise<any>> = {
   'dashboard/DashboardView': () => import('../views/dashboard/DashboardView.vue'),
   'dashboard/manage/index': () => import('../views/dashboard/DashboardManagement.vue'),
   'dashboard/DashboardManagement.vue': () => import('../views/dashboard/DashboardManagement.vue'),
+  'dashboard/DashboardManagement.vue': () => import('../views/dashboard/DashboardManagement.vue'),
   // AI
   'ai/ChatView': () => import('../views/ai/ChatView.vue'),
   'ai/AiConfigManagement': () => import('../views/ai/AiConfigManagement.vue'),

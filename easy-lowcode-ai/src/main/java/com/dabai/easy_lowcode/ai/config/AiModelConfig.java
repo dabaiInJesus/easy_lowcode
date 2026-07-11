@@ -1,12 +1,15 @@
 package com.dabai.easy_lowcode.ai.config;
 
+import com.openai.client.OpenAIClient;
+import com.openai.client.OpenAIClientImpl;
+import com.openai.core.ClientOptions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.ollama.api.OllamaApi;
 import org.springframework.ai.ollama.api.OllamaChatOptions;
 import org.springframework.ai.openai.OpenAiChatModel;
-import org.springframework.ai.openai.api.OpenAiApi;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -25,6 +28,15 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class AiModelConfig {
 
+    private OpenAIClient createOpenAiClient(String apiKey, String baseUrl) {
+        return new OpenAIClientImpl(
+                ClientOptions.builder()
+                        .apiKey(apiKey)
+                        .baseUrl(baseUrl)
+                        .build()
+        );
+    }
+
     // ==================== DeepSeek ChatModel ====================
     @Bean
     @ConditionalOnProperty(name = "ai.deepseek.enabled", havingValue = "true")
@@ -34,15 +46,9 @@ public class AiModelConfig {
             @Value("${ai.deepseek.api-key:}") String apiKey,
             @Value("${ai.deepseek.model:deepseek-chat}") String model) {
         log.info("初始化 DeepSeek ChatModel, baseUrl={}, model={}", baseUrl, model);
-        OpenAiApi openAiApi = OpenAiApi.builder()
-                .baseUrl(baseUrl)
-                .apiKey(apiKey)
-                .build();
         return OpenAiChatModel.builder()
-                .openAiApi(openAiApi)
-                .defaultOptions(org.springframework.ai.openai.OpenAiChatOptions.builder()
-                        .model(model)
-                        .build())
+                .openAiClient(createOpenAiClient(apiKey, baseUrl))
+                .options(OpenAiChatOptions.builder().model(model).build())
                 .build();
     }
 
@@ -56,15 +62,10 @@ public class AiModelConfig {
             @Value("${ai.minimax.api-key:}") String apiKey,
             @Value("${ai.minimax.model:abab6.5s-chat}") String model) {
         log.info("初始化 Minimax ChatModel, baseUrl={}, model={}", baseUrl, model);
-        OpenAiApi openAiApi = OpenAiApi.builder()
-                .baseUrl(baseUrl.endsWith("/v1") ? baseUrl : baseUrl + "/v1")
-                .apiKey(apiKey)
-                .build();
+        String url = baseUrl.endsWith("/v1") ? baseUrl : baseUrl + "/v1";
         return OpenAiChatModel.builder()
-                .openAiApi(openAiApi)
-                .defaultOptions(org.springframework.ai.openai.OpenAiChatOptions.builder()
-                        .model(model)
-                        .build())
+                .openAiClient(createOpenAiClient(apiKey, url))
+                .options(OpenAiChatOptions.builder().model(model).build())
                 .build();
     }
 
@@ -81,9 +82,7 @@ public class AiModelConfig {
                 .build();
         return OllamaChatModel.builder()
                 .ollamaApi(ollamaApi)
-                .defaultOptions(OllamaChatOptions.builder()
-                        .model(model)
-                        .build())
+                .options(OllamaChatOptions.builder().model(model).build())
                 .build();
     }
 

@@ -39,8 +39,8 @@
         <mybatis-plus.version>3.5.5</mybatis-plus.version>
         <jjwt.version>0.12.5</jjwt.version>
         <flowable.version>7.0.1</flowable.version>
-        <spring-ai.version>1.1.2</spring-ai.version>
-        <spring-ai-alibaba.version>1.1.2.0</spring-ai-alibaba.version>
+        <spring-ai.version>2.0.0</spring-ai.version>
+        <spring-ai-alibaba.version>2.0.0-M1.1</spring-ai-alibaba.version>
         <postgresql.version>42.7.1</postgresql.version>
         <rocketmq.version>2.2.3</rocketmq.version>
         <hutool.version>5.8.25</hutool.version>
