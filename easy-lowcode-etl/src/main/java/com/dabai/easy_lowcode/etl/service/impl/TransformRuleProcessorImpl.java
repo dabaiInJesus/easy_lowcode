@@ -107,10 +107,15 @@ public class TransformRuleProcessorImpl implements TransformRuleProcessor {
     }
 
     private String applySubstring(String value, String expression) {
-        String[] parts = expression.split(",");
-        int start = parts.length > 0 ? Integer.parseInt(parts[0].trim()) : 0;
-        int len = parts.length > 1 ? Integer.parseInt(parts[1].trim()) : value.length();
-        return value.substring(Math.min(start, value.length()), Math.min(start + len, value.length()));
+        try {
+            String[] parts = expression.split(",");
+            int start = parts.length > 0 ? Integer.parseInt(parts[0].trim()) : 0;
+            int len = parts.length > 1 ? Integer.parseInt(parts[1].trim()) : value.length();
+            return value.substring(Math.min(start, value.length()), Math.min(start + len, value.length()));
+        } catch (NumberFormatException e) {
+            log.warn("子串表达式解析失败: {}, 使用原始值", expression);
+            return value;
+        }
     }
 
     private String applyDateFormat(Date value, String expression) {

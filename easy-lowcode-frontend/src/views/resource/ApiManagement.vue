@@ -415,7 +415,7 @@ const registerFormData = reactive<Partial<ApiManagement>>({
   apiType: 'EXTERNAL',
   description: '',
   version: 'v1',
-  authRequired: 0,
+  authRequired: false,
   rateLimit: 0,
   status: 1,
   sortOrder: 0,

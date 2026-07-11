@@ -28,7 +28,7 @@
           <el-sub-menu v-if="menu.children && menu.children.length > 0" :index="String(menu.path || menu.id)">
             <template #title>
               <el-icon>
-                <component :is="iconMap[menu.icon] || defaultIcon" />
+                <component :is="menu.icon ? iconMap[menu.icon] : defaultIcon" />
               </el-icon>
               <span>{{ menu.menuName }}</span>
             </template>
@@ -38,7 +38,7 @@
               :index="getFullPath(menu.path, child.path)"
             >
               <el-icon>
-                <component :is="iconMap[child.icon] || defaultIcon" />
+                <component :is="child.icon ? iconMap[child.icon] : defaultIcon" />
               </el-icon>
               <template #title>{{ child.menuName }}</template>
             </el-menu-item>
@@ -47,7 +47,7 @@
           <!-- 无子菜单 -->
           <el-menu-item v-else :index="String(menu.path || menu.id)">
             <el-icon>
-              <component :is="iconMap[menu.icon] || defaultIcon" />
+              <component :is="menu.icon ? iconMap[menu.icon] : defaultIcon" />
             </el-icon>
             <template #title>{{ menu.menuName }}</template>
           </el-menu-item>

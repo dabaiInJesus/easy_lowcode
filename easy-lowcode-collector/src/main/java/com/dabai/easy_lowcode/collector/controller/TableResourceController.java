@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dabai.easy_lowcode.collector.entity.TableResource;
 import com.dabai.easy_lowcode.collector.mapper.TableResourceMapper;
 import com.dabai.easy_lowcode.collector.service.DataPreviewService;
+import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.dabai.easy_lowcode.collector.service.TableResourceService;
 import com.dabai.easy_lowcode.common.result.PageResult;
@@ -56,7 +57,7 @@ public class TableResourceController {
             }
             wrapper.orderByDesc(TableResource::getCreateTime);
             
-            Page<TableResource> page = ((com.dabai.easy_lowcode.collector.service.impl.TableResourceServiceImpl) tableResourceService).pageWithDatasourceName(new Page<>(current, size), wrapper);
+            Page<TableResource> page = tableResourceService.pageWithDatasourceName(new Page<>(current, size), wrapper);
             
             PageResult<TableResource> result = new PageResult<>(
                 page.getRecords(),
@@ -83,7 +84,7 @@ public class TableResourceController {
         }
         wrapper.orderByDesc(TableResource::getCreateTime);
         
-        List<TableResource> list = ((com.dabai.easy_lowcode.collector.service.impl.TableResourceServiceImpl) tableResourceService).listWithDatasourceName(wrapper);
+        List<TableResource> list = tableResourceService.listWithDatasourceName(wrapper);
         return Result.success(list);
     }
     
@@ -102,7 +103,7 @@ public class TableResourceController {
     @ApiResponse(responseCode = "200", description = "注册成功")
     @PostMapping
     @PreAuthorize("hasRole('admin')")
-    public Result<Void> register(@RequestBody TableResource tableResource) {
+    public Result<Void> register(@Valid @RequestBody TableResource tableResource) {
         log.info("收到注册请求: {}", tableResource);
         
         if (tableResource.getDatasourceId() == null) {
@@ -157,7 +158,7 @@ public class TableResourceController {
     @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping
     @PreAuthorize("hasRole('admin')")
-    public Result<Void> update(@RequestBody TableResource tableResource) {
+    public Result<Void> update(@Valid @RequestBody TableResource tableResource) {
         if (tableResource.getId() == null) {
             return Result.error("资源ID不能为空");
         }

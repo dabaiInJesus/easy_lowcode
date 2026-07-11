@@ -7,6 +7,7 @@ import com.dabai.easy_lowcode.common.result.Result;
 import com.dabai.easy_lowcode.resource.entity.SysResource;
 import com.dabai.easy_lowcode.resource.model.QueryTemplate;
 import com.dabai.easy_lowcode.resource.service.DynamicDataService;
+import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.dabai.easy_lowcode.resource.service.ResourceExecutionService;
 import com.dabai.easy_lowcode.resource.service.SysResourceService;
@@ -111,7 +112,7 @@ public class SysResourceController {
     @ApiResponse(responseCode = "200", description = "创建成功")
     @PostMapping
     @PreAuthorize("hasRole('admin')")
-    public Result<Void> create(@RequestBody SysResource resource) {
+    public Result<Void> create(@Valid @RequestBody SysResource resource) {
         resourceService.save(resource);
         return Result.success("创建成功");
     }
@@ -120,7 +121,7 @@ public class SysResourceController {
     @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping
     @PreAuthorize("hasRole('admin')")
-    public Result<Void> update(@RequestBody SysResource resource) {
+    public Result<Void> update(@Valid @RequestBody SysResource resource) {
         resourceService.updateById(resource);
         return Result.success("更新成功");
     }

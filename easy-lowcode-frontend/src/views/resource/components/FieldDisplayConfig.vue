@@ -82,7 +82,7 @@
     </el-table>
 
     <el-dialog v-model="enumDialog.visible" title="枚举映射配置" width="400">
-      <div v-for="(val, key, idx) in enumDialog.mappings" :key="idx" style="display:flex;gap:8px;margin-bottom:8px">
+      <div v-for="(_val, key, idx) in enumDialog.mappings" :key="idx" style="display:flex;gap:8px;margin-bottom:8px">
         <el-input v-model="enumDialog.mappings[key]" placeholder="原始值" disabled style="width:120px" />
         <span style="line-height:32px">→</span>
         <el-input v-model="enumDialog.mappings[key]" placeholder="显示名称" style="width:160px" />

@@ -54,7 +54,7 @@
         <el-table-column prop="dataType" label="数据类型" width="100" />
         <el-table-column prop="queryType" label="查询方式" width="100" />
         <el-table-column label="操作" width="120">
-          <template #default="{ row, $index }">
+          <template #default="{ $index }">
             <el-button size="small" type="danger" @click="removeMapping($index)">移除</el-button>
           </template>
         </el-table-column>

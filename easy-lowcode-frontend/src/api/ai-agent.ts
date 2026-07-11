@@ -1,10 +1,12 @@
 import request from '@/utils/request'
+import type { AiAgent } from '@/types/ai'
+import type { PageResult } from '@/types/common'
 
 /**
  * 分页查询 Agent 列表
  */
 export function getAgentPage(current: number, size: number, keyword?: string) {
-  return request({
+  return request<PageResult<AiAgent>>({
     url: '/ai/agent/list',
     method: 'get',
     params: { current, size, keyword },
@@ -14,7 +16,7 @@ export function getAgentPage(current: number, size: number, keyword?: string) {
 /**
  * 创建 Agent
  */
-export function createAgent(data: any) {
+export function createAgent(data: Omit<AiAgent, 'id'>) {
   return request({
     url: '/ai/agent/create',
     method: 'post',
@@ -25,7 +27,7 @@ export function createAgent(data: any) {
 /**
  * 更新 Agent
  */
-export function updateAgent(data: any) {
+export function updateAgent(data: AiAgent) {
   return request({
     url: '/ai/agent',
     method: 'put',
@@ -57,7 +59,7 @@ export function publishAgent(id: number) {
  * 获取可用工具列表
  */
 export function getAgentTools() {
-  return request({
+  return request<Array<{ name: string; description: string }>>({
     url: '/ai/agent/tools',
     method: 'get',
   })

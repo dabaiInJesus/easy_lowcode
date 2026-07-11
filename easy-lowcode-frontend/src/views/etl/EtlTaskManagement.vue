@@ -56,6 +56,9 @@
             <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
+        <template #empty>
+          <el-empty description="暂无ETL任务" />
+        </template>
       </el-table>
       <el-pagination v-model:current-page="pagination.current" v-model:page-size="pagination.size"
         :total="pagination.total" :page-sizes="[10,20,50,100]" layout="total, sizes, prev, pager, next, jumper"
@@ -227,7 +230,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { getEtlTaskPage, createEtlTask, updateEtlTask, deleteEtlTask, executeEtlTask, getEtlTaskHistory, getEtlTaskSourceColumns, getEtlDatasources, toggleEtlTaskSchedule, scanTableColumns, type EtlTask } from '@/api/etl'
+import { getEtlTaskPage, createEtlTask, updateEtlTask, deleteEtlTask, executeEtlTask, getEtlTaskHistory, getEtlDatasources, toggleEtlTaskSchedule, scanTableColumns, type EtlTask } from '@/api/etl'
 import { getDataSourcePage } from '@/api/datasource'
 
 const searchForm = reactive({ keyword: '' })

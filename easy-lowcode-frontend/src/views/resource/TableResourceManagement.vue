@@ -111,7 +111,7 @@
               v-model="selectedDatasourceId"
               placeholder="请选择数据源"
               style="width: 100%"
-              @change="(val: any) => handleDatasourceChange()"
+              @change="() => handleDatasourceChange()"
             >
               <el-option
                 v-for="ds in datasourceList"
@@ -690,7 +690,7 @@ const handleDatasourceChange = async () => {
     
     tableList.value = tables.map(table => ({
       ...table,
-      isRegistered: registeredTableNames.has(table.tableName),
+      isRegistered: registeredTableNames.has(table.tableName ?? ''),
     }))
     
     ElMessage.success(`扫描到 ${tables.length} 个表`)

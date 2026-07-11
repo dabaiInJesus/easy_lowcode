@@ -1,0 +1,152 @@
+# Alertmanager 配置
+# 用于管理和路由告警通知
+
+global:
+  resolve_timeout: 5m
+  # 邮件服务器配置（如需邮件通知）
+  # smtp_smarthost: 'smtp.qq.com:587'
+  # smtp_auth_username: 'your-email@qq.com'
+  # smtp_auth_password: 'your-password'
+  # smtp_from: 'alerts@easy-lowcode.com'
+
+# 告警模板文件
+templates:
+  - '/etc/alertmanager/email.tmpl'
+
+# 告警路由配置
+route:
+  # 根路由 - 默认接收器
+  receiver: 'default'
+  
+  # 分组设置 - 相同告警在一段时间内分组处理
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s        # 等待10秒后再发送告警，允许更多告警分组
+  group_interval: 10s    # 相同组内新增告警的等待时间
+  repeat_interval: 4h    # 重复发送未解决的告警间隔
+  
+  # 子路由 - 针对特定告警的路由规则
+  routes:
+    # Critical 级别 - 立即通知
+    - match:
+        severity: critical
+      receiver: 'critical'
+      group_wait: 0s      # 不等待，立即发送
+      group_interval: 30s # 每30秒重新评估
+      repeat_interval: 30m
+      continue: true
+    
+    # Warning 级别 - 定期通知
+    - match:
+        severity: warning
+      receiver: 'warning'
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+      continue: true
+    
+    # Info 级别 - 仅记录
+    - match:
+        severity: info
+      receiver: 'info'
+      group_wait: 5m
+      group_interval: 1h
+      repeat_interval: 24h
+
+# 接收器配置
+receivers:
+  # 默认接收器
+  - name: 'default'
+    webhook_configs:
+      - url: 'http://localhost:8888/webhook/default'
+        send_resolved: true
+
+  # Critical 告警接收器 - 多渠道通知
+  - name: 'critical'
+    # 钉钉通知
+    webhook_configs:
+      - url: '${DINGTALK_WEBHOOK}'  # 需在环境变量中设置
+        send_resolved: true
+    # 邮件通知
+    email_configs:
+      - to: '${ALERT_EMAIL}'        # 需在环境变量中设置
+        from: 'alerts@easy-lowcode.com'
+        smarthost: '${SMTP_HOST}:${SMTP_PORT}'
+        auth_username: '${SMTP_USERNAME}'
+        auth_password: '${SMTP_PASSWORD}'
+        headers:
+          Subject: '[CRITICAL] {{ .GroupLabels.alertname }}'
+        html: |
+          <h2 style="color:red;">🚨 Critical Alert</h2>
+          <p><b>Alert Name:</b> {{ .GroupLabels.alertname }}</p>
+          <p><b>Service:</b> {{ .GroupLabels.service }}</p>
+          <p><b>Severity:</b> {{ .CommonLabels.severity }}</p>
+          <table border="1" cellpadding="10">
+            <tr>
+              <th>Description</th>
+              <th>Summary</th>
+              <th>Time</th>
+            </tr>
+            {{ range .Alerts.Firing }}
+            <tr>
+              <td>{{ .Annotations.description }}</td>
+              <td>{{ .Annotations.summary }}</td>
+              <td>{{ .StartsAt.Format "2006-01-02 15:04:05" }}</td>
+            </tr>
+            {{ end }}
+          </table>
+    # 电话告警（可选）
+    # pagerduty_configs:
+    #   - service_key: '${PAGERDUTY_KEY}'
+
+  # Warning 告警接收器
+  - name: 'warning'
+    # 企业微信通知
+    webhook_configs:
+      - url: '${WECHAT_WEBHOOK}'    # 需在环境变量中设置
+        send_resolved: true
+    # 邮件通知
+    email_configs:
+      - to: '${ALERT_EMAIL}'
+        from: 'alerts@easy-lowcode.com'
+        smarthost: '${SMTP_HOST}:${SMTP_PORT}'
+        auth_username: '${SMTP_USERNAME}'
+        auth_password: '${SMTP_PASSWORD}'
+        headers:
+          Subject: '[WARNING] {{ .GroupLabels.alertname }}'
+
+  # Info 告警接收器 - 仅记录到文件或日志服务
+  - name: 'info'
+    webhook_configs:
+      - url: 'http://localhost:8888/webhook/info'
+        send_resolved: true
+
+# 告警抑制配置
+inhibit_rules:
+  # 当应用宕机时，抑制应用相关的其他告警，避免告警风暴
+  - source_match:
+      alertname: 'ApplicationDown'
+    target_match_re:
+      alertname: '.*'
+    target_match:
+      job: 'easy-lowcode-app'
+    equal: ['service']
+
+  # 当数据库宕机时，抑制数据库连接相关的告警
+  - source_match:
+      alertname: 'PostgreSQLDown'
+    target_match_re:
+      alertname: 'HighDatabaseConnectionUsage|SlowDatabaseQuery'
+    equal: ['service']
+
+  # 当Redis宕机时，抑制Redis相关的其他告警
+  - source_match:
+      alertname: 'RedisDown'
+    target_match_re:
+      alertname: 'HighRedisMemoryUsage|HighRedisEvictionRate'
+    equal: ['service']
+
+  # 生产环境检修窗口期间抑制告警（需额外配置）
+  # - target_match:
+  #     severity: warning
+  #   match_re:
+  #     maintenance_window: 'yes'

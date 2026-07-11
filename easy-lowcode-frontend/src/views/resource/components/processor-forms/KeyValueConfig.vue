@@ -1,11 +1,11 @@
 <template>
   <div>
     <p style="color:#666;font-size:13px;margin-bottom:12px">配置键值映射关系</p>
-    <div v-for="(val, key, idx) in localConfig.mappings" :key="idx" style="display:flex;gap:8px;margin-bottom:8px">
+    <div v-for="(_val, key, idx) in localConfig.mappings" :key="idx" style="display:flex;gap:8px;margin-bottom:8px">
       <el-input v-model="localConfig.mappings[key]" placeholder="原始名称" style="width:140px" />
       <span style="line-height:32px">→</span>
       <el-input v-model="localConfig.mappings[key]" placeholder="映射名称" style="width:140px" />
-      <el-button @click="removeEntry(key)" type="danger" size="small">×</el-button>
+      <el-button @click="removeEntry(String(key))" type="danger" size="small">×</el-button>
     </div>
     <el-button size="small" @click="addEntry">+ 添加映射</el-button>
   </div>

@@ -26,6 +26,9 @@
             <el-button size="small" @click="handleTest(row)" :loading="testLoading === row.id">测试</el-button>
           </template>
         </el-table-column>
+        <template #empty>
+          <el-empty description="暂无AI配置" />
+        </template>
       </el-table>
     </el-card>
 
@@ -85,19 +88,8 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { getAiConfigPage, createAiConfig, updateAiConfig, deleteAiConfig, testAiConnection, getAiConfigById } from '@/api/ai'
+import { getAiConfigPage, createAiConfig, updateAiConfig, deleteAiConfig, testAiConnection, getAiConfigById, type AiConfig } from '@/api/ai'
 import request from '@/utils/request'
-
-interface AiConfig {
-  id?: number
-  provider: string
-  displayName: string
-  apiKey?: string
-  baseUrl?: string
-  model?: string
-  status?: number
-  remark?: string
-}
 
 interface ModelOption {
   label: string

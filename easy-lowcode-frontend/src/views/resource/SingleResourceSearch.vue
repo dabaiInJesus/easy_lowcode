@@ -100,7 +100,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getTableResourceList, getResourceFields, getResourceTemplates, singleSearch } from '@/api/resourceSearch'
+import { getTableResourceList, getResourceFields, getResourceTemplates, singleSearch, type SearchParams } from '@/api/resourceSearch'
 import type { FieldConfig, DisplayFieldSetting } from '@/types/tableResource'
 
 const loading = ref(false)
@@ -149,7 +149,7 @@ const tableColumns = computed(() => {
         width: setting?.width,
         align: setting?.align || 'left',
         fixed: setting?.fixed,
-        sortable: setting?.sortable !== false && f.sortable,
+        sortable: setting?.sortable !== false && (f.sortable ?? false),
       })
     })
   } else {
@@ -235,7 +235,7 @@ async function handleSearch() {
         }
       }
     }
-    const params: Record<string, any> = {
+    const params: SearchParams = {
       page: searchParams.page,
       pageSize: searchParams.pageSize,
       filters,

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.dabai.easy_lowcode.auth.entity.SysRole;
 import com.dabai.easy_lowcode.auth.service.SysRoleService;
 import com.dabai.easy_lowcode.common.result.Result;
+import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -42,7 +43,7 @@ public class RoleController {
     @ApiResponse(responseCode = "200", description = "创建成功")
     @PostMapping
     @PreAuthorize("hasRole('admin')")
-    public Result<Void> createRole(@RequestBody SysRole role) {
+    public Result<Void> createRole(@Valid @RequestBody SysRole role) {
         if (role.getRoleCode() == null || role.getRoleCode().trim().isEmpty()) {
             role.setRoleCode(generateRoleCode(role.getRoleName()));
         }
@@ -69,7 +70,7 @@ public class RoleController {
     @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping
     @PreAuthorize("hasRole('admin')")
-    public Result<Void> updateRole(@RequestBody SysRole role) {
+    public Result<Void> updateRole(@Valid @RequestBody SysRole role) {
         LambdaQueryWrapper<SysRole> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysRole::getRoleCode, role.getRoleCode())
                .ne(SysRole::getId, role.getId());

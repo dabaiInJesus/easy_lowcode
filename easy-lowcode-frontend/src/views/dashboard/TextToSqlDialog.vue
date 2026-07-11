@@ -167,7 +167,7 @@
 import { ref, reactive, computed, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
-import { getDataSourceList, getTableColumns, textToSql } from '@/api/dashboard'
+import { getDataSourceList, textToSql } from '@/api/dashboard'
 import { buildChartOption } from '@/utils/chartRenderer'
 
 const props = defineProps<{

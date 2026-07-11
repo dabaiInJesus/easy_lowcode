@@ -66,11 +66,11 @@
             <el-button link type="primary" size="small" @click="handleEdit(row)">
               编辑
             </el-button>
-            <el-button 
-              v-if="row.appUrl" 
-              link 
-              type="success" 
-              size="small" 
+            <el-button
+              v-if="row.appUrl"
+              link
+              type="success"
+              size="small"
               @click="handleJump(row)"
             >
               跳转
@@ -80,13 +80,16 @@
             </el-button>
           </template>
         </el-table-column>
+        <template #empty>
+          <el-empty description="暂无应用数据" />
+        </template>
       </el-table>
 
       <!-- 分页 -->
       <el-pagination
-        v-model:current-page="pagination.current"
-        v-model:page-size="pagination.size"
-        :total="pagination.total"
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :total="total"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
         @size-change="handleSizeChange"
@@ -177,6 +180,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus, Search, Refresh } from '@element-plus/icons-vue'
 import { getAppPage, createApp, updateApp, deleteApp } from '@/api/auth'
+import { usePagination } from '@/composables/usePagination'
 
 interface App {
   id?: number
@@ -192,15 +196,11 @@ interface App {
   createTime?: string
 }
 
-const loading = ref(false)
-const tableData = ref<App[]>([])
-const searchForm = reactive({
-  keyword: '',
-})
-const pagination = reactive({
-  current: 1,
-  size: 10,
-  total: 0,
+const searchForm = reactive({ keyword: '' })
+
+const { loading, dataList: tableData, total, currentPage, pageSize, search, handleSizeChange, handleCurrentChange } = usePagination<App>({
+  fetchFn: (params) => getAppPage(params.current, params.size, searchForm.keyword),
+  initialPageSize: 10,
 })
 
 const dialogVisible = ref(false)
@@ -231,30 +231,10 @@ const formRules: FormRules = {
   ],
 }
 
-// 加载数据
-const loadData = async () => {
-  loading.value = true
-  try {
-    const res = await getAppPage(pagination.current, pagination.size, searchForm.keyword)
-    if (res && res.records) {
-      tableData.value = res.records
-      pagination.total = res.total
-    } else {
-      console.error('响应数据格式错误:', res)
-      ElMessage.error('加载数据失败：响应格式错误')
-    }
-  } catch (error) {
-    console.error('加载数据失败:', error)
-    ElMessage.error('加载数据失败')
-  } finally {
-    loading.value = false
-  }
-}
-
 // 搜索
 const handleSearch = () => {
-  pagination.current = 1
-  loadData()
+  currentPage.value = 1
+  search()
 }
 
 // 重置
@@ -287,7 +267,7 @@ const handleDelete = async (row: App) => {
   try {
     await deleteApp(row.id!)
     ElMessage.success('删除成功')
-    loadData()
+    search()
   } catch (error) {
     console.error('删除失败:', error)
   }
@@ -317,7 +297,7 @@ const handleSubmit = async () => {
         ElMessage.success('创建成功')
       }
       dialogVisible.value = false
-      loadData()
+      search()
     } catch (error) {
       console.error('提交失败:', error)
     } finally {
@@ -343,15 +323,6 @@ const handleDialogClose = () => {
   })
 }
 
-// 分页
-const handleSizeChange = () => {
-  loadData()
-}
-
-const handleCurrentChange = () => {
-  loadData()
-}
-
 // 格式化时间
 const formatTime = (time: string | undefined) => {
   if (!time) return '-'
@@ -366,7 +337,7 @@ const formatTime = (time: string | undefined) => {
 }
 
 onMounted(() => {
-  loadData()
+  search()
 })
 </script>
 

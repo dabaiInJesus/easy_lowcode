@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.dabai.easy_lowcode.auth.entity.SysDept;
 import com.dabai.easy_lowcode.auth.service.SysDeptService;
 import com.dabai.easy_lowcode.common.result.Result;
+import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -42,7 +43,7 @@ public class DeptController {
     @ApiResponse(responseCode = "200", description = "创建成功")
     @PostMapping
     @PreAuthorize("hasRole('admin')")
-    public Result<Void> createDept(@RequestBody SysDept dept) {
+    public Result<Void> createDept(@Valid @RequestBody SysDept dept) {
         if (dept.getDeptCode() == null || dept.getDeptCode().trim().isEmpty()) {
             dept.setDeptCode(generateDeptCode(dept.getDeptName()));
         }
@@ -73,7 +74,7 @@ public class DeptController {
     @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping
     @PreAuthorize("hasRole('admin')")
-    public Result<Void> updateDept(@RequestBody SysDept dept) {
+    public Result<Void> updateDept(@Valid @RequestBody SysDept dept) {
         LambdaQueryWrapper<SysDept> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysDept::getDeptCode, dept.getDeptCode())
                .ne(SysDept::getId, dept.getId());

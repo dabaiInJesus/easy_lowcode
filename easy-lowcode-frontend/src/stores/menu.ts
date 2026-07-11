@@ -2,9 +2,10 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { getMenuTree } from '@/api/auth'
 import router from '@/router'
+import type { RouteRecordRaw } from 'vue-router'
 
 // 组件路径映射 - 后端返回的 component 字段映射到前端动态 import
-const componentMap: Record<string, () => Promise<any>> = {
+const componentMap: Record<string, () => Promise<{ default: unknown }>> = {
   // 系统管理
   'system/UserManagement': () => import('../views/system/UserManagement.vue'),
   'system/RoleManagement': () => import('../views/system/RoleManagement.vue'),
@@ -65,7 +66,6 @@ const componentMap: Record<string, () => Promise<any>> = {
   'dashboard/DashboardView': () => import('../views/dashboard/DashboardView.vue'),
   'dashboard/manage/index': () => import('../views/dashboard/DashboardManagement.vue'),
   'dashboard/DashboardManagement.vue': () => import('../views/dashboard/DashboardManagement.vue'),
-  'dashboard/DashboardManagement.vue': () => import('../views/dashboard/DashboardManagement.vue'),
   // AI
   'ai/ChatView': () => import('../views/ai/ChatView.vue'),
   'ai/AiConfigManagement': () => import('../views/ai/AiConfigManagement.vue'),
@@ -115,8 +115,7 @@ export const useMenuStore = defineStore('menu', () => {
 
     try {
       const response = await getMenuTree()
-      const menuData = response.data || response
-      menus.value = Array.isArray(menuData) ? menuData : []
+      menus.value = (Array.isArray(response) ? response : []) as MenuItem[]
       isLoaded.value = true
       
       // 注册动态路由
@@ -179,19 +178,19 @@ export const useMenuStore = defineStore('menu', () => {
   /**
    * 将菜单树转换为路由配置
    */
-  function generateRoutes(menuList: MenuItem[]): any[] {
-    const routes: any[] = []
+  function generateRoutes(menuList: MenuItem[]): RouteRecordRaw[] {
+    const routes: RouteRecordRaw[] = []
 
     menuList.forEach(menu => {
       // 有子菜单的菜单（父菜单如"数据大屏"）
       if (menu.children && menu.children.length > 0) {
         if (menu.path && menu.component) {
-          const parentRoute: any = {
+          const parentRoute: RouteRecordRaw = {
             path: menu.path,
             name: menu.menuCode,
             component: () => import('../views/LayoutWrapper.vue'),
             meta: { title: menu.menuName, icon: menu.icon },
-            children: [] as any[],
+            children: [],
           }
 
           // 处理子菜单
@@ -204,7 +203,7 @@ export const useMenuStore = defineStore('menu', () => {
                 return
               }
 
-              const childRoute: any = {
+              const childRoute: RouteRecordRaw = {
                 path: child.path,
                 name: child.menuCode,
                 component: loader,
@@ -227,7 +226,7 @@ export const useMenuStore = defineStore('menu', () => {
           return
         }
 
-        const route: any = {
+        const route: RouteRecordRaw = {
           path: menu.path,
           name: menu.menuCode,
           meta: { title: menu.menuName, icon: menu.icon },

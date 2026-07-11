@@ -1,11 +1,12 @@
 import request from '@/utils/request'
 import type { FlowDefinition, FlowExecution } from '@/types/flow'
+import type { PageResult } from '@/types/common'
 
 /**
  * 分页查询流程列表
  */
 export function getFlowPage(current: number, size: number, keyword?: string, status?: string) {
-  return request({
+  return request<PageResult<FlowDefinition>>({
     url: '/etl/flow/page',
     method: 'get',
     params: { current, size, keyword, status },
@@ -16,7 +17,7 @@ export function getFlowPage(current: number, size: number, keyword?: string, sta
  * 获取流程详情
  */
 export function getFlowDetail(id: number): Promise<FlowDefinition> {
-  return request({
+  return request<FlowDefinition>({
     url: `/etl/flow/${id}`,
     method: 'get',
   })
@@ -58,7 +59,7 @@ export function deleteFlow(id: number) {
  * 执行流程
  */
 export function executeFlow(id: number): Promise<number> {
-  return request({
+  return request<number>({
     url: `/etl/flow/${id}/execute`,
     method: 'post',
   })
@@ -78,7 +79,7 @@ export function stopFlow(id: number) {
  * 获取执行历史
  */
 export function getExecutionHistory(flowId: number, limit?: number): Promise<FlowExecution[]> {
-  return request({
+  return request<FlowExecution[]>({
     url: `/etl/flow/${flowId}/history`,
     method: 'get',
     params: { limit: limit || 20 },
@@ -89,7 +90,7 @@ export function getExecutionHistory(flowId: number, limit?: number): Promise<Flo
  * 获取执行详情
  */
 export function getExecutionDetail(executionId: number): Promise<FlowExecution> {
-  return request({
+  return request<FlowExecution>({
     url: `/etl/flow/execution/${executionId}`,
     method: 'get',
   })

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dabai.easy_lowcode.collector.entity.DataSourceConfig;
 import com.dabai.easy_lowcode.collector.service.DataSourceConfigService;
 import com.dabai.easy_lowcode.common.result.PageResult;
+import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.dabai.easy_lowcode.common.result.Result;
 import com.dabai.easy_lowcode.common.util.EncryptUtil;
@@ -77,7 +78,7 @@ public class DataSourceConfigController {
     @ApiResponse(responseCode = "200", description = "创建成功")
     @PostMapping
     @PreAuthorize("hasRole('admin')")
-    public Result<Void> create(@RequestBody DataSourceConfig config) {
+    public Result<Void> create(@Valid @RequestBody DataSourceConfig config) {
         if (config.getName() == null || config.getName().trim().isEmpty()) {
             return Result.error("数据源名称不能为空");
         }
@@ -133,7 +134,7 @@ public class DataSourceConfigController {
     @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping
     @PreAuthorize("hasRole('admin')")
-    public Result<Void> update(@RequestBody DataSourceConfig config) {
+    public Result<Void> update(@Valid @RequestBody DataSourceConfig config) {
         if (config.getId() == null) {
             return Result.error("数据源ID不能为空");
         }
@@ -208,7 +209,7 @@ public class DataSourceConfigController {
     @Operation(summary = "测试连接", description = "测试数据源连接是否可用")
     @ApiResponse(responseCode = "200", description = "测试完成")
     @PostMapping("/test-connection")
-    public Result<Boolean> testConnection(@RequestBody DataSourceConfig config) {
+    public Result<Boolean> testConnection(@Valid @RequestBody DataSourceConfig config) {
         boolean success = dataSourceConfigService.testConnection(config);
         if (success) {
             return Result.success("连接成功", true);

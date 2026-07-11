@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dabai.easy_lowcode.collector.entity.DataSourceConfig;
 import com.dabai.easy_lowcode.collector.mapper.DataSourceConfigMapper;
 import com.dabai.easy_lowcode.common.result.PageResult;
+import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.dabai.easy_lowcode.common.result.Result;
 import com.dabai.easy_lowcode.etl.entity.EtlTask;
@@ -78,7 +79,7 @@ public class EtlTaskController {
     @ApiResponse(responseCode = "200", description = "创建成功")
     @PostMapping
     @PreAuthorize("hasRole('admin')")
-    public Result<Void> create(@RequestBody EtlTask task) {
+    public Result<Void> create(@Valid @RequestBody EtlTask task) {
         try {
             boolean success = etlTaskService.createTask(task);
             if (success) {
@@ -94,7 +95,7 @@ public class EtlTaskController {
     @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping
     @PreAuthorize("hasRole('admin')")
-    public Result<Void> update(@RequestBody EtlTask task) {
+    public Result<Void> update(@Valid @RequestBody EtlTask task) {
         try {
             boolean success = etlTaskService.updateTask(task);
             if (success) {

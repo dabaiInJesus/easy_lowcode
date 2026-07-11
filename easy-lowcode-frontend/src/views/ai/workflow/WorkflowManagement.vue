@@ -26,6 +26,9 @@
             <el-button text type="danger" size="small" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
+        <template #empty>
+          <el-empty description="暂无工作流数据" />
+        </template>
       </el-table>
 
       <div class="pagination-wrapper">

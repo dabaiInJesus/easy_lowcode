@@ -105,7 +105,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import type { QueryTemplate, TemplateParam } from '@/types/tableResource'
+import type { QueryTemplate } from '@/types/tableResource'
 import { ElMessage } from 'element-plus'
 
 const props = defineProps<{

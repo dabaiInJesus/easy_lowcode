@@ -1,4 +1,6 @@
 import request from '@/utils/request'
+import type { User, Role, Menu, Dept, App } from '@/types/auth'
+import type { PageResult } from '@/types/common'
 
 export interface LoginParams {
   username: string
@@ -26,7 +28,7 @@ export interface UserInfo {
  * 用户登录
  */
 export function login(data: LoginParams) {
-  return request({
+  return request<LoginResponse>({
     url: '/auth/login',
     method: 'post',
     data,
@@ -47,7 +49,7 @@ export function logout() {
  * 获取当前用户信息
  */
 export function getCurrentUser() {
-  return request({
+  return request<User>({
     url: '/auth/current',
     method: 'get',
   })
@@ -57,7 +59,7 @@ export function getCurrentUser() {
  * 分页查询用户列表
  */
 export function getUserPage(current: number, size: number, keyword?: string) {
-  return request({
+  return request<PageResult<User>>({
     url: '/auth/user/page',
     method: 'get',
     params: { current, size, keyword },
@@ -67,7 +69,7 @@ export function getUserPage(current: number, size: number, keyword?: string) {
 /**
  * 创建用户
  */
-export function createUser(data: any) {
+export function createUser(data: Omit<User, 'id'>) {
   return request({
     url: '/auth/user',
     method: 'post',
@@ -78,7 +80,7 @@ export function createUser(data: any) {
 /**
  * 更新用户
  */
-export function updateUser(data: any) {
+export function updateUser(data: User) {
   return request({
     url: '/auth/user',
     method: 'put',
@@ -111,7 +113,7 @@ export function resetPassword(id: number, newPassword: string) {
  * 获取统计数据
  */
 export function getStatistics() {
-  return request({
+  return request<{ userCount: number; roleCount: number; menuCount: number; deptCount: number }>({
     url: '/auth/statistics',
     method: 'get',
   })
@@ -121,7 +123,7 @@ export function getStatistics() {
  * 获取菜单列表
  */
 export function getMenuList() {
-  return request({
+  return request<Menu[]>({
     url: '/auth/menu/list',
     method: 'get',
   })
@@ -130,7 +132,7 @@ export function getMenuList() {
 /**
  * 创建菜单
  */
-export function createMenu(data: any) {
+export function createMenu(data: Omit<Menu, 'id'>) {
   return request({
     url: '/auth/menu',
     method: 'post',
@@ -141,7 +143,7 @@ export function createMenu(data: any) {
 /**
  * 更新菜单
  */
-export function updateMenu(data: any) {
+export function updateMenu(data: Menu) {
   return request({
     url: '/auth/menu',
     method: 'put',
@@ -163,7 +165,7 @@ export function deleteMenu(id: number) {
  * 获取角色列表
  */
 export function getRoleList() {
-  return request({
+  return request<Role[]>({
     url: '/auth/role/list',
     method: 'get',
     silentError: true, // 静默错误，由调用方统一处理
@@ -173,7 +175,7 @@ export function getRoleList() {
 /**
  * 创建角色
  */
-export function createRole(data: any) {
+export function createRole(data: Omit<Role, 'id'>) {
   return request({
     url: '/auth/role',
     method: 'post',
@@ -185,7 +187,7 @@ export function createRole(data: any) {
 /**
  * 更新角色
  */
-export function updateRole(data: any) {
+export function updateRole(data: Role) {
   return request({
     url: '/auth/role',
     method: 'put',
@@ -208,7 +210,7 @@ export function deleteRole(id: number) {
 /**
  * 获取部门列表
  */
-export function getDeptList(): Promise<any> {
+export function getDeptList(): Promise<Dept[]> {
   return request({
     url: '/auth/dept/list',
     method: 'get',
@@ -218,7 +220,7 @@ export function getDeptList(): Promise<any> {
 /**
  * 创建部门
  */
-export function createDept(data: any) {
+export function createDept(data: Omit<Dept, 'id'>) {
   return request({
     url: '/auth/dept',
     method: 'post',
@@ -229,7 +231,7 @@ export function createDept(data: any) {
 /**
  * 更新部门
  */
-export function updateDept(data: any) {
+export function updateDept(data: Dept) {
   return request({
     url: '/auth/dept',
     method: 'put',
@@ -261,7 +263,7 @@ export function getAppList() {
  * 分页查询应用列表
  */
 export function getAppPage(current: number, size: number, keyword?: string) {
-  return request({
+  return request<PageResult<App>>({
     url: '/auth/app/page',
     method: 'get',
     params: { current, size, keyword },
@@ -271,7 +273,7 @@ export function getAppPage(current: number, size: number, keyword?: string) {
 /**
  * 创建应用
  */
-export function createApp(data: any) {
+export function createApp(data: Omit<App, 'id'>) {
   return request({
     url: '/auth/app',
     method: 'post',
@@ -282,7 +284,7 @@ export function createApp(data: any) {
 /**
  * 更新应用
  */
-export function updateApp(data: any) {
+export function updateApp(data: App) {
   return request({
     url: '/auth/app',
     method: 'put',
@@ -304,10 +306,10 @@ export function deleteApp(id: number) {
  * 获取用户列表（包含角色信息）
  */
 export function getUsersWithRoles() {
-  return request({
+  return request<Array<User & { roles: Role[] }>>({
     url: '/auth/authorization/users',
     method: 'get',
-    silentError: true, // 静默错误，不显示提示
+    silentError: true,
   })
 }
 
@@ -315,10 +317,10 @@ export function getUsersWithRoles() {
  * 获取角色列表（包含菜单数量）
  */
 export function getRolesWithMenuCount() {
-  return request({
+  return request<Array<Role & { menuCount: number }>>({
     url: '/auth/authorization/roles',
     method: 'get',
-    silentError: true, // 静默错误，不显示提示
+    silentError: true,
   })
 }
 
@@ -326,10 +328,10 @@ export function getRolesWithMenuCount() {
  * 获取所有角色
  */
 export function getAllRoles() {
-  return request({
+  return request<Role[]>({
     url: '/auth/authorization/all-roles',
     method: 'get',
-    silentError: true, // 静默错误，不显示提示
+    silentError: true,
   })
 }
 
@@ -337,7 +339,7 @@ export function getAllRoles() {
  * 获取用户的角色
  */
 export function getUserRoles(userId: number) {
-  return request({
+  return request<Role[]>({
     url: `/auth/authorization/user/${userId}/roles`,
     method: 'get',
   })
@@ -358,7 +360,7 @@ export function assignRolesToUser(userId: number, roleIds: number[]) {
  * 获取角色的菜单
  */
 export function getRoleMenus(roleId: number) {
-  return request({
+  return request<Menu[]>({
     url: `/auth/authorization/role/${roleId}/menus`,
     method: 'get',
   })
@@ -368,7 +370,7 @@ export function getRoleMenus(roleId: number) {
  * 获取菜单树
  */
 export function getMenuTree() {
-  return request({
+  return request<Menu[]>({
     url: '/auth/authorization/menus/tree',
     method: 'get',
   })

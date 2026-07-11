@@ -66,6 +66,9 @@
             </el-button>
           </template>
         </el-table-column>
+        <template #empty>
+          <el-empty description="暂无用户数据" />
+        </template>
       </el-table>
 
       <!-- 分页 -->

@@ -1,20 +1,21 @@
 import request from '@/utils/request'
 import type { FieldConfig, ConfigJson } from '@/types/tableResource'
+import type { PageResult } from '@/types/common'
 
 export interface SearchParams {
   page: number
   pageSize: number
   keyword?: string
-  filters?: Record<string, any>
+  filters?: Record<string, unknown>
   orderField?: string
   orderDirection?: 'ASC' | 'DESC'
   selectFields?: string[]
   templateName?: string
-  templateParams?: Record<string, any>
+  templateParams?: Record<string, unknown>
 }
 
 export interface SearchResult {
-  records: Record<string, any>[]
+  records: Record<string, unknown>[]
   total: number
   page: number
   pageSize: number
@@ -26,7 +27,21 @@ export interface ResourceFieldInfo {
   configJson?: ConfigJson
 }
 
-export function getTableResourceList(): Promise<{ records: any[] }> {
+export interface TemplateParameter {
+  name: string
+  label: string
+  type?: string
+  required?: boolean
+  defaultValue?: unknown
+}
+
+export interface ResourceTemplate {
+  name: string
+  label: string
+  parameters: TemplateParameter[]
+}
+
+export function getTableResourceList(): Promise<PageResult<{ id: string; resourceCode: string; tableName: string }>> {
   return request({
     url: '/collector/table-resource/page',
     method: 'get',
@@ -41,7 +56,7 @@ export function getResourceFields(resourceCode: string): Promise<ResourceFieldIn
   })
 }
 
-export function getResourceTemplates(resourceCode: string): Promise<{ name: string; label: string; parameters: any[] }[]> {
+export function getResourceTemplates(resourceCode: string): Promise<ResourceTemplate[]> {
   return request({
     url: `/resource/${resourceCode}/templates`,
     method: 'get',
@@ -56,7 +71,7 @@ export function singleSearch(resourceCode: string, params: SearchParams): Promis
   })
 }
 
-export function singleGetById(resourceCode: string, id: number): Promise<Record<string, any>> {
+export function singleGetById(resourceCode: string, id: number): Promise<Record<string, unknown>> {
   return request({
     url: `/resource/search/single/${resourceCode}/${id}`,
     method: 'get',

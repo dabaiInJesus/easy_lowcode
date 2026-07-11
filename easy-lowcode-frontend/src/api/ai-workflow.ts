@@ -1,11 +1,12 @@
 import request from '@/utils/request'
 import type { AiWorkflowDef, AiWorkflowExecution } from '@/types/ai-workflow'
+import type { PageResult } from '@/types/common'
 
 /**
  * 分页查询工作流列表
  */
 export function getWorkflowPage(current: number, size: number, keyword?: string, status?: string) {
-  return request({
+  return request<PageResult<AiWorkflowDef>>({
     url: '/ai/workflow/page',
     method: 'get',
     params: { current, size, keyword, status },
@@ -16,7 +17,7 @@ export function getWorkflowPage(current: number, size: number, keyword?: string,
  * 获取工作流详情
  */
 export function getWorkflowDetail(id: number): Promise<AiWorkflowDef> {
-  return request({
+  return request<AiWorkflowDef>({
     url: `/ai/workflow/${id}`,
     method: 'get',
   })
@@ -68,7 +69,7 @@ export function publishWorkflow(id: number) {
  * 获取执行历史
  */
 export function getWorkflowHistory(workflowId: number, limit?: number): Promise<AiWorkflowExecution[]> {
-  return request({
+  return request<AiWorkflowExecution[]>({
     url: `/ai/workflow/${workflowId}/history`,
     method: 'get',
     params: { limit: limit || 20 },
@@ -79,7 +80,7 @@ export function getWorkflowHistory(workflowId: number, limit?: number): Promise<
  * 获取执行详情
  */
 export function getWorkflowExecutionDetail(executionId: number): Promise<AiWorkflowExecution> {
-  return request({
+  return request<AiWorkflowExecution>({
     url: `/ai/workflow/execution/${executionId}`,
     method: 'get',
   })
@@ -88,7 +89,7 @@ export function getWorkflowExecutionDetail(executionId: number): Promise<AiWorkf
 /**
  * 执行工作流（SSE流式）
  */
-export function executeWorkflowSSE(workflowId: number, inputVariables?: Record<string, any>): EventSource {
+export function executeWorkflowSSE(workflowId: number, inputVariables?: Record<string, unknown>): EventSource {
   const params = new URLSearchParams()
   if (inputVariables) {
     Object.entries(inputVariables).forEach(([k, v]) => {

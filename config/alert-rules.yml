@@ -1,0 +1,288 @@
+# Prometheus 告警规则配置
+# 定义针对 Easy Lowcode 平台的监控告警规则
+
+groups:
+  # ==========================================
+  # 应用层告警规则
+  # ==========================================
+  - name: easy_lowcode_app
+    interval: 30s
+    rules:
+      # 应用不可达告警
+      - alert: ApplicationDown
+        expr: up{job="easy-lowcode-app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: easy-lowcode-startup
+        annotations:
+          summary: "Easy Lowcode 应用宕机"
+          description: "应用已停止响应超过1分钟，请立即检查日志和容器状态"
+          dashboard: "http://grafana:3000/d/easy-lowcode-app"
+          runbook: "https://wiki.internal/easy-lowcode/troubleshooting#app-down"
+
+      # 高错误率告警
+      - alert: HighErrorRate
+        expr: |
+          (rate(http_server_requests_seconds_count{status=~"5.."}[5m]) /
+           rate(http_server_requests_seconds_count[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: easy-lowcode-startup
+        annotations:
+          summary: "应用错误率过高 ({{ $value | humanizePercentage }})"
+          description: "最近5分钟内，5xx错误占比超过5%，请检查应用日志排查问题"
+          dashboard: "http://grafana:3000/d/easy-lowcode-app?var-interval=5m"
+
+      # 请求响应时间过长告警
+      - alert: SlowResponseTime
+        expr: |
+          histogram_quantile(0.95, rate(http_server_requests_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: easy-lowcode-startup
+        annotations:
+          summary: "API响应时间过长 (P95: {{ $value | humanizeDuration }})"
+          description: "API响应时间P95值超过1秒，可能存在性能瓶颈或数据库问题"
+          dashboard: "http://grafana:3000/d/easy-lowcode-app?var-interval=5m"
+
+      # 高内存使用率告警
+      - alert: HighMemoryUsage
+        expr: |
+          (process_resident_memory_bytes{job="easy-lowcode-app"} /
+           process_virtual_memory_max_bytes{job="easy-lowcode-app"}) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: easy-lowcode-startup
+        annotations:
+          summary: "应用内存使用率过高 ({{ $value | humanizePercentage }})"
+          description: "内存使用率超过90%，可能出现内存泄漏，建议检查代码或增加堆内存"
+
+      # JVM GC时间过长告警
+      - alert: HighGCTime
+        expr: |
+          rate(jvm_gc_pause_seconds_sum[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: easy-lowcode-startup
+        annotations:
+          summary: "JVM GC耗时过长"
+          description: "过去5分钟内GC总耗时超过1秒，应用吞吐量可能受影响"
+
+  # ==========================================
+  # 数据库告警规则
+  # ==========================================
+  - name: database_alerts
+    interval: 30s
+    rules:
+      # 数据库连接不可达
+      - alert: PostgreSQLDown
+        expr: up{job="postgres"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: postgresql
+        annotations:
+          summary: "PostgreSQL 数据库不可用"
+          description: "无法连接到PostgreSQL数据库，应用无法正常工作，请立即检查"
+          runbook: "https://wiki.internal/easy-lowcode/troubleshooting#postgres-down"
+
+      # 数据库连接池耗尽
+      - alert: HighDatabaseConnectionUsage
+        expr: |
+          (sum(jdbc_connections_active) /
+           sum(jdbc_connections_max)) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: postgresql
+        annotations:
+          summary: "数据库连接池使用率过高 ({{ $value | humanizePercentage }})"
+          description: "数据库连接使用率超过85%，可能出现连接泄漏或流量突增"
+
+      # 数据库查询耗时过长
+      - alert: SlowDatabaseQuery
+        expr: |
+          histogram_quantile(0.95, rate(jdbc_connection_time_max[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: postgresql
+        annotations:
+          summary: "数据库查询耗时过长 (P95: {{ $value | humanizeDuration }})"
+          description: "数据库查询P95耗时超过5秒，建议优化查询或添加索引"
+
+  # ==========================================
+  # 缓存告警规则
+  # ==========================================
+  - name: cache_alerts
+    interval: 30s
+    rules:
+      # Redis 不可用
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis 服务不可用"
+          description: "无法连接到Redis缓存服务，应用可用性降低，请立即检查"
+          runbook: "https://wiki.internal/easy-lowcode/troubleshooting#redis-down"
+
+      # Redis 内存使用率过高
+      - alert: HighRedisMemoryUsage
+        expr: |
+          (redis_memory_used_bytes / redis_memory_max_bytes) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis 内存使用率过高 ({{ $value | humanizePercentage }})"
+          description: "Redis内存使用超过85%，可能影响性能，建议清理过期数据或扩容"
+
+      # Redis 逐出率过高
+      - alert: HighRedisEvictionRate
+        expr: |
+          rate(redis_evicted_keys_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis 驱逐速率过高 ({{ $value | humanize }}/s)"
+          description: "Redis频繁驱逐数据，可能导致缓存命中率下降，建议扩容或优化缓存策略"
+
+  # ==========================================
+  # 消息队列告警规则
+  # ==========================================
+  - name: messaging_alerts
+    interval: 30s
+    rules:
+      # RocketMQ Broker 离线
+      - alert: RocketMQBrokerDown
+        expr: rocketmq_broker_alive == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: rocketmq
+        annotations:
+          summary: "RocketMQ Broker 离线"
+          description: "Broker无响应，消息队列功能不可用，请检查Broker和NameServer状态"
+
+      # 消息堆积告警
+      - alert: HighMessageBacklog
+        expr: |
+          (sum(rocketmq_producer_queued_messages) or on() vector(0)) > 100000
+        for: 10m
+        labels:
+          severity: warning
+          service: rocketmq
+        annotations:
+          summary: "消息队列堆积过多 ({{ $value | humanize }} messages)"
+          description: "消息堆积超过10万条，消费速度不足，可能出现消费延迟"
+
+  # ==========================================
+  # 搜索引擎告警规则
+  # ==========================================
+  - name: elasticsearch_alerts
+    interval: 30s
+    rules:
+      # Elasticsearch 集群状态异常
+      - alert: ElasticsearchClusterUnhealthy
+        expr: elasticsearch_cluster_health_status != 1
+        for: 5m
+        labels:
+          severity: critical
+          service: elasticsearch
+        annotations:
+          summary: "Elasticsearch 集群状态异常"
+          description: "集群健康状态异常({{ $value }}), 可能存在节点宕机或分片分配问题"
+
+      # 索引写入阻塞
+      - alert: ElasticsearchIndexWriteBlocked
+        expr: elasticsearch_indices_indexing_is_throttled > 0
+        for: 5m
+        labels:
+          severity: warning
+          service: elasticsearch
+        annotations:
+          summary: "Elasticsearch 索引写入被阻塞"
+          description: "索引写入被限流，可能是磁盘空间不足或堆内存压力大"
+
+      # 磁盘空间不足
+      - alert: ElasticsearchLowDiskSpace
+        expr: |
+          (1 - (elasticsearch_fs_stat_available_bytes / elasticsearch_fs_stat_total_bytes)) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: elasticsearch
+        annotations:
+          summary: "Elasticsearch 磁盘空间不足"
+          description: "可用磁盘空间不足15%，建议立即清理过期索引或扩容"
+
+  # ==========================================
+  # 系统基础告警
+  # ==========================================
+  - name: system_alerts
+    interval: 30s
+    rules:
+      # CPU 使用率过高
+      - alert: HighCPUUsage
+        expr: |
+          (1 - avg(rate(node_cpu_seconds_total{mode="idle"}[5m]))) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "CPU 使用率过高 ({{ $value | humanizePercentage }})"
+          description: "CPU使用率超过80%，可能影响应用性能，建议排查高CPU进程"
+
+      # 磁盘空间不足
+      - alert: LowDiskSpace
+        expr: |
+          (node_filesystem_avail_bytes{fstype!~"tmpfs|fuse.lxcfs|squashfs|vfat"} /
+           node_filesystem_size_bytes) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "磁盘空间不足 ({{ $value | humanizePercentage }} available)"
+          description: "可用磁盘空间少于10%，建议立即清理或扩容"
+
+      # 网络错误告警
+      - alert: HighNetworkErrors
+        expr: |
+          rate(node_network_transmit_errs_total[5m]) > 100 or
+          rate(node_network_receive_errs_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "网络错误率过高"
+          description: "网络传输/接收错误频繁，可能存在网络问题"
+
+# ==========================================
+# 告警规则说明
+# ==========================================
+# 1. 严重级别 (severity):
+#    - critical: 需要立即处理
+#    - warning: 需要关注和处理
+#    - info: 仅供参考
+#
+# 2. for 字段表示告警触发条件需要持续一段时间才发出告警
+#    避免短暂波动导致的误报
+#
+# 3. annotations 包含告警详情、处理指南等信息
+#    可在告警UI中展示
+#
+# 4. 告警将发送到 Alertmanager，由其进行路由和分组处理

@@ -46,8 +46,11 @@ export interface FieldConfig {
   columnName: string
   dataType: string
   columnComment?: string
+  fieldLabel?: string
   exactQuery: boolean
   fuzzyQuery: boolean
+  searchable?: boolean
+  sortable?: boolean
 }
 
 export interface ConfigJson {

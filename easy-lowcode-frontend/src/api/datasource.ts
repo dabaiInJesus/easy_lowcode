@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+import type { PageResult } from '@/types/common'
 
 export interface DataSourceConfig {
   id?: number
@@ -17,7 +18,7 @@ export interface DataSourceConfig {
 /**
  * 分页查询数据源列表
  */
-export function getDataSourcePage(current: number, size: number, keyword?: string): Promise<any> {
+export function getDataSourcePage(current: number, size: number, keyword?: string): Promise<PageResult<DataSourceConfig>> {
   return request({
     url: '/collector/datasource/page',
     method: 'get',
@@ -78,10 +79,25 @@ export function testConnection(data: Partial<DataSourceConfig>): Promise<boolean
   })
 }
 
+export interface TableInfo {
+  name: string
+  tableName?: string
+  type: string
+  comment?: string
+}
+
+export interface ColumnInfo {
+  name: string
+  type: string
+  nullable?: boolean
+  comment?: string
+  primaryKey?: boolean
+}
+
 /**
  * 扫描表列表
  */
-export function scanTables(datasourceId: number): Promise<any[]> {
+export function scanTables(datasourceId: number): Promise<TableInfo[]> {
   return request({
     url: `/collector/datasource/${datasourceId}/tables`,
     method: 'get',
@@ -91,7 +107,7 @@ export function scanTables(datasourceId: number): Promise<any[]> {
 /**
  * 获取表结构
  */
-export function getTableColumns(datasourceId: number, tableName: string): Promise<any[]> {
+export function getTableColumns(datasourceId: number, tableName: string): Promise<ColumnInfo[]> {
   return request({
     url: `/collector/datasource/${datasourceId}/table/${tableName}/columns`,
     method: 'get',
@@ -102,9 +118,9 @@ export function getTableColumns(datasourceId: number, tableName: string): Promis
  * 获取所有活跃数据源（用于下拉选择器）
  */
 export function getActiveDataSources(): Promise<DataSourceConfig[]> {
-  return request({
+  return request<{ records: DataSourceConfig[] }>({
     url: '/collector/datasource/page',
     method: 'get',
     params: { current: 1, size: 200 },
-  }).then((res: any) => res.records || [])
+  }).then(res => res.records || [])
 }

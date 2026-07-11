@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dabai.easy_lowcode.collector.entity.ApiManagement;
 import com.dabai.easy_lowcode.collector.mapper.ApiManagementMapper;
 import com.dabai.easy_lowcode.collector.service.ApiManagementService;
+import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.dabai.easy_lowcode.common.result.Result;
 import io.swagger.v3.oas.annotations.Operation;
@@ -78,7 +79,7 @@ public class ApiManagementController {
     @ApiResponse(responseCode = "200", description = "注册成功")
     @PostMapping("/register-external")
     @PreAuthorize("hasRole('admin')")
-    public Result<Void> registerExternalApi(@RequestBody ApiManagement apiManagement) {
+    public Result<Void> registerExternalApi(@Valid @RequestBody ApiManagement apiManagement) {
         try {
             boolean success = apiManagementService.registerExternalApi(apiManagement);
             if (success) {
@@ -98,7 +99,7 @@ public class ApiManagementController {
     @PreAuthorize("hasRole('admin')")
     public Result<Void> update(
             @Parameter(description = "API ID") @PathVariable Long id,
-            @RequestBody ApiManagement apiManagement) {
+            @Valid @RequestBody ApiManagement apiManagement) {
         apiManagement.setId(id);
         boolean success = apiManagementService.updateById(apiManagement);
         if (success) {

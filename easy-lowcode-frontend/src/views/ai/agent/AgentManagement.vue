@@ -40,6 +40,9 @@
             <el-button text type="danger" size="small" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
+        <template #empty>
+          <el-empty description="暂无Agent数据" />
+        </template>
       </el-table>
     </el-card>
 

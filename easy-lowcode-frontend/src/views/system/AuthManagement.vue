@@ -258,7 +258,7 @@ const handleAuthRole = async (row: any) => {
     const menuIds = await getRoleMenus(row.id)
     setTimeout(() => {
       if (menuTreeRef.value && menuIds && menuIds.length > 0) {
-        const stringMenuIds = menuIds.map((id: number) => String(id))
+        const stringMenuIds = menuIds.map((menu) => String(menu.id))
         menuTreeRef.value.setCheckedKeys(stringMenuIds)
       }
     }, 100)

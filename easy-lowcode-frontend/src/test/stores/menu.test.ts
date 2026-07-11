@@ -124,7 +124,7 @@ describe('menuStore', () => {
     const mockMenus = [
       createMockMenu({ id: 1, path: '/test', component: 'system/UserManagement' }),
     ]
-    vi.mocked(getMenuTree).mockResolvedValue({ data: mockMenus })
+    vi.mocked(getMenuTree).mockResolvedValue(mockMenus as any)
 
     const store = useMenuStore()
     await store.loadMenus()
@@ -156,7 +156,7 @@ describe('menuStore', () => {
   })
 
   it('loadMenus should handle response without .data field', async () => {
-    vi.mocked(getMenuTree).mockResolvedValue({})
+    vi.mocked(getMenuTree).mockResolvedValue([] as any)
 
     const store = useMenuStore()
     await store.loadMenus()

@@ -2,16 +2,16 @@
  * User entity matching SysUser.java
  */
 export interface User {
-  id: string
+  id?: number
   username: string
   nickname: string
-  realName: string
-  phone: string
-  email: string
-  avatar: string
-  gender: number
+  realName?: string
+  phone?: string
+  email?: string
+  avatar?: string
+  gender?: number
   status: number
-  deptId: string
+  deptId?: number
   createTime?: string
   updateTime?: string
 }
@@ -20,10 +20,10 @@ export interface User {
  * Role entity matching SysRole.java
  */
 export interface Role {
-  id: string
+  id?: number
   roleName: string
   roleCode: string
-  description: string
+  description?: string
   status: number
   sort: number
   createTime?: string
@@ -34,15 +34,15 @@ export interface Role {
  * Menu entity matching SysMenu.java
  */
 export interface Menu {
-  id: string
-  parentId: string
+  id?: number
+  parentId?: number
   menuName: string
   menuCode: string
   menuType: number
-  path: string
-  component: string
-  perms: string
-  icon: string
+  path?: string
+  component?: string
+  perms?: string
+  icon?: string
   sort: number
   visible: number
   createTime?: string
@@ -54,14 +54,14 @@ export interface Menu {
  * Department entity matching SysDept.java
  */
 export interface Dept {
-  id: string
-  parentId: string
+  id?: number
+  parentId?: number
   deptName: string
   deptCode: string
   sort: number
-  leader: string
-  phone: string
-  email: string
+  leader?: string
+  phone?: string
+  email?: string
   status: number
   createTime?: string
   updateTime?: string
@@ -72,14 +72,14 @@ export interface Dept {
  * Application entity matching SysApp.java
  */
 export interface App {
-  id: string
+  id?: number
   appName: string
   appCode: string
-  appIcon: string
-  appUrl: string
-  clientId: string
-  clientSecret: string
-  redirectUri: string
+  appIcon?: string
+  appUrl?: string
+  clientId?: string
+  clientSecret?: string
+  redirectUri?: string
   status: number
   sort: number
   createTime?: string

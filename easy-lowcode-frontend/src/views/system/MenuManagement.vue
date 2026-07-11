@@ -85,6 +85,9 @@
             <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
+        <template #empty>
+          <el-empty description="暂无菜单数据" />
+        </template>
       </el-table>
 
       <!-- 分页 -->

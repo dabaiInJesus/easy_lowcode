@@ -61,27 +61,19 @@ public class DataSourceConfigServiceImpl extends ServiceImpl<DataSourceConfigMap
             
             // 尝试连接
             log.debug("尝试连接数据库: URL={}, Username={}", config.getUrl(), config.getUsername());
-            Connection conn = DriverManager.getConnection(config.getUrl(), config.getUsername(), password);
-            log.debug("数据库连接成功");
-            
-            // 根据数据库类型执行不同的测试查询
-            String testQuery = getTestQuery(config.getDbType());
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(testQuery);
-            if (rs.next()) {
-                log.info("数据源连接测试成功: {}", config.getName());
-                rs.close();
-                stmt.close();
-                conn.close();
-                return true;
+            try (Connection conn = DriverManager.getConnection(config.getUrl(), config.getUsername(), password);
+                 Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery(getTestQuery(config.getDbType()))) {
+                log.debug("数据库连接成功");
+                
+                if (rs.next()) {
+                    log.info("数据源连接测试成功: {}", config.getName());
+                    return true;
+                }
+                
+                log.warn("数据源连接测试失败: {} 未返回结果", getTestQuery(config.getDbType()));
+                return false;
             }
-            
-            rs.close();
-            stmt.close();
-            conn.close();
-            
-            log.warn("数据源连接测试失败: {} 未返回结果", testQuery);
-            return false;
         } catch (ClassNotFoundException e) {
             log.error("数据源连接测试失败 - 驱动类未找到: {}, 驱动: {}", config.getName(), config.getDriverClassName(), e);
             return false;
@@ -103,23 +95,17 @@ public class DataSourceConfigServiceImpl extends ServiceImpl<DataSourceConfigMap
         
         try {
             String password = EncryptUtil.decrypt(config.getPassword());
-            Connection conn = DriverManager.getConnection(config.getUrl(), config.getUsername(), password);
-            
-            // 根据数据库类型查询表列表
-            String sql = getTableListSql(config.getDbType());
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
-            
-            while (rs.next()) {
-                Map<String, Object> table = new HashMap<>();
-                table.put("tableName", rs.getString("table_name"));
-                table.put("tableComment", rs.getString("table_comment"));
-                tables.add(table);
+            try (Connection conn = DriverManager.getConnection(config.getUrl(), config.getUsername(), password);
+                 Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery(getTableListSql(config.getDbType()))) {
+                
+                while (rs.next()) {
+                    Map<String, Object> table = new HashMap<>();
+                    table.put("tableName", rs.getString("table_name"));
+                    table.put("tableComment", rs.getString("table_comment"));
+                    tables.add(table);
+                }
             }
-            
-            rs.close();
-            stmt.close();
-            conn.close();
             
             log.info("扫描到 {} 张表", tables.size());
         } catch (Exception e) {
@@ -141,26 +127,20 @@ public class DataSourceConfigServiceImpl extends ServiceImpl<DataSourceConfigMap
         
         try {
             String password = EncryptUtil.decrypt(config.getPassword());
-            Connection conn = DriverManager.getConnection(config.getUrl(), config.getUsername(), password);
-            
-            // 根据数据库类型查询列信息
-            String sql = getColumnListSql(config.getDbType(), tableName);
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
-            
-            while (rs.next()) {
-                Map<String, Object> column = new HashMap<>();
-                column.put("columnName", rs.getString("column_name"));
-                column.put("dataType", rs.getString("data_type"));
-                column.put("columnComment", rs.getString("column_comment"));
-                column.put("isNullable", rs.getString("is_nullable"));
-                column.put("columnKey", rs.getString("column_key"));
-                columns.add(column);
+            try (Connection conn = DriverManager.getConnection(config.getUrl(), config.getUsername(), password);
+                 Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery(getColumnListSql(config.getDbType(), tableName))) {
+                
+                while (rs.next()) {
+                    Map<String, Object> column = new HashMap<>();
+                    column.put("columnName", rs.getString("column_name"));
+                    column.put("dataType", rs.getString("data_type"));
+                    column.put("columnComment", rs.getString("column_comment"));
+                    column.put("isNullable", rs.getString("is_nullable"));
+                    column.put("columnKey", rs.getString("column_key"));
+                    columns.add(column);
+                }
             }
-            
-            rs.close();
-            stmt.close();
-            conn.close();
         } catch (Exception e) {
             log.error("获取表结构失败", e);
             throw new RuntimeException("获取表结构失败: " + e.getMessage());

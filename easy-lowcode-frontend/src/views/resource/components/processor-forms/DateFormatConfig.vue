@@ -9,7 +9,7 @@
       </el-select>
     </el-form-item>
     <el-form-item label="按字段单独配置">
-      <div v-for="(fmt, field, idx) in localConfig.fieldFormats" :key="idx" style="display:flex;gap:8px;margin-bottom:6px">
+      <div v-for="(_fmt, field, idx) in localConfig.fieldFormats" :key="idx" style="display:flex;gap:8px;margin-bottom:6px">
         <el-input v-model="localConfig.fieldFormats[field]" :placeholder="field" style="width:200px" disabled />
         <el-input v-model="localConfig.fieldFormats[field]" placeholder="格式" style="width:160px" />
         <el-button size="small" type="danger" @click="delete localConfig.fieldFormats[field]">×</el-button>

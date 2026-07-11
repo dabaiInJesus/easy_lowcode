@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.dabai.easy_lowcode.auth.entity.SysMenu;
 import com.dabai.easy_lowcode.auth.service.SysMenuService;
 import com.dabai.easy_lowcode.common.result.Result;
+import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -40,7 +41,7 @@ public class MenuController {
     @ApiResponse(responseCode = "200", description = "创建成功")
     @PostMapping
     @PreAuthorize("hasRole('admin')")
-    public Result<Void> createMenu(@RequestBody SysMenu menu) {
+    public Result<Void> createMenu(@Valid @RequestBody SysMenu menu) {
         if (menu.getMenuCode() == null || menu.getMenuCode().trim().isEmpty()) {
             menu.setMenuCode(generateMenuCode(menu.getMenuName()));
         }
@@ -59,7 +60,7 @@ public class MenuController {
     @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping
     @PreAuthorize("hasRole('admin')")
-    public Result<Void> updateMenu(@RequestBody SysMenu menu) {
+    public Result<Void> updateMenu(@Valid @RequestBody SysMenu menu) {
         LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysMenu::getMenuCode, menu.getMenuCode())
                .ne(SysMenu::getId, menu.getId());

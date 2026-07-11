@@ -1,4 +1,6 @@
 import request from '@/utils/request'
+import type { PageResult } from '@/types/common'
+import type { AiAgent, AgentMessage } from '@/types/ai'
 
 export interface AiConfig {
   id?: number
@@ -18,7 +20,7 @@ export function chat(data: { message: string; history?: {role:string;content:str
   return request({ url: '/ai/chat', method: 'post', data })
 }
 
-export function streamChat(data: { message: string; history?: {role:string;content:string}[]; provider?: string }): Promise<any> {
+export function streamChat(data: { message: string; history?: {role:string;content:string}[]; provider?: string }): Promise<ReadableStream> {
   return request({
     url: '/ai/chat/stream',
     method: 'post',
@@ -37,7 +39,7 @@ export function testAiConnection(data: { provider: string; apiKey?: string; apiU
   return request({ url: '/ai/test', method: 'post', data })
 }
 
-export function getAiConfigPage(current: number, size: number): Promise<any> {
+export function getAiConfigPage(current: number, size: number): Promise<PageResult<AiConfig>> {
   return request({ url: '/ai/config/page', method: 'get', params: { current, size } })
 }
 
@@ -73,16 +75,16 @@ export function getAgentDetail(id: number) {
   return request({ url: `/ai/agent/${id}`, method: 'get' })
 }
 
-export function updateAgent(data: any) {
+export function updateAgent(data: AiAgent) {
   return request({ url: '/ai/agent', method: 'put', data })
 }
 
 export function getAgentTools() {
-  return request({ url: '/ai/agent/tools', method: 'get' })
+  return request<Array<{ name: string; description: string }>>({ url: '/ai/agent/tools', method: 'get' })
 }
 
 export function getAgentHistory(agentCode: string, sessionId?: string) {
-  return request({ url: `/ai/agent/history/${agentCode}`, method: 'get', params: { sessionId } })
+  return request<AgentMessage[]>({ url: `/ai/agent/history/${agentCode}`, method: 'get', params: { sessionId } })
 }
 
 export function clearAgentSession(agentCode: string, sessionId?: string) {

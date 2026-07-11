@@ -7,6 +7,7 @@ import com.dabai.easy_lowcode.common.result.Result;
 import com.dabai.easy_lowcode.dashboard.entity.Dashboard;
 import com.dabai.easy_lowcode.dashboard.entity.DashboardChart;
 import com.dabai.easy_lowcode.dashboard.service.DashboardService;
+import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -89,7 +90,7 @@ public class DashboardController {
     @Operation(summary = "创建大屏", description = "创建新的大屏")
     @ApiResponse(responseCode = "200", description = "创建成功")
     @PostMapping
-    public Result<Void> create(@RequestBody Dashboard dashboard) {
+    public Result<Void> create(@Valid @RequestBody Dashboard dashboard) {
         try {
             dashboardService.createDashboard(dashboard);
             return Result.success("创建成功");
@@ -101,7 +102,7 @@ public class DashboardController {
     @Operation(summary = "更新大屏", description = "更新大屏信息")
     @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping
-    public Result<Void> update(@RequestBody Dashboard dashboard) {
+    public Result<Void> update(@Valid @RequestBody Dashboard dashboard) {
         try {
             dashboardService.updateDashboard(dashboard);
             return Result.success("更新成功");
@@ -171,7 +172,7 @@ public class DashboardController {
     @Operation(summary = "添加图表", description = "向大屏添加图表组件")
     @ApiResponse(responseCode = "200", description = "添加成功")
     @PostMapping("/chart")
-    public Result<Void> addChart(@RequestBody DashboardChart chart) {
+    public Result<Void> addChart(@Valid @RequestBody DashboardChart chart) {
         try {
             dashboardService.addChart(chart);
             return Result.success("添加成功");
@@ -183,7 +184,7 @@ public class DashboardController {
     @Operation(summary = "更新图表", description = "更新图表配置")
     @ApiResponse(responseCode = "200", description = "更新成功")
     @PutMapping("/chart")
-    public Result<Void> updateChart(@RequestBody DashboardChart chart) {
+    public Result<Void> updateChart(@Valid @RequestBody DashboardChart chart) {
         try {
             dashboardService.updateChart(chart);
             return Result.success("更新成功");

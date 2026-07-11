@@ -7,7 +7,7 @@
       </el-select>
     </el-form-item>
     <el-form-item label="字段列表">
-      <div v-for="(f, idx) in localConfig.fields" :key="idx" style="display:flex;gap:8px;margin-bottom:6px">
+      <div v-for="(_f, idx) in localConfig.fields" :key="idx" style="display:flex;gap:8px;margin-bottom:6px">
         <el-input v-model="localConfig.fields[idx]" placeholder="字段名" style="width:200px" />
         <el-button size="small" type="danger" @click="localConfig.fields.splice(idx, 1)">×</el-button>
       </div>

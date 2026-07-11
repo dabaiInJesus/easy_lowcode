@@ -191,7 +191,7 @@
     <!-- Text-to-SQL AI 生成对话框 -->
     <TextToSqlDialog
       v-model="showTextToSqlDialog"
-      :dashboard-id="dashboardId"
+      :dashboard-id="dashboardId ?? 0"
       @chart-added="handleChartAdded"
     />
   </div>
@@ -250,7 +250,7 @@ const loadDashboard = async () => {
   try {
     const d = await getDashboardById(dashboardId.value)
     dashboard.value = d || dashboard.value
-    const c = await getDashboardCharts(dashboardId.value)
+    const c = await getDashboardCharts(dashboardId.value!)
     charts.value = c || []
     // 加载图表预览数据
     await loadChartData()
@@ -338,7 +338,7 @@ const addChart = async () => {
     await apiAddChart(newChart as DashboardChart)
     ElMessage.success('添加成功')
     // 重新加载图表
-    const c = await getDashboardCharts(dashboardId.value)
+    const c = await getDashboardCharts(dashboardId.value!)
     charts.value = c || []
     newChart.title = ''; newChart.querySql = ''; newChart.xField = ''; newChart.yField = ''
   } catch (e: any) { ElMessage.error(e.message || '添加失败') }
@@ -373,7 +373,7 @@ const previewDashboard = () => {
 const handleBack = () => { router.push({ name: 'dashboardManagement' }) }
 
 /** AI 快速生成：打开 AI 生成器并预填问题 */
-const quickGenerate = (question: string) => {
+const quickGenerate = (_question: string) => {
   activeMenu.value = 'ai'
   showTextToSqlDialog.value = true
 }
@@ -384,7 +384,7 @@ const handleChartAdded = async (chart: Partial<DashboardChart>) => {
     await apiAddChart(chart)
     ElMessage.success('图表添加成功')
     // 重新加载图表
-    const c = await getDashboardCharts(dashboardId.value)
+    const c = await getDashboardCharts(dashboardId.value!)
     charts.value = c || []
     await loadChartData()
   } catch (e: any) {
