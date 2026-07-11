@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.dabai.easy_lowcode.common.exception.BusinessException;
+import com.dabai.easy_lowcode.etl.engine.FlowExecutionEngine;
 import com.dabai.easy_lowcode.etl.entity.EtlFlow;
 import com.dabai.easy_lowcode.etl.entity.EtlFlowExecution;
 import com.dabai.easy_lowcode.etl.entity.EtlNodeConfig;
@@ -30,6 +31,7 @@ public class EtlFlowServiceImpl extends ServiceImpl<EtlFlowMapper, EtlFlow> impl
     private final EtlFlowMapper flowMapper;
     private final EtlNodeConfigMapper nodeConfigMapper;
     private final EtlFlowExecutionMapper executionMapper;
+    private final FlowExecutionEngine flowExecutionEngine;
 
     @Override
     public Page<EtlFlow> pageFlow(Page<EtlFlow> page, String keyword, String status) {
@@ -129,16 +131,34 @@ public class EtlFlowServiceImpl extends ServiceImpl<EtlFlowMapper, EtlFlow> impl
         if (flow.getNodesJson() == null || flow.getNodesJson().isBlank()) {
             throw new BusinessException("流程未配置节点");
         }
-        // TODO: 调用 FlowExecutionEngine 执行流程
-        log.info("准备执行流程: flowId={}, flowName={}", flowId, flow.getFlowName());
-        throw new BusinessException("流程执行引擎尚未实现");
+        if (isFlowRunning(flowId)) {
+            throw new BusinessException("流程正在运行中");
+        }
+        // 调用 FlowExecutionEngine 异步执行流程
+        return flowExecutionEngine.executeAsync(flow).join();
     }
 
     @Override
     public boolean stopFlow(Long flowId) {
-        // TODO: 停止正在执行的流程
-        log.info("准备停止流程: flowId={}", flowId);
-        throw new BusinessException("流程停止功能尚未实现");
+        EtlFlow flow = flowMapper.selectById(flowId);
+        if (flow == null) {
+            throw new BusinessException("流程不存在");
+        }
+        if (!flowExecutionEngine.isRunning(flowId)) {
+            throw new BusinessException("流程未在运行中");
+        }
+        // 查找正在运行的执行记录
+        EtlFlowExecution runningExec = executionMapper.selectOne(
+                new LambdaQueryWrapper<EtlFlowExecution>()
+                        .eq(EtlFlowExecution::getFlowId, flowId)
+                        .eq(EtlFlowExecution::getExecStatus, "RUNNING")
+                        .orderByDesc(EtlFlowExecution::getCreateTime)
+                        .last("LIMIT 1"));
+        if (runningExec == null) {
+            throw new BusinessException("未找到运行中的执行记录");
+        }
+        // 停止执行
+        return flowExecutionEngine.stopExecution(runningExec.getId());
     }
 
     @Override
@@ -157,12 +177,7 @@ public class EtlFlowServiceImpl extends ServiceImpl<EtlFlowMapper, EtlFlow> impl
 
     @Override
     public boolean isFlowRunning(Long flowId) {
-        EtlFlowExecution lastExec = executionMapper.selectOne(
-                new LambdaQueryWrapper<EtlFlowExecution>()
-                        .eq(EtlFlowExecution::getFlowId, flowId)
-                        .orderByDesc(EtlFlowExecution::getCreateTime)
-                        .last("LIMIT 1"));
-        return lastExec != null && "RUNNING".equals(lastExec.getExecStatus());
+        return flowExecutionEngine.isRunning(flowId);
     }
 
     /**
