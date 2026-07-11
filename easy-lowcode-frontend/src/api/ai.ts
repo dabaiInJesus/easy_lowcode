@@ -68,3 +68,23 @@ export function executeAgent(data: { agentId: string; input: string }): Promise<
 export function getAgentList(): Promise<{id:string;name:string;description:string}[]> {
   return request({ url: '/ai/agent/list', method: 'get' })
 }
+
+export function getAgentDetail(id: number) {
+  return request({ url: `/ai/agent/${id}`, method: 'get' })
+}
+
+export function updateAgent(data: any) {
+  return request({ url: '/ai/agent', method: 'put', data })
+}
+
+export function getAgentTools() {
+  return request({ url: '/ai/agent/tools', method: 'get' })
+}
+
+export function getAgentHistory(agentCode: string, sessionId?: string) {
+  return request({ url: `/ai/agent/history/${agentCode}`, method: 'get', params: { sessionId } })
+}
+
+export function clearAgentSession(agentCode: string, sessionId?: string) {
+  return request({ url: `/ai/agent/session/${agentCode}`, method: 'delete', params: { sessionId } })
+}

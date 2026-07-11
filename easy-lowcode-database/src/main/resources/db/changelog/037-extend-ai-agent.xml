@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <!-- 扩展 ai_agent 表：添加工具配置、知识库关联、规划配置 -->
+    <changeSet id="037-extend-ai-agent" author="dabai">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="ai_agent" columnName="tools_config"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="ai_agent">
+            <column name="tools_config" type="TEXT" remarks="工具配置JSON"/>
+            <column name="knowledge_ids" type="TEXT" remarks="关联知识库ID列表JSON"/>
+            <column name="max_iterations" type="INTEGER" defaultValueNumeric="10" remarks="最大执行轮次"/>
+            <column name="enable_planning" type="INTEGER" defaultValueNumeric="0" remarks="是否启用自主规划(0-否 1-是)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Agent 工具表 -->
+    <changeSet id="037-create-ai-agent-tool" author="dabai">
+        <createTable tableName="ai_agent_tool" remarks="Agent工具配置表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="agent_id" type="BIGINT" remarks="AgentID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tool_name" type="VARCHAR(100)" remarks="工具名称">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tool_type" type="VARCHAR(50)" remarks="工具类型(web_search/calculator/http/database/workflow/custom)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="config_json" type="TEXT" remarks="工具配置JSON"/>
+            <column name="enabled" type="INTEGER" defaultValueNumeric="1" remarks="是否启用"/>
+            <column name="sort_order" type="INTEGER" defaultValueNumeric="0" remarks="排序"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间"/>
+        </createTable>
+        <createIndex indexName="idx_agent_tool_agent" tableName="ai_agent_tool">
+            <column name="agent_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Agent 知识库表 -->
+    <changeSet id="037-create-ai-agent-knowledge" author="dabai">
+        <createTable tableName="ai_agent_knowledge" remarks="Agent知识库表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="agent_id" type="BIGINT" remarks="AgentID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="knowledge_name" type="VARCHAR(200)" remarks="知识库名称">
+                <constraints nullable="false"/>
+            </column>
+            <column name="knowledge_type" type="VARCHAR(50)" remarks="类型(document/faq/webpage)"/>
+            <column name="content" type="TEXT" remarks="内容"/>
+            <column name="metadata_json" type="TEXT" remarks="元数据JSON"/>
+            <column name="status" type="INTEGER" defaultValueNumeric="1" remarks="状态(0-禁用 1-启用)"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间"/>
+        </createTable>
+        <createIndex indexName="idx_agent_knowledge_agent" tableName="ai_agent_knowledge">
+            <column name="agent_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Agent 执行日志表 -->
+    <changeSet id="037-create-ai-agent-exec-log" author="dabai">
+        <createTable tableName="ai_agent_exec_log" remarks="Agent执行日志表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="agent_id" type="BIGINT" remarks="AgentID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="session_id" type="VARCHAR(100)" remarks="会话ID"/>
+            <column name="role" type="VARCHAR(20)" remarks="角色(user/assistant/tool/system)"/>
+            <column name="content" type="TEXT" remarks="内容"/>
+            <column name="tool_name" type="VARCHAR(100)" remarks="工具名称（tool角色时）"/>
+            <column name="tool_input" type="TEXT" remarks="工具输入JSON"/>
+            <column name="tool_output" type="TEXT" remarks="工具输出JSON"/>
+            <column name="iteration" type="INTEGER" defaultValueNumeric="0" remarks="迭代轮次"/>
+            <column name="token_usage" type="INTEGER" defaultValueNumeric="0" remarks="Token使用量"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间"/>
+        </createTable>
+        <createIndex indexName="idx_agent_exec_log_agent" tableName="ai_agent_exec_log">
+            <column name="agent_id"/>
+        </createIndex>
+        <createIndex indexName="idx_agent_exec_log_session" tableName="ai_agent_exec_log">
+            <column name="session_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <!-- AI工作流定义表 -->
+    <changeSet id="036-create-ai-workflow" author="dabai">
+        <createTable tableName="ai_workflow" remarks="AI工作流定义表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="workflow_name" type="VARCHAR(100)" remarks="工作流名称">
+                <constraints nullable="false"/>
+            </column>
+            <column name="workflow_code" type="VARCHAR(100)" remarks="工作流编码">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="description" type="VARCHAR(500)" remarks="工作流描述"/>
+            <column name="nodes_json" type="TEXT" remarks="节点配置JSON"/>
+            <column name="edges_json" type="TEXT" remarks="连线配置JSON"/>
+            <column name="variables_json" type="TEXT" remarks="全局变量定义JSON"/>
+            <column name="status" type="VARCHAR(20)" defaultValue="DRAFT" remarks="状态(DRAFT/PUBLISHED)"/>
+            <column name="remark" type="VARCHAR(500)" remarks="备注"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间"/>
+            <column name="create_by" type="BIGINT" remarks="创建人"/>
+            <column name="update_by" type="BIGINT" remarks="更新人"/>
+            <column name="deleted" type="SMALLINT" defaultValueNumeric="0" remarks="删除标志"/>
+        </createTable>
+        <addUniqueConstraint columnNames="workflow_code" constraintName="uk_ai_workflow_code" tableName="ai_workflow"/>
+    </changeSet>
+
+    <!-- AI工作流执行记录表 -->
+    <changeSet id="036-create-ai-workflow-execution" author="dabai">
+        <createTable tableName="ai_workflow_execution" remarks="AI工作流执行记录表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="workflow_id" type="BIGINT" remarks="工作流ID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="workflow_name" type="VARCHAR(100)" remarks="工作流名称（冗余）"/>
+            <column name="exec_status" type="VARCHAR(20)" defaultValue="RUNNING" remarks="执行状态(RUNNING/SUCCESS/FAILED)"/>
+            <column name="start_time" type="TIMESTAMP" remarks="开始时间"/>
+            <column name="end_time" type="TIMESTAMP" remarks="结束时间"/>
+            <column name="input_variables" type="TEXT" remarks="输入变量JSON"/>
+            <column name="output_variables" type="TEXT" remarks="输出变量JSON"/>
+            <column name="node_executions" type="TEXT" remarks="各节点执行详情JSON"/>
+            <column name="error_message" type="TEXT" remarks="错误信息"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间"/>
+            <column name="create_by" type="BIGINT" remarks="创建人"/>
+            <column name="update_by" type="BIGINT" remarks="更新人"/>
+            <column name="deleted" type="SMALLINT" defaultValueNumeric="0" remarks="删除标志"/>
+        </createTable>
+        <createIndex indexName="idx_wf_exec_workflow" tableName="ai_workflow_execution">
+            <column name="workflow_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- AI工作流节点执行记录表 -->
+    <changeSet id="036-create-ai-workflow-node-execution" author="dabai">
+        <createTable tableName="ai_workflow_node_exec" remarks="AI工作流节点执行记录表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="execution_id" type="BIGINT" remarks="执行记录ID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="node_id" type="VARCHAR(50)" remarks="节点ID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="node_type" type="VARCHAR(30)" remarks="节点类型(start/llm/code/http/condition/variable/end)"/>
+            <column name="node_name" type="VARCHAR(100)" remarks="节点名称"/>
+            <column name="exec_status" type="VARCHAR(20)" remarks="执行状态(RUNNING/SUCCESS/FAILED/SKIPPED)"/>
+            <column name="start_time" type="TIMESTAMP" remarks="开始时间"/>
+            <column name="end_time" type="TIMESTAMP" remarks="结束时间"/>
+            <column name="input_data" type="TEXT" remarks="输入数据JSON"/>
+            <column name="output_data" type="TEXT" remarks="输出数据JSON"/>
+            <column name="error_message" type="TEXT" remarks="错误信息"/>
+            <column name="token_usage" type="INTEGER" remarks="Token使用量（LLM节点）"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间"/>
+        </createTable>
+        <createIndex indexName="idx_wf_node_exec_exec" tableName="ai_workflow_node_exec">
+            <column name="execution_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 添加工作流管理菜单 -->
+    <changeSet id="036-add-workflow-menu" author="dabai">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM sys_menu WHERE menu_code = 'ai:workflow:list'</sqlCheck>
+        </preConditions>
+        <sql>
+            INSERT INTO sys_menu (id, parent_id, menu_name, menu_code, menu_type, path, component, perms, icon, sort, visible, deleted, create_time, update_time, create_by, update_by)
+            SELECT
+                COALESCE((SELECT MAX(id) FROM sys_menu), 0) + 1,
+                (SELECT id FROM sys_menu WHERE menu_code = 'ai_management' LIMIT 1),
+                '工作流',
+                'ai:workflow:list',
+                2,
+                'ai/workflow',
+                'ai/WorkflowManagement.vue',
+                'ai:workflow:list',
+                'Connection',
+                3,
+                1,
+                0,
+                NOW(),
+                NOW(),
+                1,
+                1
+            WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_code = 'ai:workflow:list');
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

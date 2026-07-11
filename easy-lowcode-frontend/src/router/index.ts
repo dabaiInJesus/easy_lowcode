@@ -76,6 +76,18 @@ const router = createRouter({
               meta: { title: 'AI对话' },
             },
             {
+              path: 'workflow',
+              name: 'aiWorkflow',
+              component: () => import('../views/ai/workflow/WorkflowManagement.vue'),
+              meta: { title: '工作流' },
+            },
+            {
+              path: 'agent',
+              name: 'aiAgent',
+              component: () => import('../views/ai/agent/AgentManagement.vue'),
+              meta: { title: '智能体' },
+            },
+            {
               path: 'config',
               name: 'aiConfig',
               component: () => import('../views/ai/AiConfigManagement.vue'),
@@ -193,6 +205,18 @@ const router = createRouter({
       name: 'flowDesigner',
       component: () => import('../views/etl/FlowDesigner.vue'),
       meta: { requiresAuth: true, title: '流程设计', hideLayout: true },
+    },
+    {
+      path: '/ai/workflow/design/:id',
+      name: 'aiWorkflowDesigner',
+      component: () => import('../views/ai/workflow/WorkflowDesigner.vue'),
+      meta: { requiresAuth: true, title: '工作流设计', hideLayout: true },
+    },
+    {
+      path: '/ai/agent/chat/:agentCode',
+      name: 'agentChat',
+      component: () => import('../views/ai/agent/AgentChat.vue'),
+      meta: { requiresAuth: true, title: '智能体对话', hideLayout: true },
     },
   ],
 })

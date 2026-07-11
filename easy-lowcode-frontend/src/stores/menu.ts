@@ -68,8 +68,12 @@ const componentMap: Record<string, () => Promise<any>> = {
   // AI
   'ai/ChatView': () => import('../views/ai/ChatView.vue'),
   'ai/AiConfigManagement': () => import('../views/ai/AiConfigManagement.vue'),
+  'ai/WorkflowManagement': () => import('../views/ai/workflow/WorkflowManagement.vue'),
+  'ai/AgentManagement': () => import('../views/ai/agent/AgentManagement.vue'),
   'ai/ChatView.vue': () => import('../views/ai/ChatView.vue'),
   'ai/AiConfigManagement.vue': () => import('../views/ai/AiConfigManagement.vue'),
+  'ai/WorkflowManagement.vue': () => import('../views/ai/workflow/WorkflowManagement.vue'),
+  'ai/AgentManagement.vue': () => import('../views/ai/agent/AgentManagement.vue'),
   'ai/chat/index': () => import('../views/ai/ChatView.vue'),
   'ai/config/index': () => import('../views/ai/AiConfigManagement.vue'),
 }

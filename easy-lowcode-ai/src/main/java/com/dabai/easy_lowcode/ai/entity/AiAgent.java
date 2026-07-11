@@ -106,4 +106,28 @@ public class AiAgent extends BaseEntity {
      * 使用次数
      */
     private Integer usageCount = 0;
+
+    /**
+     * 工具配置 JSON（启用的工具名称列表）
+     */
+    @TableField(value = "tools_config")
+    private String toolsConfig;
+
+    /**
+     * 关联知识库 ID 列表 JSON
+     */
+    @TableField(value = "knowledge_ids")
+    private String knowledgeIds;
+
+    /**
+     * 最大执行轮次（ReAct 循环）
+     */
+    @TableField(value = "max_iterations")
+    private Integer maxIterations = 10;
+
+    /**
+     * 是否启用自主规划 (0-否 1-是)
+     */
+    @TableField(value = "enable_planning")
+    private Integer enablePlanning = 0;
 }

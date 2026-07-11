@@ -38,5 +38,7 @@
     <include file="db/changelog/033-create-fulltext-tables.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/034-create-etl-flow-tables.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/035-fix-collector-menus.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/036-create-ai-workflow-tables.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/037-extend-ai-agent.xml" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

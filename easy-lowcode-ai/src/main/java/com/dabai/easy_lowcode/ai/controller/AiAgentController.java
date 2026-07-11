@@ -1,6 +1,11 @@
 package com.dabai.easy_lowcode.ai.controller;
 
+import com.dabai.easy_lowcode.ai.agent.AgentExecutor;
+import com.dabai.easy_lowcode.ai.agent.tool.ToolRegistry;
+import com.dabai.easy_lowcode.ai.entity.AiAgent;
+import com.dabai.easy_lowcode.ai.mapper.AiAgentMapper;
 import com.dabai.easy_lowcode.ai.service.AiAgentService;
+import com.dabai.easy_lowcode.common.exception.BusinessException;
 import com.dabai.easy_lowcode.common.result.Result;
 import org.springframework.security.access.prepost.PreAuthorize;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,10 +16,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * AI Agent 控制器
@@ -28,9 +36,11 @@ import java.util.Map;
 public class AiAgentController {
 
     private final AiAgentService aiAgentService;
+    private final AgentExecutor agentExecutor;
+    private final ToolRegistry toolRegistry;
+    private final AiAgentMapper aiAgentMapper;
 
     @Operation(summary = "执行Agent任务", description = "执行指定的AI Agent任务")
-    @ApiResponse(responseCode = "200", description = "执行成功")
     @PostMapping("/execute")
     public Result<String> executeAgent(@RequestBody ExecuteAgentRequest request) {
         try {
@@ -43,16 +53,61 @@ public class AiAgentController {
         }
     }
 
-    @Operation(summary = "流式执行Agent任务", description = "以SSE流式方式执行AI Agent任务，实时返回响应")
-    @ApiResponse(responseCode = "200", description = "流式执行开始")
+    @Operation(summary = "流式执行Agent任务", description = "以SSE流式方式执行AI Agent任务")
     @PostMapping(value = "/execute/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> executeAgentStream(@RequestBody ExecuteAgentRequest request) {
         return aiAgentService.executeAgentStream(request.getAgentCode(), request.getTask())
                 .doOnError(e -> log.error("Agent 流式执行异常", e));
     }
 
-    @Operation(summary = "获取所有可用Agent", description = "获取系统中所有可用的AI Agent列表")
-    @ApiResponse(responseCode = "200", description = "获取成功")
+    @Operation(summary = "增强Agent对话（SSE）", description = "支持工具调用的Agent对话，实时推送思考过程和工具执行结果")
+    @PostMapping(value = "/{agentCode}/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter chatWithAgent(
+            @Parameter(description = "Agent编码") @PathVariable String agentCode,
+            @RequestBody Map<String, String> request) {
+
+        SseEmitter emitter = new SseEmitter(300_000L);
+        String message = request.get("message");
+        String sessionId = request.getOrDefault("sessionId", UUID.randomUUID().toString());
+
+        if (message == null || message.isBlank()) {
+            try {
+                emitter.send(SseEmitter.event().name("error").data("{\"error\":\"消息不能为空\"}"));
+            } catch (Exception ignored) {}
+            emitter.complete();
+            return emitter;
+        }
+
+        // 查找 Agent
+        AiAgent agent = aiAgentMapper.selectOne(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<AiAgent>()
+                        .eq(AiAgent::getAgentCode, agentCode)
+                        .eq(AiAgent::getStatus, 1));
+        if (agent == null) {
+            try {
+                emitter.send(SseEmitter.event().name("error").data("{\"error\":\"Agent不存在: " + agentCode + "\"}"));
+            } catch (Exception ignored) {}
+            emitter.complete();
+            return emitter;
+        }
+
+        // 异步执行
+        CompletableFuture.runAsync(() -> {
+            try {
+                agentExecutor.executeAgent(agent, message, sessionId, emitter);
+            } catch (Exception e) {
+                log.error("Agent对话异常: agentCode={}", agentCode, e);
+                try {
+                    emitter.send(SseEmitter.event().name("error").data("{\"error\":\"" + e.getMessage() + "\"}"));
+                } catch (Exception ignored) {}
+                emitter.complete();
+            }
+        });
+
+        return emitter;
+    }
+
+    @Operation(summary = "获取所有可用Agent")
     @GetMapping("/list")
     public Result<List<Map<String, Object>>> listAgents() {
         try {
@@ -63,8 +118,16 @@ public class AiAgentController {
         }
     }
 
-    @Operation(summary = "创建自定义Agent", description = "创建一个新的自定义AI Agent")
-    @ApiResponse(responseCode = "200", description = "创建成功")
+    @Operation(summary = "获取Agent详情")
+    @GetMapping("/{id}")
+    public Result<AiAgent> getAgentDetail(@Parameter(description = "AgentID") @PathVariable Long id) {
+        AiAgent agent = aiAgentMapper.selectById(id);
+        if (agent == null) throw new BusinessException("Agent不存在");
+        // 掩码处理
+        return Result.success(agent);
+    }
+
+    @Operation(summary = "创建自定义Agent")
     @PostMapping("/create")
     public Result<String> createAgent(@RequestBody CreateAgentRequest request) {
         try {
@@ -81,8 +144,21 @@ public class AiAgentController {
         }
     }
 
-    @Operation(summary = "获取Agent对话历史", description = "获取指定Agent的对话历史记录")
-    @ApiResponse(responseCode = "200", description = "获取成功")
+    @Operation(summary = "更新Agent")
+    @PutMapping
+    @PreAuthorize("hasRole('admin')")
+    public Result<Void> updateAgent(@RequestBody AiAgent agent) {
+        aiAgentMapper.updateById(agent);
+        return Result.success("更新成功");
+    }
+
+    @Operation(summary = "获取可用工具列表")
+    @GetMapping("/tools")
+    public Result<List<Map<String, Object>>> getTools() {
+        return Result.success(toolRegistry.getToolDescriptions());
+    }
+
+    @Operation(summary = "获取Agent对话历史")
     @GetMapping("/history/{agentCode}")
     public Result<List<Map<String, String>>> getChatHistory(
             @Parameter(description = "Agent编码") @PathVariable String agentCode,
@@ -95,8 +171,7 @@ public class AiAgentController {
         }
     }
 
-    @Operation(summary = "清除会话", description = "清除指定Agent的会话对话历史")
-    @ApiResponse(responseCode = "200", description = "清除成功")
+    @Operation(summary = "清除会话")
     @DeleteMapping("/session/{agentCode}")
     public Result<Void> clearSession(
             @Parameter(description = "Agent编码") @PathVariable String agentCode,
