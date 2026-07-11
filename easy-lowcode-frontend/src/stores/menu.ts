@@ -12,6 +12,12 @@ const componentMap: Record<string, () => Promise<any>> = {
   'system/DeptManagement': () => import('../views/system/DeptManagement.vue'),
   'system/AppManagement': () => import('../views/system/AppManagement.vue'),
   'system/AuthManagement': () => import('../views/system/AuthManagement.vue'),
+  'system/UserManagement.vue': () => import('../views/system/UserManagement.vue'),
+  'system/RoleManagement.vue': () => import('../views/system/RoleManagement.vue'),
+  'system/MenuManagement.vue': () => import('../views/system/MenuManagement.vue'),
+  'system/DeptManagement.vue': () => import('../views/system/DeptManagement.vue'),
+  'system/AppManagement.vue': () => import('../views/system/AppManagement.vue'),
+  'system/AuthManagement.vue': () => import('../views/system/AuthManagement.vue'),
   'system/user/index': () => import('../views/system/UserManagement.vue'),
   'system/role/index': () => import('../views/system/RoleManagement.vue'),
   'system/menu/index': () => import('../views/system/MenuManagement.vue'),
@@ -26,6 +32,17 @@ const componentMap: Record<string, () => Promise<any>> = {
   'resource/MultiResourceSearch': () => import('../views/resource/MultiResourceSearch.vue'),
   'resource/UnifiedKeyManagement': () => import('../views/resource/UnifiedKeyManagement.vue'),
   'resource/FullTextSearch': () => import('../views/resource/FullTextSearch.vue'),
+  'resource/DataSourceManagement.vue': () => import('../views/resource/DataSourceManagement.vue'),
+  'resource/TableResourceManagement.vue': () => import('../views/resource/TableResourceManagement.vue'),
+  'resource/ApiManagement.vue': () => import('../views/resource/ApiManagement.vue'),
+  'resource/SingleResourceSearch.vue': () => import('../views/resource/SingleResourceSearch.vue'),
+  'resource/MultiResourceSearch.vue': () => import('../views/resource/MultiResourceSearch.vue'),
+  'resource/UnifiedKeyManagement.vue': () => import('../views/resource/UnifiedKeyManagement.vue'),
+  'resource/FullTextSearch.vue': () => import('../views/resource/FullTextSearch.vue'),
+  // 资源查询（带 / 前缀的路径）
+  '/resource-query/SingleResourceSearch': () => import('../views/resource/SingleResourceSearch.vue'),
+  '/resource-query/MultiResourceSearch': () => import('../views/resource/MultiResourceSearch.vue'),
+  '/resource-query/FullTextSearch': () => import('../views/resource/FullTextSearch.vue'),
   'resource/datasource/index': () => import('../views/resource/DataSourceManagement.vue'),
   'resource/table/index': () => import('../views/resource/TableResourceManagement.vue'),
   'resource/api/index': () => import('../views/resource/ApiManagement.vue'),
@@ -35,15 +52,24 @@ const componentMap: Record<string, () => Promise<any>> = {
   'resource/search/fulltext/index': () => import('../views/resource/FullTextSearch.vue'),
   // ETL
   'etl/EtlTaskManagement': () => import('../views/etl/EtlTaskManagement.vue'),
+  'etl/FlowManagement': () => import('../views/etl/FlowManagement.vue'),
+  'etl/FlowMonitor': () => import('../views/etl/FlowMonitor.vue'),
   'etl/task/index': () => import('../views/etl/EtlTaskManagement.vue'),
+  'etl/flow/index': () => import('../views/etl/FlowManagement.vue'),
+  // 数据采集（带 .vue 后缀的映射）
+  'etl/FlowManagement.vue': () => import('../views/etl/FlowManagement.vue'),
+  'etl/FlowMonitor.vue': () => import('../views/etl/FlowMonitor.vue'),
   // 数据大屏
   'dashboard/DashboardManagement': () => import('../views/dashboard/DashboardManagement.vue'),
   'dashboard/DashboardDesigner': () => import('../views/dashboard/DashboardDesigner.vue'),
   'dashboard/DashboardView': () => import('../views/dashboard/DashboardView.vue'),
   'dashboard/manage/index': () => import('../views/dashboard/DashboardManagement.vue'),
+  'dashboard/DashboardManagement.vue': () => import('../views/dashboard/DashboardManagement.vue'),
   // AI
   'ai/ChatView': () => import('../views/ai/ChatView.vue'),
   'ai/AiConfigManagement': () => import('../views/ai/AiConfigManagement.vue'),
+  'ai/ChatView.vue': () => import('../views/ai/ChatView.vue'),
+  'ai/AiConfigManagement.vue': () => import('../views/ai/AiConfigManagement.vue'),
   'ai/chat/index': () => import('../views/ai/ChatView.vue'),
   'ai/config/index': () => import('../views/ai/AiConfigManagement.vue'),
 }
@@ -158,7 +184,7 @@ export const useMenuStore = defineStore('menu', () => {
           const parentRoute: any = {
             path: menu.path,
             name: menu.menuCode,
-            component: () => import('../views/Layout.vue'),
+            component: () => import('../views/LayoutWrapper.vue'),
             meta: { title: menu.menuName, icon: menu.icon },
             children: [] as any[],
           }
@@ -166,14 +192,15 @@ export const useMenuStore = defineStore('menu', () => {
           // 处理子菜单
           menu.children.forEach(child => {
             if (child.path && child.component) {
+              // 检查组件映射是否存在
               const loader = componentMap[child.component]
               if (!loader) {
-                console.warn(`组件不存在: ${child.component}`)
+                // 组件不存在，跳过此菜单项（不生成路由）
                 return
               }
 
               const childRoute: any = {
-                path: child.path.split('/').pop() || child.path,
+                path: child.path,
                 name: child.menuCode,
                 component: loader,
                 meta: { title: child.menuName, icon: child.icon },

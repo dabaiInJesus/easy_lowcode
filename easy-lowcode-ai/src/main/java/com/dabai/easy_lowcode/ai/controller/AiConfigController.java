@@ -122,7 +122,7 @@ public class AiConfigController {
         return Result.success(list);
     }
 
-    @Operation(summary = "获取AI配置详情（包含完整API Key）", description = "根据ID获取AI配置完整信息，包括解密后的API Key")
+    @Operation(summary = "获取AI配置详情（脱敏）", description = "根据ID获取AI配置信息，敏感字段返回掩码，不返回明文密钥")
     @ApiResponse(responseCode = "200", description = "获取成功")
     @GetMapping("/{id}")
     public Result<AiConfig> getById(@Parameter(description = "配置ID") @PathVariable Long id) {
@@ -130,19 +130,12 @@ public class AiConfigController {
         if (config == null) {
             return Result.error("配置不存在");
         }
-        if (config.getApiKey() != null && !config.getApiKey().contains("****")) {
-            try {
-                config.setApiKey(EncryptUtil.decrypt(config.getApiKey()));
-            } catch (Exception e) {
-                log.warn("API Key解密失败: {}", e.getMessage());
-            }
+        // 安全要求：不向调用方返回解密后的密钥，始终使用掩码
+        if (config.getApiKey() != null) {
+            config.setApiKey("********");
         }
-        if (config.getSecretKey() != null && !config.getSecretKey().contains("****")) {
-            try {
-                config.setSecretKey(EncryptUtil.decrypt(config.getSecretKey()));
-            } catch (Exception e) {
-                log.warn("Secret Key解密失败: {}", e.getMessage());
-            }
+        if (config.getSecretKey() != null) {
+            config.setSecretKey("********");
         }
         return Result.success(config);
     }

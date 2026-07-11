@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 数据大屏控制器
@@ -53,9 +54,11 @@ public class DashboardController {
 
         Page<Dashboard> page = dashboardService.page(new Page<>(current, size), wrapper);
 
+        // 批量查询图表数量（避免 N+1）
+        List<Long> dashboardIds = page.getRecords().stream().map(Dashboard::getId).collect(Collectors.toList());
+        Map<Long, Long> chartCountMap = dashboardService.getChartCountsByDashboardIds(dashboardIds);
         for (Dashboard d : page.getRecords()) {
-            long count = dashboardService.getCharts(d.getId()).size();
-            d.setChartCount((int) count);
+            d.setChartCount(chartCountMap.getOrDefault(d.getId(), 0L).intValue());
         }
 
         PageResult<Dashboard> result = new PageResult<>(

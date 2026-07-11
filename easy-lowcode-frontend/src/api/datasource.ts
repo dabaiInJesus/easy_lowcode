@@ -97,3 +97,14 @@ export function getTableColumns(datasourceId: number, tableName: string): Promis
     method: 'get',
   })
 }
+
+/**
+ * 获取所有活跃数据源（用于下拉选择器）
+ */
+export function getActiveDataSources(): Promise<DataSourceConfig[]> {
+  return request({
+    url: '/collector/datasource/page',
+    method: 'get',
+    params: { current: 1, size: 200 },
+  }).then((res: any) => res.records || [])
+}

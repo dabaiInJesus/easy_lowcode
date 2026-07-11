@@ -86,7 +86,6 @@
 import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { getAiConfigPage, createAiConfig, updateAiConfig, deleteAiConfig, testAiConnection, getAiConfigById } from '@/api/ai'
-import { useUserStore } from '@/stores'
 import request from '@/utils/request'
 
 interface AiConfig {
@@ -174,9 +173,9 @@ const providerOptions = computed(() => {
 })
 
 const currentModels = computed(() => {
-  const config = providerConfig[formData.provider]
+  const config = providerConfig[formData.provider!]
   if (!config) return []
-  return config.models.map(m => ({ label: m, value: m }))
+  return config.models.map((m: string) => ({ label: m, value: m }))
 })
 
 const filteredModels = ref<ModelOption[]>([])
@@ -200,12 +199,12 @@ const filterModels = (query: string) => {
     filteredModels.value = currentModels.value
     return
   }
-  const config = providerConfig[formData.provider]
+  const config = providerConfig[formData.provider!]
   if (!config) return
   filteredModels.value = config.models
-    .filter(m => m.toLowerCase().includes(query.toLowerCase()))
-    .map(m => ({ label: m, value: m }))
-  if (!filteredModels.value.find(m => m.value === query)) {
+    .filter((m: string) => m.toLowerCase().includes(query.toLowerCase()))
+    .map((m: string) => ({ label: m, value: m }))
+  if (!filteredModels.value.find((m: ModelOption) => m.value === query)) {
     filteredModels.value.unshift({ label: query, value: query })
   }
 }
@@ -274,7 +273,7 @@ const handleEdit = async (row: AiConfig) => {
     const fullConfig = await getAiConfigById(row.id!)
     Object.assign(formData, fullConfig)
     nextTick(() => {
-      filteredModels.value = providerConfig[formData.provider]?.models.map(m => ({ label: m, value: m })) || []
+      filteredModels.value = providerConfig[formData.provider!]?.models.map((m: string) => ({ label: m, value: m })) || []
     })
   } catch (e: any) {
     ElMessage.error('获取配置详情失败')
@@ -294,23 +293,13 @@ const handleDelete = async (row: AiConfig) => {
 }
 
 const handleTest = async (row: AiConfig) => {
-  console.log('handleTest called, row:', row)
   testLoading.value = row.id!
   try {
-    console.log('calling getAiConfigById...')
     const fullConfig = await getAiConfigById(row.id!)
-    console.log('got config:', fullConfig)
-    
+
     const testUrl = '/ai/test'
-    console.log('sending request to:', testUrl)
-    console.log('request data:', {
-      provider: fullConfig.provider,
-      apiKey: fullConfig.apiKey,
-      apiUrl: fullConfig.baseUrl,
-      model: fullConfig.model
-    })
-    
-    const res = await request({
+
+    await request({
       url: testUrl,
       method: 'POST',
       data: {
@@ -320,22 +309,8 @@ const handleTest = async (row: AiConfig) => {
         model: fullConfig.model
       }
     })
-    console.log('request result:', res)
     ElMessage.success('连接成功')
   } catch (e: any) {
-    console.log('=== Catch block entered ===')
-    console.log('e:', e)
-    console.log('e.constructor.name:', e.constructor?.name)
-    console.log('e.message:', e.message)
-    console.log('e.response:', e.response)
-    console.log('e.response?.data:', e.response?.data)
-    console.log('e.config:', e.config)
-    console.log('e.config?.url:', e.config?.url)
-    console.log('e.config?.baseURL:', e.config?.baseURL)
-    console.log('e.isAxiosError:', e.isAxiosError)
-    console.log('e.toString():', e.toString())
-    console.log('JSON.stringify(e):', JSON.stringify(e, Object.getOwnPropertyNames(e)))
-    
     ElMessage.error(e.message || '连接失败')
   } finally {
     testLoading.value = null
@@ -346,7 +321,7 @@ const handleFormTest = async () => {
   formTestLoading.value = true
   try {
     const ok = await testAiConnection({
-      provider: formData.provider,
+      provider: formData.provider!,
       apiKey: formData.apiKey,
       apiUrl: formData.baseUrl,
       model: formData.model

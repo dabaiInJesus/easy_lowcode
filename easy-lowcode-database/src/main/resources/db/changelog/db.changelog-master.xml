@@ -36,5 +36,7 @@
     <include file="db/changelog/031-add-collector-menu.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/032-create-unified-key-mapping.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/033-create-fulltext-tables.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/034-create-etl-flow-tables.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/035-fix-collector-menus.xml" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

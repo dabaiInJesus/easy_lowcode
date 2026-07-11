@@ -11,6 +11,7 @@ import com.dabai.easy_lowcode.dashboard.entity.DashboardChart;
 import com.dabai.easy_lowcode.dashboard.mapper.ChartDataSourceMapper;
 import com.dabai.easy_lowcode.dashboard.mapper.DashboardChartMapper;
 import com.dabai.easy_lowcode.dashboard.mapper.DashboardMapper;
+import com.dabai.easy_lowcode.dashboard.engine.SqlEngineFactory;
 import com.dabai.easy_lowcode.dashboard.service.impl.DashboardServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,6 +45,8 @@ class DashboardServiceImplTest {
     private DataSourceConfigMapper dataSourceConfigMapper;
     @Mock
     private ChartCacheService chartCacheService;
+    @Mock
+    private SqlEngineFactory sqlEngineFactory;
 
     private DashboardServiceImpl dashboardService;
 
@@ -53,7 +56,7 @@ class DashboardServiceImplTest {
     @BeforeEach
     void setUp() {
         // 手动创建 service 并注入 baseMapper（ServiceImpl 的核心依赖）
-        dashboardService = new DashboardServiceImpl(chartMapper, chartDataSourceMapper, dataSourceConfigMapper, chartCacheService);
+        dashboardService = new DashboardServiceImpl(chartMapper, chartDataSourceMapper, dataSourceConfigMapper, chartCacheService, sqlEngineFactory);
         ReflectionTestUtils.setField((ServiceImpl<?, Dashboard>) dashboardService, "baseMapper", dashboardMapper);
 
         dashboard = new Dashboard();

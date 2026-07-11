@@ -1,6 +1,7 @@
 package com.dabai.easy_lowcode.etl.service.impl;
 
 import com.dabai.easy_lowcode.collector.entity.DataSourceConfig;
+import com.dabai.easy_lowcode.common.sql.SqlValidator;
 import com.dabai.easy_lowcode.common.util.EncryptUtil;
 import com.dabai.easy_lowcode.etl.entity.EtlTask;
 import com.dabai.easy_lowcode.etl.model.TransformRule;
@@ -112,6 +113,14 @@ public class TaskExecutorImpl implements TaskExecutor {
             int batchSize = task.getBatchSize() != null ? task.getBatchSize() : 1000;
             String dbType = targetDs.getDbType();
 
+            // TRUNCATE 只在批写循环前执行一次（P1-1 修复）
+            if ("TRUNCATE".equalsIgnoreCase(task.getWriteMode())) {
+                try (Statement truncateStmt = targetConn.createStatement()) {
+                    truncateStmt.execute("TRUNCATE TABLE " + task.getTargetTable());
+                    log.info("ETL TRUNCATE 执行一次: {}", task.getTargetTable());
+                }
+            }
+
             while (rs.next()) {
                 readCount++;
                 Object[] row = buildRow(targetColumns, fieldMap, rs, rules);
@@ -145,6 +154,7 @@ public class TaskExecutorImpl implements TaskExecutor {
 
     private String resolveSourceQuery(EtlTask task) {
         if ("SQL".equals(task.getReadMode()) && task.getSourceSql() != null) {
+            SqlValidator.assertSelectOnly(task.getSourceSql());
             return task.getSourceSql();
         }
         validateTableName(task.getSourceTable());
@@ -168,11 +178,6 @@ public class TaskExecutorImpl implements TaskExecutor {
     private long batchWrite(Connection conn, String targetTable, List<String> targetColumns,
                             List<Object[]> batch, String writeMode, String dbType) throws Exception {
         validateTableName(targetTable);
-        if ("TRUNCATE".equalsIgnoreCase(writeMode)) {
-            try (Statement stmt = conn.createStatement()) {
-                stmt.execute("TRUNCATE TABLE " + targetTable);
-            }
-        }
 
         String cols = targetColumns.stream().map(this::escapeIdentifier).collect(Collectors.joining(", "));
         String placeholders = targetColumns.stream().map(c -> "?").collect(Collectors.joining(", "));

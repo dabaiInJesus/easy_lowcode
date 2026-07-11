@@ -37,6 +37,20 @@
             <artifactId>hutool-all</artifactId>
         </dependency>
 
+        <!-- Apache Commons Net (FTP) -->
+        <dependency>
+            <groupId>commons-net</groupId>
+            <artifactId>commons-net</artifactId>
+            <version>3.11.1</version>
+        </dependency>
+
+        <!-- JSch (SFTP) -->
+        <dependency>
+            <groupId>com.jcraft</groupId>
+            <artifactId>jsch</artifactId>
+            <version>0.1.55</version>
+        </dependency>
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>

@@ -57,3 +57,30 @@ body {
   overflow-y: auto;
   padding-right: 10px;
 }
+
+/* ========== 全局表单下拉框宽度修复 ========== */
+
+/* inline 表单中的 el-select 默认宽度 */
+.el-form--inline .el-form-item .el-select {
+  width: 220px;
+}
+
+/* inline 表单中的 el-input 默认宽度 */
+.el-form--inline .el-form-item .el-input {
+  width: 220px;
+}
+
+/* inline 表单中的 el-date-picker 默认宽度 */
+.el-form--inline .el-form-item .el-date-editor {
+  width: 220px;
+}
+
+/* 表格筛选行中的下拉框 */
+.el-table .el-select {
+  width: 100%;
+}
+
+/* 搜索栏中的下拉框统一宽度 */
+.search-bar .el-select {
+  width: 180px;
+}

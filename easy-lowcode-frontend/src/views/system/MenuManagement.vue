@@ -11,21 +11,68 @@
         </div>
       </template>
 
-      <el-table :data="tableData" border stripe row-key="id" default-expand-all>
+      <!-- 搜索过滤区 -->
+      <div class="filter-bar">
+        <el-form :inline="true" :model="filterForm" size="default">
+          <el-form-item label="菜单编码">
+            <el-input
+              v-model="filterForm.menuCode"
+              placeholder="请输入菜单编码"
+              clearable
+              @clear="handleFilter"
+              @keyup.enter="handleFilter"
+            />
+          </el-form-item>
+          <el-form-item label="菜单名称">
+            <el-input
+              v-model="filterForm.menuName"
+              placeholder="请输入菜单名称"
+              clearable
+              @clear="handleFilter"
+              @keyup.enter="handleFilter"
+            />
+          </el-form-item>
+          <el-form-item label="菜单类型">
+            <el-select v-model="filterForm.menuType" placeholder="全部" clearable @change="handleFilter" style="width: 140px">
+              <el-option label="目录" :value="1" />
+              <el-option label="菜单" :value="2" />
+              <el-option label="按钮" :value="3" />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleFilter">
+              <el-icon><Search /></el-icon> 搜索
+            </el-button>
+            <el-button @click="handleResetFilter">
+              <el-icon><Refresh /></el-icon> 重置
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <el-table
+        :data="filteredTableData"
+        border
+        stripe
+        row-key="id"
+        default-expand-all
+        v-loading="loading"
+        @sort-change="handleSortChange"
+      >
         <el-table-column type="index" label="序号" width="60" align="center" />
-        <el-table-column prop="menuCode" label="菜单编码" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="menuName" label="菜单名称" min-width="150" />
+        <el-table-column prop="menuCode" label="菜单编码" min-width="150" show-overflow-tooltip sortable="custom" />
+        <el-table-column prop="menuName" label="菜单名称" min-width="150" sortable="custom" />
         <el-table-column prop="path" label="路径" min-width="150" />
         <el-table-column prop="component" label="组件" min-width="150" />
         <el-table-column prop="icon" label="图标" width="100" />
-        <el-table-column prop="menuType" label="类型" width="100">
+        <el-table-column prop="menuType" label="类型" width="100" sortable="custom">
           <template #default="{ row }">
             <el-tag v-if="row.menuType === 1" type="primary">目录</el-tag>
             <el-tag v-else-if="row.menuType === 2" type="success">菜单</el-tag>
             <el-tag v-else type="info">按钮</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="sort" label="排序" width="80" />
+        <el-table-column prop="sort" label="排序" width="80" sortable="custom" />
         <el-table-column prop="visible" label="显示" width="80">
           <template #default="{ row }">
             <el-tag v-if="row.visible === 1" type="success">显示</el-tag>
@@ -210,7 +257,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Search, Refresh } from '@element-plus/icons-vue'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { getMenuList, createMenu, updateMenu, deleteMenu } from '@/api/auth'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
@@ -531,6 +578,82 @@ const submitLoading = ref(false)
 const isEdit = ref(false)
 const formRef = ref<FormInstance>()
 
+// 过滤表单
+const filterForm = ref({
+  menuCode: '',
+  menuName: '',
+  menuType: '' as number | '',
+})
+
+// 排序状态
+const sortState = ref({
+  prop: '',
+  order: '' as '' | 'ascending' | 'descending',
+})
+
+// 过滤后的表格数据
+const filteredTableData = computed(() => {
+  let data = [...tableData.value]
+
+  // 按菜单编码过滤
+  if (filterForm.value.menuCode) {
+    const keyword = filterForm.value.menuCode.toLowerCase()
+    data = data.filter(item =>
+      item.menuCode?.toLowerCase().includes(keyword)
+    )
+  }
+
+  // 按菜单名称过滤
+  if (filterForm.value.menuName) {
+    const keyword = filterForm.value.menuName.toLowerCase()
+    data = data.filter(item =>
+      item.menuName?.toLowerCase().includes(keyword)
+    )
+  }
+
+  // 按菜单类型过滤
+  if (filterForm.value.menuType !== '') {
+    data = data.filter(item => item.menuType === filterForm.value.menuType)
+  }
+
+  // 排序
+  if (sortState.value.prop && sortState.value.order) {
+    const prop = sortState.value.prop
+    const isAsc = sortState.value.order === 'ascending'
+    data.sort((a, b) => {
+      let valA = (a as any)[prop]
+      let valB = (b as any)[prop]
+      if (typeof valA === 'string') valA = valA.toLowerCase()
+      if (typeof valB === 'string') valB = valB.toLowerCase()
+      if (valA == null) return 1
+      if (valB == null) return -1
+      if (valA < valB) return isAsc ? -1 : 1
+      if (valA > valB) return isAsc ? 1 : -1
+      return 0
+    })
+  }
+
+  return data
+})
+
+// 过滤处理
+const handleFilter = () => {
+  // filteredTableData 是 computed，自动响应
+}
+
+// 重置过滤
+const handleResetFilter = () => {
+  filterForm.value.menuCode = ''
+  filterForm.value.menuName = ''
+  filterForm.value.menuType = ''
+}
+
+// 排序变化处理
+const handleSortChange = ({ prop, order }: { prop: string; order: '' | 'ascending' | 'descending' }) => {
+  sortState.value.prop = prop
+  sortState.value.order = order
+}
+
 // 图标选择器相关
 const iconPickerVisible = ref(false)
 const iconSearchKeyword = ref('')
@@ -750,6 +873,14 @@ onMounted(() => {
 <style scoped>
 .menu-management { height: 100%; }
 .card-header { display: flex; justify-content: space-between; align-items: center; }
+
+.filter-bar {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: #fafafa;
+  border-radius: 4px;
+}
+
 .form-tip {
   font-size: 12px;
   color: #909399;

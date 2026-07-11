@@ -39,7 +39,7 @@ service.interceptors.request.use(
       const controller = new AbortController()
       config.signal = controller.signal
       pendingRequests.set(key, controller)
-      config.signal.addEventListener('abort', () => {
+      controller.signal.addEventListener('abort', () => {
         pendingRequests.delete(key)
       })
     }
@@ -66,17 +66,9 @@ service.interceptors.response.use(
   (response: AxiosResponse) => {
     const res: ApiResponse<any> = response.data
 
-    console.log('[Request Interceptor] Response received:', {
-      url: response.config?.url,
-      status: response.status,
-      code: res.code,
-      message: res.message
-    })
-
     // 如果返回的状态码不是 200，则认为是错误
     if (res.code !== 200) {
       const config = response.config as CustomRequestConfig
-      console.log('[Request Interceptor] Non-200 response, rejecting with message:', res.message)
       if (!config.silentError) {
         ElMessage.error(res.message || '请求失败')
       }
@@ -93,15 +85,6 @@ service.interceptors.response.use(
     return res.data
   },
   (error) => {
-    console.log('[Request Interceptor] Error caught:', {
-      message: error.message,
-      code: error.code,
-      status: error.response?.status,
-      responseData: error.response?.data,
-      url: error.config?.url,
-      baseURL: error.config?.baseURL
-    })
-    
     const errMsg = error.response?.data?.message || error.message || '网络错误'
     const config = error.config as CustomRequestConfig
     if (!config?.silentError) {

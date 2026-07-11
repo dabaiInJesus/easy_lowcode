@@ -167,15 +167,6 @@ public class TextToSqlService {
                         col.comment() != null && !col.comment().isBlank() ? " // " + col.comment() : ""));
             }
             prompt.append("\n");
-
-            // 示例数据（前3行），帮助 AI 理解字段值含义
-            List<Map<String, Object>> sampleData = null;
-            try {
-                String sampleSql = "SELECT * FROM " + escapeIdentifier(tableName, dialect) + " LIMIT 3";
-                SqlEngine engine = sqlEngineFactory.getEngine(
-                        dataSourceConfigMapper.selectById(1L)); // 临时借用
-                // 实际在 engine.execute 前无法提前获取，此处留空，后续优化可提前拉取
-            } catch (Exception ignored) { }
         } else {
             prompt.append("【表结构】未知，请根据常识生成合理 SQL。\n\n");
         }

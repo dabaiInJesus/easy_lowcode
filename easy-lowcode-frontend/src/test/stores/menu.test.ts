@@ -127,7 +127,7 @@ describe('menuStore', () => {
     vi.mocked(getMenuTree).mockResolvedValue({ data: mockMenus })
 
     const store = useMenuStore()
-    const result = await store.loadMenus()
+    await store.loadMenus()
 
     expect(getMenuTree).toHaveBeenCalledTimes(1)
     expect(store.isLoaded).toBe(true)
@@ -159,7 +159,7 @@ describe('menuStore', () => {
     vi.mocked(getMenuTree).mockResolvedValue({})
 
     const store = useMenuStore()
-    const result = await store.loadMenus()
+    await store.loadMenus()
 
     expect(store.menus).toEqual([])
     expect(store.isLoaded).toBe(true)

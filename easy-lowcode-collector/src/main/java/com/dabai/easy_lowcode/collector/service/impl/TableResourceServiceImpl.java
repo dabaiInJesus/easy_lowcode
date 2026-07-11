@@ -13,7 +13,6 @@ import com.dabai.easy_lowcode.collector.service.DataSourceConfigService;
 import com.dabai.easy_lowcode.collector.service.TableResourceService;
 import com.dabai.easy_lowcode.common.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,16 +28,18 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class TableResourceServiceImpl extends ServiceImpl<TableResourceMapper, TableResource> implements TableResourceService {
-    
-    @Autowired
-    @Lazy
-    private ApiManagementService apiManagementService;
-    
-    @Autowired
-    private DataSourceConfigService dataSourceConfigService;
-    
-    @Autowired
-    private ApiManagementMapper apiManagementMapper;
+
+    private final ApiManagementService apiManagementService;
+    private final DataSourceConfigService dataSourceConfigService;
+    private final ApiManagementMapper apiManagementMapper;
+
+    public TableResourceServiceImpl(@Lazy ApiManagementService apiManagementService,
+                                    DataSourceConfigService dataSourceConfigService,
+                                    ApiManagementMapper apiManagementMapper) {
+        this.apiManagementService = apiManagementService;
+        this.dataSourceConfigService = dataSourceConfigService;
+        this.apiManagementMapper = apiManagementMapper;
+    }
     
     /**
      * 分页查询，填充数据源名称

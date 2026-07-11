@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <!-- 1. 删除数据采集下的3个旧子菜单 -->
+    <changeSet id="035-delete-old-collector-menus" author="dabai">
+        <sql>
+            DELETE FROM sys_role_menu WHERE menu_id IN (
+                SELECT id FROM sys_menu WHERE menu_code IN ('collector_datasource', 'collector_table_resource', 'collector_api')
+            );
+        </sql>
+        <sql>
+            DELETE FROM sys_menu WHERE menu_code IN ('collector_datasource', 'collector_table_resource', 'collector_api');
+        </sql>
+    </changeSet>
+
+    <!-- 2. 将流程管理菜单移到数据采集下，修正路径为相对路径 -->
+    <changeSet id="035-move-flow-menu" author="dabai">
+        <sql>
+            UPDATE sys_menu
+            SET parent_id = (SELECT id FROM sys_menu WHERE menu_code = 'data_collection' LIMIT 1),
+                path = 'flow',
+                component = 'etl/FlowManagement.vue',
+                sort = 1
+            WHERE menu_code = 'etl:flow:list';
+        </sql>
+    </changeSet>
+
+    <!-- 3. 将流程监控菜单移到数据采集下，修正路径为相对路径 -->
+    <changeSet id="035-move-flow-monitor-menu" author="dabai">
+        <sql>
+            UPDATE sys_menu
+            SET parent_id = (SELECT id FROM sys_menu WHERE menu_code = 'data_collection' LIMIT 1),
+                path = 'flow/monitor',
+                component = 'etl/FlowMonitor.vue',
+                sort = 2
+            WHERE menu_code = 'etl:flow:monitor';
+        </sql>
+    </changeSet>
+
+    <!-- 4. 分配admin角色权限 -->
+    <changeSet id="035-grant-flow-perms" author="dabai">
+        <sql>
+            INSERT INTO sys_role_menu (role_id, menu_id)
+            SELECT 1, id FROM sys_menu
+            WHERE menu_code IN ('etl:flow:list', 'etl:flow:monitor')
+            AND NOT EXISTS (SELECT 1 FROM sys_role_menu WHERE role_id = 1 AND menu_id = sys_menu.id);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

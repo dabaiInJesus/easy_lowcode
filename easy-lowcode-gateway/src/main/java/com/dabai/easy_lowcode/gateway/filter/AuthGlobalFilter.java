@@ -17,7 +17,7 @@ import reactor.core.publisher.Mono;
 
 import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Component
@@ -26,8 +26,11 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
     @Value("${jwt.secret}")
     private String jwtSecret;
     
-    @Value("${gateway.auth.whitelist:/api/auth/login,/api/auth/register}")
-    private List<String> whiteList;
+    @Value("${gateway.auth.whitelist-exact:/api/auth/login,/api/auth/logout,/api/auth/register}")
+    private Set<String> exactWhiteList;
+
+    @Value("${gateway.auth.whitelist-prefix:/swagger-ui/,/v3/api-docs/,/actuator/}")
+    private Set<String> prefixWhiteList;
     
     private javax.crypto.SecretKey hmacKey;
     
@@ -77,7 +80,10 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
     }
     
     private boolean isWhiteList(String path) {
-        return whiteList.stream().anyMatch(path::startsWith);
+        if (exactWhiteList.contains(path)) {
+            return true;
+        }
+        return prefixWhiteList.stream().anyMatch(path::startsWith);
     }
     
     private Mono<Void> unauthorized(ServerHttpResponse response, String message) {

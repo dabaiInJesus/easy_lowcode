@@ -35,7 +35,7 @@
             <el-menu-item
               v-for="child in menu.children"
               :key="child.id"
-              :index="String(child.path || child.id)"
+              :index="getFullPath(menu.path, child.path)"
             >
               <el-icon>
                 <component :is="iconMap[child.icon] || defaultIcon" />
@@ -190,6 +190,17 @@ const iconMap: Record<string, any> = {
 
 const defaultIcon = Menu  // fallback icon
 
+// 构建子菜单的完整路径
+function getFullPath(parentPath: string | undefined, childPath: string | undefined): string {
+  if (!childPath) return ''
+  if (!parentPath) return childPath
+  // 如果子路径已经是绝对路径（以 / 开头），直接返回
+  if (childPath.startsWith('/')) return childPath
+  // 拼接父路径和子路径
+  const parent = parentPath.startsWith('/') ? parentPath : `/${parentPath}`
+  return `${parent}/${childPath}`
+}
+
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
@@ -254,7 +265,6 @@ const handleCommand = async (command: string) => {
     router.push('/login')
   } else if (command === 'profile') {
     // TODO: 跳转到个人中心
-    console.log('个人中心')
   }
 }
 </script>

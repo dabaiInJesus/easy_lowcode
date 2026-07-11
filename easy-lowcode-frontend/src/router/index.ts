@@ -137,31 +137,6 @@ const router = createRouter({
             },
           ],
         },
-        // ---- 数据采集 ----
-        {
-          path: 'collection',
-          meta: { title: '数据采集' },
-          children: [
-            {
-              path: 'datasource',
-              name: 'collectionDatasource',
-              component: () => import('../views/resource/DataSourceManagement.vue'),
-              meta: { title: '数据源管理' },
-            },
-            {
-              path: 'table',
-              name: 'collectionTableResource',
-              component: () => import('../views/resource/TableResourceManagement.vue'),
-              meta: { title: '表资源管理' },
-            },
-            {
-              path: 'api',
-              name: 'collectionApi',
-              component: () => import('../views/resource/ApiManagement.vue'),
-              meta: { title: 'API管理' },
-            },
-          ],
-        },
         {
           path: 'dashboard',
           meta: { title: '数据大屏' },
@@ -185,6 +160,18 @@ const router = createRouter({
               component: () => import('../views/etl/EtlTaskManagement.vue'),
               meta: { title: 'ETL任务' },
             },
+            {
+              path: 'flow',
+              name: 'flowManagement',
+              component: () => import('../views/etl/FlowManagement.vue'),
+              meta: { title: '流程管理' },
+            },
+            {
+              path: 'flow/monitor',
+              name: 'flowMonitor',
+              component: () => import('../views/etl/FlowMonitor.vue'),
+              meta: { title: '流程监控' },
+            },
           ],
         },
       ],
@@ -200,6 +187,12 @@ const router = createRouter({
       name: 'dashboardView',
       component: () => import('../views/dashboard/DashboardView.vue'),
       meta: { requiresAuth: true, title: '大屏预览', hideLayout: true },
+    },
+    {
+      path: '/etl/flow/design/:id',
+      name: 'flowDesigner',
+      component: () => import('../views/etl/FlowDesigner.vue'),
+      meta: { requiresAuth: true, title: '流程设计', hideLayout: true },
     },
   ],
 })

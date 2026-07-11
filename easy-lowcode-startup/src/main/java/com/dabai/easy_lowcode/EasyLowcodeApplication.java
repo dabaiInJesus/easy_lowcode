@@ -15,9 +15,11 @@ import java.util.Map;
 @MapperScan("com.dabai.easy_lowcode.**.mapper")
 public class EasyLowcodeApplication {
 
+    private static boolean envLoaded = false;
+
     public static void main(String[] args) {
-        // 加载 .env 文件并获取配置
-        Map<String, Object> envProperties = loadEnvFile();
+        // 加载 .env 文件并获取配置（DevTools 重启时跳过重复加载）
+        Map<String, Object> envProperties = envLoaded ? Map.of() : loadEnvFile();
         
         // 创建 SpringApplication 实例
         SpringApplication app = new SpringApplication(EasyLowcodeApplication.class);
@@ -87,7 +89,8 @@ public class EasyLowcodeApplication {
             System.out.println("⚠️  警告: 加载 .env 文件失败 - " + e.getMessage());
             System.out.println("   提示: 请确保项目根目录存在 .env 文件或配置了系统环境变量");
         }
-        
+
+        envLoaded = true;
         return properties;
     }
 }

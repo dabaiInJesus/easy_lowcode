@@ -3,8 +3,8 @@ import { ref, computed } from 'vue'
 import type { UserInfo } from '@/api/auth'
 
 export const useUserStore = defineStore('user', () => {
-  // 状态
-  const token = ref<string>(localStorage.getItem('token') || '')
+  // 状态：使用 sessionStorage 替代 localStorage，避免 XSS 跨标签页 token 泄露
+  const token = ref<string>(sessionStorage.getItem('token') || '')
   const userInfo = ref<UserInfo | null>(null)
 
   // 计算属性
@@ -19,7 +19,7 @@ export const useUserStore = defineStore('user', () => {
    */
   function setToken(newToken: string) {
     token.value = newToken
-    localStorage.setItem('token', newToken)
+    sessionStorage.setItem('token', newToken)
   }
 
   /**
@@ -35,14 +35,14 @@ export const useUserStore = defineStore('user', () => {
   function clearUser() {
     token.value = ''
     userInfo.value = null
-    localStorage.removeItem('token')
+    sessionStorage.removeItem('token')
   }
 
   /**
-   * 从本地存储恢复 Token
+   * 从会话存储恢复 Token
    */
   function restoreToken() {
-    const savedToken = localStorage.getItem('token')
+    const savedToken = sessionStorage.getItem('token')
     if (savedToken) {
       token.value = savedToken
     }

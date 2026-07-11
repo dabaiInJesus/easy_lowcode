@@ -11,8 +11,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-
 interface Props {
   status: string | number
   typeMap?: Record<string, any>
@@ -30,8 +28,6 @@ const props = withDefaults(defineProps<Props>(), {
     0: 'danger',
     ENABLE: 'success',
     DISABLE: 'danger',
-    ENABLE: 'success',
-    DISABLE: 'danger',
     SUCCESS: 'success',
     FAILURE: 'danger',
     RUNNING: 'warning',
@@ -46,6 +42,4 @@ const props = withDefaults(defineProps<Props>(), {
   hit: false,
   round: false
 })
-
-const type = computed(() => props.typeMap[props.status] || 'info')
 </script>

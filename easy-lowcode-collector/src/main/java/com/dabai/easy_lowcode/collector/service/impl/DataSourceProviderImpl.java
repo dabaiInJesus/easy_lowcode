@@ -6,18 +6,20 @@ import com.dabai.easy_lowcode.collector.mapper.DataSourceConfigMapper;
 import com.dabai.easy_lowcode.common.util.EncryptUtil;
 import com.dabai.easy_lowcode.database.model.DataSourceInfo;
 import com.dabai.easy_lowcode.database.service.DataSourceProvider;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
  * 数据源提供者实现
- * 封装 JDBC 连接管理、密码解密，供 resource/dashboard/etl 模块使用
+ * 封装 JDBC 连接池管理、密码解密，供 resource/dashboard/etl 模块使用
  */
 @Slf4j
 @Service
@@ -25,6 +27,7 @@ import java.util.stream.Collectors;
 public class DataSourceProviderImpl implements DataSourceProvider {
 
     private final DataSourceConfigMapper dataSourceConfigMapper;
+    private final ConcurrentHashMap<Long, HikariDataSource> pool = new ConcurrentHashMap<>();
 
     @Override
     public DataSourceInfo getById(Long id) {
@@ -59,9 +62,32 @@ public class DataSourceProviderImpl implements DataSourceProvider {
 
     @Override
     public Connection getConnection(DataSourceInfo info) throws Exception {
-        String password = decryptPassword(info.getPassword());
-        Class.forName(info.getDriverClassName());
-        return DriverManager.getConnection(info.getUrl(), info.getUsername(), password);
+        HikariDataSource ds = pool.computeIfAbsent(info.getId(), id -> {
+            log.info("创建 HikariCP 连接池: datasourceId={}, dbType={}", id, info.getDbType());
+            HikariConfig config = new HikariConfig();
+            config.setJdbcUrl(info.getUrl());
+            config.setUsername(info.getUsername());
+            config.setPassword(decryptPassword(info.getPassword()));
+            config.setDriverClassName(info.getDriverClassName());
+            config.setMaximumPoolSize(10);
+            config.setMinimumIdle(2);
+            config.setIdleTimeout(300_000); // 5 min
+            config.setConnectionTimeout(10_000);
+            config.setPoolName("ds-" + id);
+            return new HikariDataSource(config);
+        });
+        return ds.getConnection();
+    }
+
+    /**
+     * 清除指定数据源的连接池（数据源配置更新时调用）
+     */
+    public void evictPool(Long datasourceId) {
+        HikariDataSource ds = pool.remove(datasourceId);
+        if (ds != null) {
+            ds.close();
+            log.info("清除 HikariCP 连接池: datasourceId={}", datasourceId);
+        }
     }
 
     private String decryptPassword(String encrypted) {

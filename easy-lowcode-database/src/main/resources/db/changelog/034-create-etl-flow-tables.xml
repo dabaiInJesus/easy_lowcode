@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <!-- 可视化流程定义表 -->
+    <changeSet id="034-create-etl-flow" author="dabai">
+        <createTable tableName="etl_flow" remarks="可视化流程定义表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="flow_name" type="VARCHAR(100)" remarks="流程名称">
+                <constraints nullable="false"/>
+            </column>
+            <column name="flow_code" type="VARCHAR(100)" remarks="流程编码">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="description" type="VARCHAR(500)" remarks="流程描述"/>
+            <column name="nodes_json" type="TEXT" remarks="节点配置JSON"/>
+            <column name="edges_json" type="TEXT" remarks="连线配置JSON"/>
+            <column name="status" type="VARCHAR(20)" defaultValue="DRAFT" remarks="状态(DRAFT/READY/RUNNING/COMPLETED/FAILED)"/>
+            <column name="schedule_type" type="VARCHAR(20)" defaultValue="MANUAL" remarks="调度方式(MANUAL/CRON/INTERVAL)"/>
+            <column name="cron_expression" type="VARCHAR(100)" remarks="CRON表达式"/>
+            <column name="interval_seconds" type="INTEGER" remarks="间隔秒数"/>
+            <column name="last_exec_time" type="TIMESTAMP" remarks="最后执行时间"/>
+            <column name="last_exec_status" type="VARCHAR(20)" remarks="最后执行状态"/>
+            <column name="remark" type="VARCHAR(500)" remarks="备注"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间"/>
+            <column name="create_by" type="BIGINT" remarks="创建人"/>
+            <column name="update_by" type="BIGINT" remarks="更新人"/>
+            <column name="deleted" type="SMALLINT" defaultValueNumeric="0" remarks="删除标志"/>
+        </createTable>
+        <addUniqueConstraint columnNames="flow_code" constraintName="uk_etl_flow_code" tableName="etl_flow"/>
+    </changeSet>
+
+    <!-- 流程执行记录表 -->
+    <changeSet id="034-create-etl-flow-execution" author="dabai">
+        <createTable tableName="etl_flow_execution" remarks="流程执行记录表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="flow_id" type="BIGINT" remarks="流程ID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="flow_name" type="VARCHAR(100)" remarks="流程名称（冗余）"/>
+            <column name="exec_status" type="VARCHAR(20)" defaultValue="RUNNING" remarks="执行状态(RUNNING/SUCCESS/FAILED/STOPPED)"/>
+            <column name="start_time" type="TIMESTAMP" remarks="开始时间"/>
+            <column name="end_time" type="TIMESTAMP" remarks="结束时间"/>
+            <column name="read_count" type="BIGINT" defaultValueNumeric="0" remarks="读取记录数"/>
+            <column name="write_count" type="BIGINT" defaultValueNumeric="0" remarks="写入记录数"/>
+            <column name="skip_count" type="BIGINT" defaultValueNumeric="0" remarks="跳过记录数"/>
+            <column name="error_count" type="BIGINT" defaultValueNumeric="0" remarks="错误记录数"/>
+            <column name="error_message" type="TEXT" remarks="错误信息"/>
+            <column name="exec_detail" type="TEXT" remarks="各节点执行详情JSON"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间"/>
+            <column name="create_by" type="BIGINT" remarks="创建人"/>
+            <column name="update_by" type="BIGINT" remarks="更新人"/>
+            <column name="deleted" type="SMALLINT" defaultValueNumeric="0" remarks="删除标志"/>
+        </createTable>
+        <createIndex indexName="idx_flow_exec_flow" tableName="etl_flow_execution">
+            <column name="flow_id"/>
+        </createIndex>
+        <createIndex indexName="idx_flow_exec_status" tableName="etl_flow_execution">
+            <column name="exec_status"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 流程节点配置表（冗余存储便于查询） -->
+    <changeSet id="034-create-etl-node-config" author="dabai">
+        <createTable tableName="etl_node_config" remarks="流程节点配置表">
+            <column name="id" type="BIGINT" remarks="主键ID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="flow_id" type="BIGINT" remarks="流程ID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="node_id" type="VARCHAR(50)" remarks="前端节点ID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="node_type" type="VARCHAR(20)" remarks="节点类型(SOURCE/TRANSFORM/TARGET)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="node_sub_type" type="VARCHAR(50)" remarks="节点子类型(mysql/csv/filter等)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="node_name" type="VARCHAR(100)" remarks="节点名称"/>
+            <column name="config_json" type="TEXT" remarks="节点参数配置JSON"/>
+            <column name="position_x" type="DOUBLE" defaultValueNumeric="0" remarks="画布X坐标"/>
+            <column name="position_y" type="DOUBLE" defaultValueNumeric="0" remarks="画布Y坐标"/>
+            <column name="create_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="创建时间"/>
+            <column name="update_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP" remarks="更新时间"/>
+            <column name="create_by" type="BIGINT" remarks="创建人"/>
+            <column name="update_by" type="BIGINT" remarks="更新人"/>
+            <column name="deleted" type="SMALLINT" defaultValueNumeric="0" remarks="删除标志"/>
+        </createTable>
+        <createIndex indexName="idx_node_config_flow" tableName="etl_node_config">
+            <column name="flow_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 添加流程管理菜单 -->
+    <changeSet id="034-add-flow-menu" author="dabai">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM sys_menu WHERE menu_code = 'etl:flow:list'</sqlCheck>
+        </preConditions>
+        <sql>
+            INSERT INTO sys_menu (id, parent_id, menu_name, menu_code, menu_type, path, component, perms, icon, sort, visible, deleted, create_time, update_time, create_by, update_by)
+            SELECT
+                COALESCE((SELECT MAX(id) FROM sys_menu), 0) + 1,
+                (SELECT id FROM sys_menu WHERE menu_code = 'etl:task:list' LIMIT 1),
+                '流程管理',
+                'etl:flow:list',
+                2,
+                'etl/flow',
+                'etl/FlowManagement.vue',
+                'etl:flow:list',
+                'Connection',
+                1,
+                1,
+                0,
+                NOW(),
+                NOW(),
+                1,
+                1
+            WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_code = 'etl:flow:list');
+        </sql>
+    </changeSet>
+
+    <!-- 添加流程监控菜单 -->
+    <changeSet id="034-add-flow-monitor-menu" author="dabai">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM sys_menu WHERE menu_code = 'etl:flow:monitor'</sqlCheck>
+        </preConditions>
+        <sql>
+            INSERT INTO sys_menu (id, parent_id, menu_name, menu_code, menu_type, path, component, perms, icon, sort, visible, deleted, create_time, update_time, create_by, update_by)
+            SELECT
+                COALESCE((SELECT MAX(id) FROM sys_menu), 0) + 1,
+                (SELECT id FROM sys_menu WHERE menu_code = 'etl:task:list' LIMIT 1),
+                '流程监控',
+                'etl:flow:monitor',
+                2,
+                'etl/flow/monitor',
+                'etl/FlowMonitor.vue',
+                'etl:flow:monitor',
+                'Monitor',
+                2,
+                1,
+                0,
+                NOW(),
+                NOW(),
+                1,
+                1
+            WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_code = 'etl:flow:monitor');
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

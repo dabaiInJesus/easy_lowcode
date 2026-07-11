@@ -95,6 +95,9 @@ cd easy-lowcode-startup && mvn spring-boot:run
 
 ## 技术规范
 
+### 交流语言
+- AI 助手回答问题、编写注释、提交 commit message 时，**必须使用中文**
+
 ### 代码风格
 - 使用 Lombok 简化代码
 - 统一使用 `Result` 封装返回结果

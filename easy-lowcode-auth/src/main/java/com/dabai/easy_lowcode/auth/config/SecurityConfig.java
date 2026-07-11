@@ -51,7 +51,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("**"));
+        String origins = System.getenv().getOrDefault("CORS_ORIGINS",
+                System.getenv().getOrDefault("APP_CORS_ORIGINS",
+                        "http://localhost:6173,http://localhost:8081"));
+        // 使用 allowedOriginPatterns 支持 ** 通配符
+        configuration.setAllowedOriginPatterns(Arrays.asList(origins.split(",")));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);

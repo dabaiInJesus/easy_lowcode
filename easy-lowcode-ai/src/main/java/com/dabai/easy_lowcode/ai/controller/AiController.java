@@ -28,13 +28,14 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Executor;
 
 /**
  * AI 聊天控制器
@@ -43,13 +44,18 @@ import java.util.concurrent.Executors;
 @Slf4j
 @RestController
 @RequestMapping("/api/ai")
-@RequiredArgsConstructor
 @Validated
 @PreAuthorize("isAuthenticated()")
 public class AiController {
 
     private final AiServiceFactory aiServiceFactory;
-    private final ExecutorService executor = Executors.newCachedThreadPool();
+    private final Executor executor;
+
+    public AiController(AiServiceFactory aiServiceFactory,
+                        @Qualifier("aiExecutor") Executor executor) {
+        this.aiServiceFactory = aiServiceFactory;
+        this.executor = executor;
+    }
 
     @Operation(summary = "聊天对话（默认AI）", description = "使用默认AI服务进行对话")
     @ApiResponse(responseCode = "200", description = "对话成功")

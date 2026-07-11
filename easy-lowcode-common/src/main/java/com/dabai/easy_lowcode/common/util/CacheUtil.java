@@ -1,7 +1,7 @@
 package com.dabai.easy_lowcode.common.util;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -15,10 +15,10 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class CacheUtil {
 
-    @Autowired
-    private StringRedisTemplate redisTemplate;
+    private final StringRedisTemplate redisTemplate;
 
     private static final String CACHE_PREFIX = "easy-lowcode:";
 

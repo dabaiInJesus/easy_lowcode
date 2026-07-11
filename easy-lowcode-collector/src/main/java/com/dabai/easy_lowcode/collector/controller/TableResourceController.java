@@ -269,7 +269,18 @@ public class TableResourceController {
         if (ids == null || ids.isEmpty()) {
             return Result.error("请选择要删除的资源");
         }
-        
+        if (ids.size() > 50) {
+            return Result.error("单次最多删除 50 条");
+        }
+
+        // 检查是否有关联 API 的资源
+        List<Long> relatedIds = ids.stream()
+                .filter(id -> tableResourceService.hasRelatedApi(id))
+                .toList();
+        if (!relatedIds.isEmpty()) {
+            return Result.error("所选资源中包含已注册 API 的资源，无法批量删除，请先删除关联 API");
+        }
+
         tableResourceService.removeBatchByIds(ids);
         return Result.success("批量删除成功");
     }

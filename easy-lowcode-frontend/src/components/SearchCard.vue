@@ -7,8 +7,6 @@
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue'
-
 interface Props {
   modelValue?: Record<string, any>
 }
@@ -23,8 +21,7 @@ const emit = defineEmits<{
   (e: 'reset'): void
 }>()
 
-const handleSearch = () => emit('search')
-const handleReset = () => emit('reset')
+defineExpose({ handleSearch: () => emit('search'), handleReset: () => emit('reset') })
 </script>
 
 <style scoped>

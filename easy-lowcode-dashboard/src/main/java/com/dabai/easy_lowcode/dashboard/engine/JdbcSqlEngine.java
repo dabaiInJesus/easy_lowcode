@@ -1,6 +1,7 @@
 package com.dabai.easy_lowcode.dashboard.engine;
 
 import com.dabai.easy_lowcode.collector.entity.DataSourceConfig;
+import com.dabai.easy_lowcode.common.sql.SqlValidator;
 import com.dabai.easy_lowcode.common.util.EncryptUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,7 @@ public class JdbcSqlEngine implements SqlEngine {
 
     @Override
     public List<Map<String, Object>> execute(String sql, Integer limit) {
+        SqlValidator.assertSelectOnly(sql);
         List<Map<String, Object>> result = new ArrayList<>();
         String password = decryptPassword();
 

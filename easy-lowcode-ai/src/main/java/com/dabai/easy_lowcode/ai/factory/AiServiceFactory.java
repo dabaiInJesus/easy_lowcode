@@ -5,6 +5,7 @@ import com.dabai.easy_lowcode.ai.service.AiService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -22,6 +23,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AiServiceFactory {
 
     private final List<AiService> aiServices;
+
+    @Value("${ai.provider.default:}")
+    private String defaultProviderCode;
 
     private final Map<AiProvider, AiService> serviceCache = new ConcurrentHashMap<>();
 
@@ -51,10 +55,17 @@ public class AiServiceFactory {
     }
 
     /**
-     * 获取默认 AI 服务（返回第一个注册的服务）
+     * 获取默认 AI 服务（优先使用配置的默认 Provider）
      */
     public AiService getDefaultService() {
-        return aiServices.isEmpty() ? null : aiServices.get(0);
+        if (aiServices.isEmpty()) return null;
+        if (defaultProviderCode != null && !defaultProviderCode.isBlank()) {
+            return serviceCache.values().stream()
+                    .filter(s -> s.getProvider().getCode().equals(defaultProviderCode))
+                    .findFirst()
+                    .orElse(aiServices.get(0));
+        }
+        return aiServices.get(0);
     }
 
     /**

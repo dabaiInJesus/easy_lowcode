@@ -140,6 +140,23 @@ public class DashboardServiceImpl extends ServiceImpl<DashboardMapper, Dashboard
     }
 
     @Override
+    public Map<Long, Long> getChartCountsByDashboardIds(List<Long> dashboardIds) {
+        if (dashboardIds == null || dashboardIds.isEmpty()) return Map.of();
+        var wrapper = new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<DashboardChart>();
+        wrapper.select("dashboard_id", "count(*) as cnt");
+        wrapper.in("dashboard_id", dashboardIds);
+        wrapper.groupBy("dashboard_id");
+        var results = chartMapper.selectMaps(wrapper);
+        Map<Long, Long> map = new HashMap<>();
+        for (var row : results) {
+            Long dashboardId = ((Number) row.get("dashboard_id")).longValue();
+            Long count = ((Number) row.get("cnt")).longValue();
+            map.put(dashboardId, count);
+        }
+        return map;
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean addChart(DashboardChart chart) {
         if (chart.getDashboardId() == null) throw new BusinessException("所属大屏不能为空");

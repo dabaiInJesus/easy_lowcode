@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * 数据大屏增强 API
@@ -33,6 +34,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 @PreAuthorize("isAuthenticated()")
 public class DataViewController {
+
+    private static final Pattern SAFE_JDBC_URL = Pattern.compile(
+            "^jdbc:(mysql|postgresql|oracle|sqlserver|dm|kingbase|gbase|oceanbase|h2)://[^\\s]+$");
 
     private final TextToSqlService textToSqlService;
     private final SqlExplainService sqlExplainService;
@@ -107,9 +111,13 @@ public class DataViewController {
                 Long id = Long.valueOf(body.get("datasourceId").toString());
                 config = dataSourceConfigMapper.selectById(id);
             } else {
+                String url = (String) body.get("url");
+                if (url == null || !SAFE_JDBC_URL.matcher(url).matches()) {
+                    return Result.error("非法的 JDBC URL");
+                }
                 config = new DataSourceConfig();
                 config.setDbType((String) body.get("dbType"));
-                config.setUrl((String) body.get("url"));
+                config.setUrl(url);
                 config.setUsername((String) body.get("username"));
                 config.setPassword((String) body.get("password"));
             }

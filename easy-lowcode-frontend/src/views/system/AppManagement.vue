@@ -236,7 +236,6 @@ const loadData = async () => {
   loading.value = true
   try {
     const res = await getAppPage(pagination.current, pagination.size, searchForm.keyword)
-    console.log('应用列表响应:', res)
     if (res && res.records) {
       tableData.value = res.records
       pagination.total = res.total

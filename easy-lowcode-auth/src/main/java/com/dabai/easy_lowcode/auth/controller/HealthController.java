@@ -3,10 +3,7 @@ package com.dabai.easy_lowcode.auth.controller;
 import com.dabai.easy_lowcode.common.util.CacheUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,15 +21,17 @@ import java.util.*;
 @Slf4j
 @RestController
 @RequestMapping("/api/auth/health")
-@RequiredArgsConstructor
 public class HealthController {
 
-    @Autowired(required = false)
-    private DataSource dataSource;
-
+    private final DataSource dataSource;
     private final CacheUtil cacheUtil;
-    
+
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    public HealthController(CacheUtil cacheUtil, @org.springframework.beans.factory.annotation.Autowired(required = false) DataSource dataSource) {
+        this.cacheUtil = cacheUtil;
+        this.dataSource = dataSource;
+    }
 
     @Operation(summary = "健康检查", description = "检查系统各组件健康状态")
     @GetMapping("/check")

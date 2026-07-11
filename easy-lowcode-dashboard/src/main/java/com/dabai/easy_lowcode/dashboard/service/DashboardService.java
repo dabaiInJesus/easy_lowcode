@@ -38,6 +38,11 @@ public interface DashboardService extends IService<Dashboard> {
     List<DashboardChart> getCharts(Long dashboardId);
 
     /**
+     * 批量获取图表数量（避免 N+1 查询）
+     */
+    Map<Long, Long> getChartCountsByDashboardIds(List<Long> dashboardIds);
+
+    /**
      * 添加图表
      */
     boolean addChart(DashboardChart chart);

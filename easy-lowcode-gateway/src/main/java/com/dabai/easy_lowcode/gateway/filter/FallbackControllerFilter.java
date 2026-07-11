@@ -1,8 +1,8 @@
 package com.dabai.easy_lowcode.gateway.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -27,15 +27,14 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class FallbackControllerFilter implements GlobalFilter, Ordered {
 
     private static final String FALLBACK_URI = "/fallback/";
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final String CIRCUIT_BREAKER_KEY = "gateway:circuit:breaker:";
 
-    @Autowired
-    private StringRedisTemplate redisTemplate;
-
+    private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override

@@ -222,7 +222,6 @@ const loadData = async () => {
   loading.value = true
   try {
     const res = await getUserPage(pagination.current, pagination.size, searchForm.keyword)
-    console.log('用户列表响应:', res)
     // 响应拦截器已经解包，res 就是 PageResult
     if (res && res.records) {
       tableData.value = res.records

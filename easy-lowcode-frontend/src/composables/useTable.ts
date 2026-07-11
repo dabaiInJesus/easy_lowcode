@@ -1,11 +1,10 @@
 import { ref, reactive, computed } from 'vue'
-import type { TableColumnCtx } from 'element-plus'
 
 /**
  * 表格分页 Hook
  * 适用于大多数列表页面的分页需求
  */
-export function usePagination<T = any>(options?: {
+export function usePagination(options?: {
   defaultSize?: number
   defaultCurrent?: number
 }) {
@@ -83,7 +82,7 @@ export function useSearchForm<F extends Record<string, any>>(initialForm?: F) {
 
   const handleSearch = (searchFn: (form: F) => void) => {
     Object.assign(searchForm, form)
-    searchFn(searchForm)
+    searchFn(searchForm as unknown as F)
   }
 
   const handleReset = (resetFn?: () => void) => {

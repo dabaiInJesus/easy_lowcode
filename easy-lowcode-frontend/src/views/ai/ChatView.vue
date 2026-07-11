@@ -82,12 +82,12 @@ onMounted(loadProviders)
 </script>
 
 <style scoped>
-.chat-container { padding: 20px; max-width: 800px; margin: 0 auto; }
-.chat-card { min-height: 600px; display: flex; flex-direction: column; }
-.chat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.chat-container { padding: 20px; height: calc(100vh - 120px); display: flex; flex-direction: column; }
+.chat-card { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.chat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-shrink: 0; }
 .chat-header h3 { margin: 0; }
 .header-actions { display: flex; gap: 8px; }
-.chat-messages { flex: 1; overflow-y: auto; padding: 16px 0; min-height: 400px; max-height: 500px; }
+.chat-messages { flex: 1; overflow-y: auto; padding: 16px 0; }
 .chat-empty { text-align: center; padding: 60px 20px; color: #909399; }
 .chat-empty p { margin: 12px 0; }
 .suggestion-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
@@ -96,7 +96,7 @@ onMounted(loadProviders)
 .message.user { text-align: right; }
 .message.user .message-content { display: inline-block; background: #409eff; color: #fff; padding: 10px 16px; border-radius: 12px 12px 4px 12px; max-width: 70%; text-align: left; white-space: pre-wrap; }
 .message.assistant .message-content { display: inline-block; background: #f0f2f5; padding: 10px 16px; border-radius: 12px 12px 12px 4px; max-width: 70%; text-align: left; white-space: pre-wrap; }
-.chat-input { display: flex; gap: 12px; align-items: flex-end; margin-top: 16px; }
+.chat-input { display: flex; gap: 12px; align-items: flex-end; margin-top: 16px; flex-shrink: 0; }
 .chat-input .el-textarea { flex: 1; }
 .thinking { min-width: 60px; }
 .dot-pulse::after { content: '...'; animation: pulse 1.5s infinite; }

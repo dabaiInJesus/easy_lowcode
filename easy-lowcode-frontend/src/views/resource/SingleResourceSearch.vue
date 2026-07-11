@@ -11,16 +11,16 @@
       <!-- 配置面板 -->
       <el-form :inline="true" label-width="80px" @submit.prevent="handleSearch">
         <el-row :gutter="16">
-          <el-col :span="8">
+          <el-col :span="10">
             <el-form-item label="资源">
-              <el-select v-model="form.resourceCode" filterable style="width:100%" @change="onResourceChange" placeholder="选择资源">
+              <el-select v-model="form.resourceCode" filterable @change="onResourceChange" placeholder="选择资源">
                 <el-option v-for="r in resourceList" :key="r.resourceCode" :label="`${r.tableComment || r.tableName} (${r.resourceCode})`" :value="r.resourceCode" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="6">
             <el-form-item label="模板">
-              <el-select v-model="searchParams.templateName" clearable placeholder="自动生成" style="width:100%" @change="onTemplateChange">
+              <el-select v-model="searchParams.templateName" clearable placeholder="自动生成" @change="onTemplateChange">
                 <el-option v-for="t in templates" :key="t.name" :label="t.label || t.name" :value="t.name" />
               </el-select>
             </el-form-item>
@@ -50,9 +50,9 @@
             <el-col v-for="f in filterFields" :key="f.columnName" :span="6">
               <el-form-item :label="f.fieldLabel || f.columnComment || f.columnName" label-width="90px">
                 <el-input v-if="f.dataType === 'string'" v-model="filterValues[f.columnName]" :placeholder="(f.exactQuery ? '精确' : '模糊') + '搜索'" clearable size="small" @change="handleSearch" />
-                <el-input-number v-else-if="f.dataType === 'number'" v-model="filterValues[f.columnName]" :placeholder="f.columnName" clearable size="small" style="width:100%" @change="handleSearch" />
-                <el-date-picker v-else-if="f.dataType === 'date'" v-model="filterValues[f.columnName]" type="date" placeholder="选择日期" clearable size="small" style="width:100%" @change="handleSearch" />
-                <el-select v-else v-model="filterValues[f.columnName]" clearable placeholder="选择" size="small" style="width:100%" @change="handleSearch">
+                <el-input-number v-else-if="f.dataType === 'number'" v-model="filterValues[f.columnName]" :placeholder="f.columnName" clearable size="small" @change="handleSearch" />
+                <el-date-picker v-else-if="f.dataType === 'date'" v-model="filterValues[f.columnName]" type="date" placeholder="选择日期" clearable size="small" @change="handleSearch" />
+                <el-select v-else v-model="filterValues[f.columnName]" clearable placeholder="选择" size="small" @change="handleSearch">
                   <el-option label="是" :value="true" />
                   <el-option label="否" :value="false" />
                 </el-select>

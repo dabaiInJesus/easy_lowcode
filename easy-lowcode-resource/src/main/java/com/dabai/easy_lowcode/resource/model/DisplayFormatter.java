@@ -1,11 +1,15 @@
 package com.dabai.easy_lowcode.resource.model;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+@Slf4j
 
 public class DisplayFormatter {
 
@@ -70,7 +74,9 @@ public class DisplayFormatter {
             if (value instanceof String) {
                 return formatStringDate((String) value, pattern);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.debug("日期格式化失败，使用原始值: {}", e.getMessage());
+        }
         return value.toString();
     }
 
@@ -91,7 +97,9 @@ public class DisplayFormatter {
                         java.time.LocalDate.parse(value, DateTimeFormatter.ofPattern(candidate[0]));
                         return java.time.LocalDate.parse(value, DateTimeFormatter.ofPattern(candidate[0]))
                                 .format(DateTimeFormatter.ofPattern(pattern));
-                    } catch (DateTimeParseException ignored) {}
+                    } catch (DateTimeParseException e2) {
+                        log.debug("日期解析备选格式失败: {}", e2.getMessage());
+                    }
                 }
             }
         }

@@ -1,5 +1,6 @@
 package com.dabai.easy_lowcode.dashboard.engine;
 
+import com.dabai.easy_lowcode.common.sql.SqlValidator;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.*;
@@ -57,6 +58,7 @@ public class HiveSqlEngine implements SqlEngine {
 
     @Override
     public List<Map<String, Object>> execute(String sql, Integer limit) {
+        SqlValidator.assertSelectOnly(sql);
         List<Map<String, Object>> result = new ArrayList<>();
 
         String jdbcUrl = buildJdbcUrl();
