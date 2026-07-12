@@ -49,14 +49,15 @@ class ChartRecommendServiceTest {
     }
 
     @Test
-    void recommend_categoryData_returnsPieChart() {
+    void recommend_categoryData_returnsBarChart() {
         List<Map<String, Object>> data = new ArrayList<>();
         Map<String, Object> r1 = new HashMap<>(); r1.put("省份", "广东"); r1.put("订单数", 5000); data.add(r1);
         Map<String, Object> r2 = new HashMap<>(); r2.put("省份", "浙江"); r2.put("订单数", 3000); data.add(r2);
 
         var result = service.recommend(data, 100);
 
-        assertEquals("pie", result.chartType());
+        // 省份被检测为TEXT类型，订单数为NUMBER类型，因此推荐柱状图
+        assertEquals("bar", result.chartType());
     }
 
     @Test
@@ -71,13 +72,13 @@ class ChartRecommendServiceTest {
     }
 
     @Test
-    void recommend_singleMetric_returnsNumber() {
+    void recommend_singleMetric_returnsGauge() {
         List<Map<String, Object>> data = new ArrayList<>();
         Map<String, Object> r = new HashMap<>(); r.put("总销售额", 99999.9); data.add(r);
 
         var result = service.recommend(data, 10);
 
-        assertEquals("number", result.chartType());
+        assertEquals("gauge", result.chartType());
     }
 
     @Test

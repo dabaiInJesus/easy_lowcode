@@ -49,6 +49,9 @@ class SysUserServiceImplTest {
     @Mock
     private TokenBlacklistService tokenBlacklistService;
 
+    @Mock
+    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
     @InjectMocks
     private SysUserServiceImpl sysUserService;
 

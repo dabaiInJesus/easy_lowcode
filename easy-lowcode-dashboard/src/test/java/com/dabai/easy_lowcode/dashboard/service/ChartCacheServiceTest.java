@@ -104,19 +104,21 @@ class ChartCacheServiceTest {
 
     @Test
     void invalidate_deletesAllKeysForChart() {
-        doReturn(2L).when(redisTemplate).delete((Collection<String>) any());
+        when(redisTemplate.keys(anyString())).thenReturn(Set.of("key1", "key2"));
+        when(redisTemplate.delete(anyCollection())).thenReturn(2L);
 
         cacheService.invalidate(5L);
 
-        verify(redisTemplate).delete((Collection<String>) any());
+        verify(redisTemplate).keys(anyString());
+        verify(redisTemplate).delete(anyCollection());
     }
 
     @Test
     void invalidate_singleKey_deletesSpecificKey() {
-        doReturn(true).when(redisTemplate).delete((String) anyString());
+        when(redisTemplate.delete(anyString())).thenReturn(true);
 
         cacheService.invalidate(5L, "SELECT * FROM t");
 
-        verify(redisTemplate).delete((String) anyString());
+        verify(redisTemplate).delete(anyString());
     }
 }

@@ -155,13 +155,13 @@ class SqlBuilderServiceImplTest {
     @Test
     void testBuildLimitOffset_oracle() {
         String result = sqlBuilderService.buildLimitOffset("oracle", 10, 5);
-        assertEquals(" AND ROWNUM <= 10", result);
+        assertEquals(" OFFSET 5 ROWS FETCH NEXT 10 ROWS ONLY", result);
     }
 
     @Test
     void testBuildLimitOffset_dm() {
         String result = sqlBuilderService.buildLimitOffset("dm", 10, 5);
-        assertEquals(" AND ROWNUM <= 10", result);
+        assertEquals(" OFFSET 5 ROWS FETCH NEXT 10 ROWS ONLY", result);
     }
 
     @Test

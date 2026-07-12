@@ -44,7 +44,7 @@ public class DashboardController {
             @Parameter(description = "状态（0草稿/1已发布/2已下线）") @RequestParam(required = false) Integer status) {
         LambdaQueryWrapper<Dashboard> wrapper = new LambdaQueryWrapper<>();
         if (keyword != null && !keyword.isEmpty()) {
-            wrapper.like(Dashboard::getName, keyword)
+            wrapper.like(Dashboard::getName, keyword)z
                    .or().like(Dashboard::getTitle, keyword);
         }
         if (status != null) {
