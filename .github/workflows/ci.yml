@@ -94,14 +94,12 @@ jobs:
 
       - name: TypeScript Type Check
         run: npx vue-tsc --noEmit
-        continue-on-error: true
 
       - name: ESLint Check
-        run: npm run lint || true
+        run: npm run lint
 
       - name: Frontend Unit Tests
         run: npm test
-        continue-on-error: true
 
       - name: Build
         run: npm run build
@@ -114,6 +112,43 @@ jobs:
           name: frontend-dist
           path: easy-lowcode-frontend/dist
           retention-days: 7
+
+  # =============================================
+  # 代码质量检查
+  # =============================================
+  code-quality:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Checkstyle
+        run: mvn checkstyle:check -B || echo "Checkstyle violations found"
+
+      - name: SpotBugs
+        run: mvn spotbugs:check -B || echo "SpotBugs issues found"
+
+      - name: PMD
+        run: mvn pmd:check -B || echo "PMD violations found"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: easy-lowcode-frontend/package-lock.json
+
+      - name: Prettier Check
+        working-directory: easy-lowcode-frontend
+        run: npm run format:check || echo "Formatting issues found"
 
   # =============================================
   # Docker镜像构建（仅main分支）
