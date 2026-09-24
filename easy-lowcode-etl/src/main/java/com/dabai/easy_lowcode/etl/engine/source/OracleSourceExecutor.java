@@ -1,6 +1,8 @@
 package com.dabai.easy_lowcode.etl.engine.source;
 
+import com.dabai.easy_lowcode.etl.engine.DataSourceCredentialResolver;
 import com.dabai.easy_lowcode.etl.engine.NodeExecutor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.stereotype.Component;
@@ -13,7 +15,10 @@ import java.util.*;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class OracleSourceExecutor implements NodeExecutor {
+
+    private final DataSourceCredentialResolver credentialResolver;
 
     @Override
     public String getNodeType() { return "oracle"; }
@@ -23,6 +28,7 @@ public class OracleSourceExecutor implements NodeExecutor {
 
     @Override
     public ItemReader<Map<String, Object>> createReader(Map<String, Object> config) {
+        config = credentialResolver.resolve(config);
         String url = (String) config.get("url");
         String username = (String) config.get("username");
         String password = (String) config.get("password");
@@ -40,7 +46,7 @@ public class OracleSourceExecutor implements NodeExecutor {
         JdbcReaderWrapper(String u, String un, String p, String q) { url=u; username=un; password=p; query=q; }
         @Override public Map<String, Object> read() {
             try {
-                if (!init) { conn = DriverManager.getConnection(url, username, password); rs = conn.createStatement().executeQuery(query); meta = rs.getMetaData(); init = true; }
+                if (!init) { conn = DriverManager.getConnection(url, username, password); java.sql.Statement st = conn.createStatement(); st.setFetchSize(1000); st.setQueryTimeout(3600); rs = st.executeQuery(query); meta = rs.getMetaData(); init = true; }
                 if (rs != null && rs.next()) { Map<String,Object> row = new LinkedHashMap<>(); for (int i=1;i<=meta.getColumnCount();i++) row.put(meta.getColumnLabel(i), rs.getObject(i)); return row; }
                 return null;
             } catch (Exception e) { throw new RuntimeException("Oracle 读取失败: " + e.getMessage(), e); }

@@ -1,6 +1,8 @@
 package com.dabai.easy_lowcode.etl.engine.target;
 
+import com.dabai.easy_lowcode.etl.engine.DataSourceCredentialResolver;
 import com.dabai.easy_lowcode.etl.engine.NodeExecutor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.stereotype.Component;
@@ -13,7 +15,10 @@ import java.util.*;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class MysqlTargetExecutor implements NodeExecutor {
+
+    private final DataSourceCredentialResolver credentialResolver;
 
     @Override
     public String getNodeType() { return "mysql"; }
@@ -23,6 +28,7 @@ public class MysqlTargetExecutor implements NodeExecutor {
 
     @Override
     public ItemWriter<Map<String, Object>> createWriter(Map<String, Object> config) {
+        config = credentialResolver.resolve(config);
         String url = (String) config.get("url");
         String username = (String) config.get("username");
         String password = (String) config.get("password");
@@ -30,6 +36,9 @@ public class MysqlTargetExecutor implements NodeExecutor {
         String writeMode = (String) config.getOrDefault("writeMode", "INSERT");
 
         log.info("MySQL Target: url={}, table={}, writeMode={}", url, table, writeMode);
+
+        // 记录 TRUNCATE 是否已执行过（写 lambda 外的原子标记，避免多 chunk 重复清表）
+        java.util.concurrent.atomic.AtomicBoolean truncated = new java.util.concurrent.atomic.AtomicBoolean(false);
 
         return chunk -> {
             List<Map<String, Object>> items = new ArrayList<>(chunk.getItems());
@@ -43,7 +52,8 @@ public class MysqlTargetExecutor implements NodeExecutor {
                 String cols = String.join(", ", columns);
                 String placeholders = columns.stream().map(c -> "?").collect(java.util.stream.Collectors.joining(", "));
 
-                if ("TRUNCATE".equalsIgnoreCase(writeMode)) {
+                // TRUNCATE 模式仅清空一次（首个 chunk 前），后续 chunk 继续追加写入
+                if ("TRUNCATE".equalsIgnoreCase(writeMode) && truncated.compareAndSet(false, true)) {
                     try (Statement stmt = conn.createStatement()) {
                         stmt.execute("TRUNCATE TABLE " + table);
                     }

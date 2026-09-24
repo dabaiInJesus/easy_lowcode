@@ -1,6 +1,8 @@
 package com.dabai.easy_lowcode.etl.engine.source;
 
+import com.dabai.easy_lowcode.etl.engine.DataSourceCredentialResolver;
 import com.dabai.easy_lowcode.etl.engine.NodeExecutor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.database.JdbcCursorItemReader;
 import org.springframework.batch.item.ItemReader;
@@ -18,7 +20,10 @@ import java.util.*;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class MysqlSourceExecutor implements NodeExecutor {
+
+    private final DataSourceCredentialResolver credentialResolver;
 
     @Override
     public String getNodeType() {
@@ -32,6 +37,7 @@ public class MysqlSourceExecutor implements NodeExecutor {
 
     @Override
     public ItemReader<Map<String, Object>> createReader(Map<String, Object> config) {
+        config = credentialResolver.resolve(config);
         String url = (String) config.get("url");
         String username = (String) config.get("username");
         String password = (String) config.get("password");
@@ -74,6 +80,10 @@ public class MysqlSourceExecutor implements NodeExecutor {
                 if (!initialized) {
                     conn = DriverManager.getConnection(url, username, password);
                     var stmt = conn.createStatement();
+                    // 防止远端网络黑洞导致读取永久挂起：单语句最多执行 1 小时
+                    stmt.setQueryTimeout(3600);
+                    // 大表用流式游标，避免全表传输到内存/长时间阻塞在首查
+                    stmt.setFetchSize(Integer.MIN_VALUE);
                     rs = stmt.executeQuery(query);
                     metaData = rs.getMetaData();
                     initialized = true;

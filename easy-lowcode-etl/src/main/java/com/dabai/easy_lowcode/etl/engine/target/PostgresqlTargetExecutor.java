@@ -1,6 +1,8 @@
 package com.dabai.easy_lowcode.etl.engine.target;
 
+import com.dabai.easy_lowcode.etl.engine.DataSourceCredentialResolver;
 import com.dabai.easy_lowcode.etl.engine.NodeExecutor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.stereotype.Component;
@@ -13,7 +15,10 @@ import java.util.*;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class PostgresqlTargetExecutor implements NodeExecutor {
+
+    private final DataSourceCredentialResolver credentialResolver;
 
     @Override
     public String getNodeType() { return "postgresql"; }
@@ -23,6 +28,7 @@ public class PostgresqlTargetExecutor implements NodeExecutor {
 
     @Override
     public ItemWriter<Map<String, Object>> createWriter(Map<String, Object> config) {
+        config = credentialResolver.resolve(config);
         String url = (String) config.get("url");
         String username = (String) config.get("username");
         String password = (String) config.get("password");

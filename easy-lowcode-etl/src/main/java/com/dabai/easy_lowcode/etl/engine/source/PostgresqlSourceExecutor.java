@@ -1,6 +1,8 @@
 package com.dabai.easy_lowcode.etl.engine.source;
 
+import com.dabai.easy_lowcode.etl.engine.DataSourceCredentialResolver;
 import com.dabai.easy_lowcode.etl.engine.NodeExecutor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.stereotype.Component;
@@ -13,7 +15,10 @@ import java.util.*;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class PostgresqlSourceExecutor implements NodeExecutor {
+
+    private final DataSourceCredentialResolver credentialResolver;
 
     @Override
     public String getNodeType() {
@@ -27,6 +32,7 @@ public class PostgresqlSourceExecutor implements NodeExecutor {
 
     @Override
     public ItemReader<Map<String, Object>> createReader(Map<String, Object> config) {
+        config = credentialResolver.resolve(config);
         String url = (String) config.get("url");
         String username = (String) config.get("username");
         String password = (String) config.get("password");
@@ -61,7 +67,12 @@ public class PostgresqlSourceExecutor implements NodeExecutor {
             try {
                 if (!initialized) {
                     conn = DriverManager.getConnection(url, username, password);
-                    rs = conn.createStatement().executeQuery(query);
+                    // PG JDBC：fetchSize>0 启用服务端游标流式读取，并防止单语句黑洞挂起
+                    java.sql.PreparedStatement ps = conn.prepareStatement(query,
+                            java.sql.ResultSet.TYPE_FORWARD_ONLY, java.sql.ResultSet.CONCUR_READ_ONLY);
+                    ps.setFetchSize(1000);
+                    ps.setQueryTimeout(3600);
+                    rs = ps.executeQuery();
                     metaData = rs.getMetaData();
                     initialized = true;
                 }
