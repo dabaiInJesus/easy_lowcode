@@ -154,6 +154,7 @@ class SqlBuilderServiceImplTest {
 
     @Test
     void testBuildLimitOffset_oracle() {
+        // Oracle 12c+ / DM 使用标准 OFFSET/FETCH 分页（ROWNUM 无法表达 offset，仅能 top-N）
         String result = sqlBuilderService.buildLimitOffset("oracle", 10, 5);
         assertEquals(" OFFSET 5 ROWS FETCH NEXT 10 ROWS ONLY", result);
     }

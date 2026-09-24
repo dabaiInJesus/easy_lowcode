@@ -275,34 +275,20 @@ services:
         condition: service_healthy
       prometheus:
         condition: service_healthy
+    # 合并加载根目录 .env 的全部变量（支持多文件列表，后加载的优先）
+    # 排查优先级: environment > env_file > compose 变量插值
+    env_file:
+      - .env
     environment:
-      # 数据库（Docker Compose 内部网络）
-      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      # 以下仅保留容器网络内必须覆盖的地址（优先级高于 env_file）
+      # 其余变量（AI Keys / JWT / AES / MinIO / Meilisearch 等）由 env_file 自动注入
       DB_HOST: postgres
       DB_PORT: 5432
-      # Redis
+      DB_PASSWORD: ${POSTGRES_PASSWORD}   # 容器内应用密码与 postgres 容器保持一致
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
-      # RocketMQ
       ROCKETMQ_NAMESERVER: rocketmq-namesrv:9876
-      # AI API Keys（必须配置）
-      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
-      MINIMAX_API_KEY: ${MINIMAX_API_KEY:-}
-      # AI 默认供应商
-      AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-}
-      # JWT
-      JWT_SECRET: ${JWT_SECRET}
-      # CORS
-      CORS_ORIGINS: ${CORS_ORIGINS:-**}
-      # 监控配置
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
-      MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: always
-      # 日志导出到Elasticsearch
-      LOGGING_LEVEL_ROOT: INFO
-      LOGGING_PATTERN_CONSOLE: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
     networks:
       - easy-lowcode-network
 

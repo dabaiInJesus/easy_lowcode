@@ -115,16 +115,15 @@ public class MeilisearchSearchService implements SearchService {
                 requestBuilder.filter(new String[]{"resourceCode = \"" + resourceCode.replace("\"", "\\\"") + "\""});
             }
 
-            var sdkResult = (com.meilisearch.sdk.model.SearchResult) index.search(requestBuilder.build());
+            com.meilisearch.sdk.model.SearchResult msResult =
+                    (com.meilisearch.sdk.model.SearchResult) index.search(requestBuilder.build());
 
             List<Map<String, Object>> records = new ArrayList<>();
-            for (var hit : sdkResult.getHits()) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> hitMap = (Map<String, Object>) hit;
-                Map<String, Object> record = new LinkedHashMap<>(hitMap);
+            for (Map<String, Object> hit : msResult.getHits()) {
+                Map<String, Object> record = new LinkedHashMap<>(hit);
 
                 @SuppressWarnings("unchecked")
-                Map<String, Object> formatted = (Map<String, Object>) hitMap.get("_formatted");
+                Map<String, Object> formatted = (Map<String, Object>) hit.get("_formatted");
                 if (formatted != null) {
                     record.put("snippet", formatted.getOrDefault("content", ""));
                 }
@@ -133,7 +132,7 @@ public class MeilisearchSearchService implements SearchService {
                 records.add(record);
             }
 
-            return new SearchResult(records, sdkResult.getEstimatedTotalHits(), page, pageSize);
+            return new SearchResult(records, msResult.getEstimatedTotalHits(), page, pageSize);
         } catch (Exception e) {
             log.error("Meilisearch 搜索失败: {}", keyword, e);
             return new SearchResult(Collections.emptyList(), 0, page, pageSize);

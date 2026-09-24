@@ -33,7 +33,8 @@ class ChartCacheServiceTest {
 
     @BeforeEach
     void setUp() {
-        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+        // put 空数据等测试不会走到 opsForValue，lenient 避免严格模式的 UnnecessaryStubbing
+        lenient().when(redisTemplate.opsForValue()).thenReturn(valueOps);
         cacheService = new ChartCacheService(redisTemplate);
     }
 
@@ -104,8 +105,9 @@ class ChartCacheServiceTest {
 
     @Test
     void invalidate_deletesAllKeysForChart() {
-        when(redisTemplate.keys(anyString())).thenReturn(Set.of("key1", "key2"));
-        when(redisTemplate.delete(anyCollection())).thenReturn(2L);
+        // 实现先 keys(pattern) 再批量 delete，keys 未打桩时 mock 返回 null 会跳过 delete
+        doReturn(Set.of("chart:data:5:a", "chart:data:5:b")).when(redisTemplate).keys(anyString());
+        doReturn(2L).when(redisTemplate).delete((Collection<String>) any());
 
         cacheService.invalidate(5L);
 
@@ -115,7 +117,7 @@ class ChartCacheServiceTest {
 
     @Test
     void invalidate_singleKey_deletesSpecificKey() {
-        when(redisTemplate.delete(anyString())).thenReturn(true);
+        doReturn(true).when(redisTemplate).delete(anyString());
 
         cacheService.invalidate(5L, "SELECT * FROM t");
 

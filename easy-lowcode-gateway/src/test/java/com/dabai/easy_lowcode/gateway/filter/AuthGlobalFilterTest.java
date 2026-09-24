@@ -115,12 +115,13 @@ class AuthGlobalFilterTest {
         String token = createToken("user123");
         MockServerWebExchange originalExchange = createExchange("/api/users", "Bearer " + token);
 
-        ArgumentCaptor<MockServerWebExchange> captor = ArgumentCaptor.forClass(MockServerWebExchange.class);
-        when(chain.filter(captor.capture())).thenReturn(Mono.empty());
-
         filter.filter(originalExchange, chain).block();
 
-        MockServerWebExchange mutatedExchange = captor.getValue();
+        // 官方推荐姿势：capture() 只用于 verify()（stubbing 中使用是 Mockito 明确警告的模式）
+        ArgumentCaptor<org.springframework.web.server.ServerWebExchange> captor =
+                ArgumentCaptor.forClass(org.springframework.web.server.ServerWebExchange.class);
+        verify(chain).filter(captor.capture());
+        org.springframework.web.server.ServerWebExchange mutatedExchange = captor.getValue();
         assertThat(mutatedExchange.getRequest().getHeaders().getFirst("X-User-Id")).isEqualTo("user123");
     }
 }

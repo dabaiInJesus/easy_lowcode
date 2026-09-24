@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -39,6 +40,9 @@ class EtlTaskServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        // MP ServiceImpl.baseMapper 声明类型擦除为 BaseMapper，@InjectMocks 注入不了，需手动设置
+        ReflectionTestUtils.setField(etlTaskService, "baseMapper", etlTaskMapper);
+
         task = new EtlTask();
         task.setTaskName("用户数据同步");
         task.setTaskCode("sync_user");
@@ -64,6 +68,7 @@ class EtlTaskServiceImplTest {
 
         when(dataSourceConfigMapper.selectById(1L)).thenReturn(sourceDs);
         when(dataSourceConfigMapper.selectById(2L)).thenReturn(targetDs);
+        when(etlTaskMapper.selectCount(any())).thenReturn(0L);
         when(etlTaskMapper.insert(any(EtlTask.class))).thenReturn(1);
 
         assertDoesNotThrow(() -> etlTaskService.createTask(task));
@@ -99,8 +104,8 @@ class EtlTaskServiceImplTest {
 
     @Test
     void testCreateTaskWithInvalidSourceDs() {
+        // 实现校验顺序：源数据源判空/存在性校验在前，查不到即抛出，不会查目标数据源
         when(dataSourceConfigMapper.selectById(1L)).thenReturn(null);
-        when(dataSourceConfigMapper.selectById(2L)).thenReturn(new DataSourceConfig());
         Exception ex = assertThrows(Exception.class, () -> etlTaskService.createTask(task));
         assertTrue(ex.getMessage().contains("源数据源不存在"));
     }
@@ -111,7 +116,8 @@ class EtlTaskServiceImplTest {
         task.setId(1L);
         when(etlTaskMapper.selectById(1L)).thenReturn(task);
         Exception ex = assertThrows(Exception.class, () -> etlTaskService.executeTask(1L));
-        assertTrue(ex.getMessage().contains("任务已禁用"));
+        // 实现的提示文案为"任务未启用，无法执行"
+        assertTrue(ex.getMessage().contains("任务未启用"));
     }
 
     @Test
@@ -130,11 +136,12 @@ class EtlTaskServiceImplTest {
 
     @Test
     void testDefaultValues() {
+        // EtlTask 实体在字段上给出了新建任务的合理默认值
         EtlTask newTask = new EtlTask();
-        assertNull(newTask.getBatchSize());
-        assertNull(newTask.getStatus());
-        assertNull(newTask.getScheduleType());
-        assertNull(newTask.getWriteMode());
-        assertNull(newTask.getReadMode());
+        assertEquals("TABLE", newTask.getReadMode());
+        assertEquals("INSERT", newTask.getWriteMode());
+        assertEquals("MANUAL", newTask.getScheduleType());
+        assertEquals(1000, newTask.getBatchSize());
+        assertEquals(1, newTask.getStatus());
     }
 }
