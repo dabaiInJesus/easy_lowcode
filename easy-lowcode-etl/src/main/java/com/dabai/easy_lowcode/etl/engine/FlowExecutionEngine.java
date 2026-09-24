@@ -110,7 +110,7 @@ public class FlowExecutionEngine {
                     .toList();
 
             // 8. 构建 Reader
-            NodeExecutor sourceExecutor = registry.getExecutor(sourceNode.getNodeSubType());
+            NodeExecutor sourceExecutor = registry.getExecutor(sourceNode.getNodeSubType(), "SOURCE");
             Map<String, Object> sourceConfig = parseConfig(sourceNode.getConfigJson());
             ItemReader<Map<String, Object>> reader = sourceExecutor.createReader(sourceConfig);
 
@@ -118,7 +118,7 @@ public class FlowExecutionEngine {
             ItemProcessor<Map<String, Object>, Map<String, Object>> processor = buildProcessorChain(transformNodes);
 
             // 10. 构建 Writer
-            NodeExecutor targetExecutor = registry.getExecutor(targetNode.getNodeSubType());
+            NodeExecutor targetExecutor = registry.getExecutor(targetNode.getNodeSubType(), "TARGET");
             Map<String, Object> targetConfig = parseConfig(targetNode.getConfigJson());
             ItemWriter<Map<String, Object>> writer = targetExecutor.createWriter(targetConfig);
 
@@ -139,15 +139,36 @@ public class FlowExecutionEngine {
                     .start(step)
                     .build();
 
-            // 13. 执行 Job
+            // 14. 根据批处理真实结果更新执行记录（回填读写统计）
             JobLauncher jobLauncher = applicationContext.getBean(JobLauncher.class);
-            JobExecution batchExecution = jobLauncher.run(job, new JobParametersBuilder()
+            org.springframework.batch.core.JobExecution batchExecution = jobLauncher.run(job, new JobParametersBuilder()
                     .addLong("flowId", flow.getId())
                     .addLong("executionId", execution.getId())
                     .addLong("timestamp", System.currentTimeMillis())
                     .toJobParameters());
 
-            // 14. 更新执行记录
+            StepExecution stepExecution = batchExecution.getStepExecutions().stream()
+                    .findFirst().orElse(null);
+            if (stepExecution != null) {
+                execution.setReadCount(stepExecution.getReadCount());
+                execution.setWriteCount(stepExecution.getWriteCount());
+                execution.setSkipCount(stepExecution.getSkipCount());
+                execution.setErrorCount(stepExecution.getFilterCount() > 0 ? stepExecution.getFilterCount() : 0L);
+            }
+
+            String batchStatus = String.valueOf(batchExecution.getStatus());
+            if (!org.springframework.batch.core.BatchStatus.COMPLETED.equals(batchExecution.getStatus())) {
+                // 批处理未成功完成：提取退出描述作为错误信息
+                String exitDescription = batchExecution.getExitStatus() == null
+                        ? batchStatus
+                        : batchExecution.getExitStatus().getExitDescription();
+                if (exitDescription == null || exitDescription.isBlank()) {
+                    exitDescription = batchExecution.getExitStatus() == null ? batchStatus
+                            : batchExecution.getExitStatus().getExitCode();
+                }
+                throw new IllegalStateException("流程执行失败: " + exitDescription);
+            }
+
             execution.setExecStatus("COMPLETED");
             execution.setEndTime(LocalDateTime.now());
             executionMapper.updateById(execution);
@@ -199,9 +220,39 @@ public class FlowExecutionEngine {
 
     private List<EtlNodeConfig> parseNodes(EtlFlow flow) {
         if (flow.getNodes() != null && !flow.getNodes().isEmpty()) return flow.getNodes();
-        return nodeConfigMapper.selectList(
+        // 1) 旧版 node_config 表数据
+        List<EtlNodeConfig> fromTable = nodeConfigMapper.selectList(
                 new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<EtlNodeConfig>()
                         .eq(EtlNodeConfig::getFlowId, flow.getId()));
+        if (!fromTable.isEmpty()) return fromTable;
+        // 2) 画板保存的 vue-flow nodesJson（前端保存流程时仅写该字段，
+        //    结构为 [{id, position, data:{nodeType,nodeSubType,label,config:{...}}}]）
+        return parseNodesFromJson(flow.getNodesJson(), flow.getId());
+    }
+
+    /**
+     * 解析前端画板（vue-flow）保存的节点 JSON 为节点配置。
+     * 前端保存流程只提交 nodesJson，此处补齐"画板所见即执行所得"的解析链路。
+     */
+    private List<EtlNodeConfig> parseNodesFromJson(String nodesJson, Long flowId) {
+        if (nodesJson == null || nodesJson.isBlank()) return List.of();
+        com.alibaba.fastjson.JSONArray arr = com.alibaba.fastjson.JSON.parseArray(nodesJson);
+        List<EtlNodeConfig> result = new ArrayList<>(arr.size());
+        for (int i = 0; i < arr.size(); i++) {
+            com.alibaba.fastjson.JSONObject node = arr.getJSONObject(i);
+            com.alibaba.fastjson.JSONObject data = node.getJSONObject("data");
+            if (data == null) continue;
+            EtlNodeConfig config = new EtlNodeConfig();
+            config.setFlowId(flowId);
+            config.setNodeId(node.getString("id"));
+            config.setNodeType(data.getString("nodeType"));
+            config.setNodeSubType(data.getString("nodeSubType"));
+            config.setNodeName(data.getString("label"));
+            com.alibaba.fastjson.JSONObject cfg = data.getJSONObject("config");
+            config.setConfigJson(cfg == null ? "{}" : cfg.toJSONString());
+            result.add(config);
+        }
+        return result;
     }
 
     private List<JSONObject> parseEdges(EtlFlow flow) {
@@ -246,7 +297,7 @@ public class FlowExecutionEngine {
 
         List<ItemProcessor<Map<String, Object>, Map<String, Object>>> processors = new ArrayList<>();
         for (EtlNodeConfig node : transformNodes) {
-            NodeExecutor executor = registry.getExecutor(node.getNodeSubType());
+            NodeExecutor executor = registry.getExecutor(node.getNodeSubType(), "TRANSFORM");
             Map<String, Object> config = parseConfig(node.getConfigJson());
             processors.add(executor.createProcessor(config));
         }
