@@ -215,22 +215,22 @@ management:
 # 全文检索配置
 easy-lowcode:
   search:
-    engine: meilisearch  # meilisearch | elasticsearch
+    engine: ${SEARCH_ENGINE:meilisearch}  # meilisearch | elasticsearch
     meilisearch:
-      host: http://localhost:7700
+      host: ${MEILISEARCH_HOST:http://localhost:7700}
       api-key: ${MEILISEARCH_API_KEY:}
-      index-name: fulltext_docs
+      index-name: ${MEILISEARCH_INDEX_NAME:fulltext_docs}
     elasticsearch:
-      host: localhost:9200
+      host: ${ES_HOST:localhost:9200}
       username: ${ES_USERNAME:}
       password: ${ES_PASSWORD:}
   storage:
-    type: minio  # minio | s3 | local
+    type: ${STORAGE_TYPE:minio}  # minio | s3 | local
     minio:
-      endpoint: http://localhost:9000
+      endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
       access-key: ${MINIO_ACCESS_KEY:minioadmin}
       secret-key: ${MINIO_SECRET_KEY:minioadmin}
-      bucket: easy-lowcode-files
+      bucket: ${MINIO_BUCKET:easy-lowcode-files}
     s3:
       endpoint: ${S3_ENDPOINT:}
       region: us-east-1
