@@ -212,7 +212,7 @@ public class ChartRecommendService {
                     "max": null,
                     "splitNumber": 4,
                     "itemStyle": {"color": "#5470C6"},
-                    "detail": {"formatter": "{value}", "fontSize": 24, "offsetCenter": [0, "10%"]},
+                    "detail": {"formatter": "{value}", "fontSize": 24, "offsetCenter": [0, "10%%"]},
                     "data": [{"value": %s, "name": "%s"}],
                     "pointer": {"length": "60%%"}
                   }]
