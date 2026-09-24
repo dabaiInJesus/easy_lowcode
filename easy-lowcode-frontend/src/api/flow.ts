@@ -16,7 +16,7 @@ export function getFlowPage(current: number, size: number, keyword?: string, sta
 /**
  * 获取流程详情
  */
-export function getFlowDetail(id: number): Promise<FlowDefinition> {
+export function getFlowDetail(id: number | string): Promise<FlowDefinition> {
   return request<FlowDefinition>({
     url: `/etl/flow/${id}`,
     method: 'get',
@@ -78,7 +78,7 @@ export function stopFlow(id: number) {
 /**
  * 获取执行历史
  */
-export function getExecutionHistory(flowId: number, limit?: number): Promise<FlowExecution[]> {
+export function getExecutionHistory(flowId: number | string, limit?: number): Promise<FlowExecution[]> {
   return request<FlowExecution[]>({
     url: `/etl/flow/${flowId}/history`,
     method: 'get',

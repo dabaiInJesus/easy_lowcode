@@ -16,7 +16,7 @@ export function getWorkflowPage(current: number, size: number, keyword?: string,
 /**
  * 获取工作流详情
  */
-export function getWorkflowDetail(id: number): Promise<AiWorkflowDef> {
+export function getWorkflowDetail(id: number | string): Promise<AiWorkflowDef> {
   return request<AiWorkflowDef>({
     url: `/ai/workflow/${id}`,
     method: 'get',

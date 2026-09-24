@@ -79,7 +79,7 @@ import { getWorkflowDetail, updateWorkflow, publishWorkflow } from '@/api/ai-wor
 import type { AiWorkflowDef } from '@/types/ai-workflow'
 
 interface Props {
-  workflowId?: number
+  workflowId?: number | string
 }
 
 const props = defineProps<Props>()

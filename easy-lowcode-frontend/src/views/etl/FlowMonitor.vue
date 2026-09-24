@@ -92,7 +92,7 @@ import { Refresh, View } from '@element-plus/icons-vue'
 import { getExecutionHistory, getExecutionDetail } from '@/api/flow'
 import type { FlowExecution } from '@/types/flow'
 
-const props = defineProps<{ flowId?: number }>()
+const props = defineProps<{ flowId?: number | string }>()
 
 const loading = ref(false)
 const executions = ref<FlowExecution[]>([])

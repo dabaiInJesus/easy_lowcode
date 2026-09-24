@@ -48,7 +48,8 @@ import { buildChartOption } from '@/utils/chartRenderer'
 
 const route = useRoute()
 const router = useRouter()
-const dashboardId = Number(route.params.id)
+// 雪花 ID 超过 JS Number 安全整数范围（2^53），必须以字符串传递，否则精度丢失
+const dashboardId = String(route.params.id)
 
 const dashboard = ref<any>({})
 const chartData = ref<any[]>([])

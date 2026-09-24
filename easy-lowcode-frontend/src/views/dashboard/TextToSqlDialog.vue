@@ -172,7 +172,7 @@ import { buildChartOption } from '@/utils/chartRenderer'
 
 const props = defineProps<{
   modelValue: boolean
-  dashboardId: number
+  dashboardId: number | string
 }>()
 
 const emit = defineEmits<{

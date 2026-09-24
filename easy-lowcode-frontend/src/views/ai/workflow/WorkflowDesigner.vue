@@ -12,7 +12,8 @@ import WorkflowCanvas from './WorkflowCanvas.vue'
 const route = useRoute()
 const workflowId = computed(() => {
   const id = route.params.id
-  return id ? Number(id) : undefined
+  // 雪花 ID 超过 JS Number 安全整数范围（2^53），必须以字符串传递，否则精度丢失后后端查不到
+  return id ? String(id) : undefined
 })
 </script>
 

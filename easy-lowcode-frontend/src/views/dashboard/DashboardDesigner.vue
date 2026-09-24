@@ -211,10 +211,10 @@ import TextToSqlDialog from './TextToSqlDialog.vue'
 const route = useRoute()
 const router = useRouter()
 
-// 安全获取大屏 ID
+// 安全获取大屏 ID（雪花 ID 超过 JS Number 安全整数范围，必须以字符串传递，否则精度丢失后后端查不到）
 const dashboardId = computed(() => {
-  const id = Number(route.params.id)
-  if (isNaN(id) || id <= 0) {
+  const id = String(route.params.id || '')
+  if (!id || id === 'null' || id === 'undefined') {
     return null
   }
   return id

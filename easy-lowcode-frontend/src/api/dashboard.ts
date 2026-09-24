@@ -24,7 +24,7 @@ export interface Dashboard {
 
 export interface DashboardChart {
   id?: number
-  dashboardId: number
+  dashboardId: number | string  // 雪花 ID 需以字符串传递（超 JS Number 安全范围）
   title: string
   chartType: string
   datasourceId?: number
@@ -55,7 +55,7 @@ export function getDashboardList(status?: number): Promise<Dashboard[]> {
   return request({ url: '/dashboard/list', method: 'get', params: { status } })
 }
 
-export function getDashboardById(id: number): Promise<Dashboard> {
+export function getDashboardById(id: number | string): Promise<Dashboard> {
   return request({ url: `/dashboard/${id}`, method: 'get' })
 }
 
@@ -83,7 +83,7 @@ export function offlineDashboard(id: number): Promise<void> {
   return request({ url: `/dashboard/${id}/offline`, method: 'post' })
 }
 
-export function getDashboardCharts(dashboardId: number): Promise<DashboardChart[]> {
+export function getDashboardCharts(dashboardId: number | string): Promise<DashboardChart[]> {
   return request({ url: `/dashboard/${dashboardId}/charts`, method: 'get' })
 }
 
@@ -107,7 +107,7 @@ export function queryChartData(chartId: number, params?: Record<string, any>): P
   return request({ url: `/dashboard/chart/${chartId}/data`, method: 'get', params })
 }
 
-export function previewDashboard(id: number): Promise<any> {
+export function previewDashboard(id: number | string): Promise<any> {
   return request({ url: `/dashboard/${id}/preview`, method: 'get' })
 }
 
