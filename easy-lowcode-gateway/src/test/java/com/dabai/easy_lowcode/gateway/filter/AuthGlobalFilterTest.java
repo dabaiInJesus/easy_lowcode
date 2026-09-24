@@ -39,9 +39,14 @@ class AuthGlobalFilterTest {
         secretField.setAccessible(true);
         secretField.set(filter, JWT_SECRET);
 
-        Field whiteListField = AuthGlobalFilter.class.getDeclaredField("whiteList");
-        whiteListField.setAccessible(true);
-        whiteListField.set(filter, List.of("/api/auth/login", "/api/auth/register"));
+        // 实现已演化为「精确匹配 + 前缀匹配」两个集合（原单一 whiteList 字段已拆分）
+        Field exactField = AuthGlobalFilter.class.getDeclaredField("exactWhiteList");
+        exactField.setAccessible(true);
+        exactField.set(filter, new java.util.HashSet<>(List.of("/api/auth/login", "/api/auth/register")));
+
+        Field prefixField = AuthGlobalFilter.class.getDeclaredField("prefixWhiteList");
+        prefixField.setAccessible(true);
+        prefixField.set(filter, new java.util.HashSet<>(List.of("/swagger-ui/", "/v3/api-docs/", "/actuator/")));
 
         filter.init();
 
