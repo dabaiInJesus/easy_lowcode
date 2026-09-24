@@ -4,7 +4,6 @@ import com.meilisearch.sdk.Client;
 import com.meilisearch.sdk.Config;
 import com.meilisearch.sdk.Index;
 import com.meilisearch.sdk.SearchRequest;
-import com.meilisearch.sdk.model.SearchResult;
 import jakarta.annotation.PostConstruct;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -58,7 +57,7 @@ public class MeilisearchSearchService implements SearchService {
             doc.put("fileType", fileType);
             doc.put("resourceCode", resourceCode != null ? resourceCode : "");
             if (index != null) {
-                index.addDocumentsJson(meilisearchJson(doc));
+                index.addDocuments(meilisearchJson(doc));
             }
         } catch (Exception e) {
             log.error("Meilisearch 索引失败: {}", docId, e);
@@ -80,7 +79,7 @@ public class MeilisearchSearchService implements SearchService {
                 documents.add(d);
             }
             if (index != null) {
-                index.addDocumentsJson(meilisearchJsonArray(documents));
+                index.addDocuments(meilisearchJsonArray(documents));
             }
         } catch (Exception e) {
             log.error("Meilisearch 批量索引失败", e);
@@ -107,25 +106,24 @@ public class MeilisearchSearchService implements SearchService {
             }
 
             var requestBuilder = SearchRequest.builder()
-                    .setQuery(keyword)
-                    .setLimit(pageSize)
-                    .setOffset((page - 1) * pageSize)
-                    .setAttributesToHighlight(new String[]{"content"});
+                    .q(keyword)
+                    .limit(pageSize)
+                    .offset((page - 1) * pageSize)
+                    .attributesToHighlight(new String[]{"content"});
 
             if (resourceCode != null && !resourceCode.isEmpty()) {
-                requestBuilder.setFilter("resourceCode = \"" + resourceCode.replace("\"", "\\\"") + "\"");
+                requestBuilder.filter(new String[]{"resourceCode = \"" + resourceCode.replace("\"", "\\\"") + "\""});
             }
 
-            SearchResult result = index.search(requestBuilder.build());
+            com.meilisearch.sdk.model.SearchResult msResult =
+                    (com.meilisearch.sdk.model.SearchResult) index.search(requestBuilder.build());
 
             List<Map<String, Object>> records = new ArrayList<>();
-            for (var hit : result.getHits()) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> hitMap = (Map<String, Object>) hit;
-                Map<String, Object> record = new LinkedHashMap<>(hitMap);
+            for (Map<String, Object> hit : msResult.getHits()) {
+                Map<String, Object> record = new LinkedHashMap<>(hit);
 
                 @SuppressWarnings("unchecked")
-                Map<String, Object> formatted = (Map<String, Object>) hitMap.get("_formatted");
+                Map<String, Object> formatted = (Map<String, Object>) hit.get("_formatted");
                 if (formatted != null) {
                     record.put("snippet", formatted.getOrDefault("content", ""));
                 }
@@ -134,7 +132,7 @@ public class MeilisearchSearchService implements SearchService {
                 records.add(record);
             }
 
-            return new SearchResult(records, result.getTotalHits(), page, pageSize);
+            return new SearchResult(records, msResult.getEstimatedTotalHits(), page, pageSize);
         } catch (Exception e) {
             log.error("Meilisearch 搜索失败: {}", keyword, e);
             return new SearchResult(Collections.emptyList(), 0, page, pageSize);

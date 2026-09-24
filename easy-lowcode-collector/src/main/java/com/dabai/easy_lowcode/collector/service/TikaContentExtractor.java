@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
@@ -24,7 +25,7 @@ public class TikaContentExtractor {
             Parser parser = new AutoDetectParser();
             ContentHandler handler = new BodyContentHandler(-1);
             Metadata metadata = new Metadata();
-            metadata.set(Metadata.RESOURCE_NAME_KEY, fileName);
+            metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, fileName);
             ParseContext context = new ParseContext();
 
             parser.parse(inputStream, handler, metadata, context);
