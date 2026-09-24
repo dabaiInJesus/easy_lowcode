@@ -44,7 +44,7 @@
         <el-table-column prop="remark" label="备注" min-width="200" show-overflow-tooltip />
         <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" type="primary" @click="handleTestConnection(row)">
+            <el-button size="small" type="primary" :loading="testingId === row.id" :disabled="testingId !== null && testingId !== row.id" @click="handleTestConnection(row)">
               测试连接
             </el-button>
             <el-button size="small" @click="handleEdit(row)">编辑</el-button>
@@ -199,6 +199,8 @@ const dialogTitle = ref('')
 const formRef = ref<FormInstance>()
 const submitLoading = ref(false)
 const testLoading = ref(false)
+// 表格行内"测试连接"的 loading 标记（按行 id），避免点击后长时间无反馈
+const testingId = ref<number | null>(null)
 const showPassword = ref(false)
 const formData = reactive<Partial<DataSourceConfig>>({
   name: '',
@@ -385,11 +387,13 @@ const handleDelete = async (row: DataSourceConfig) => {
 
 // 测试连接（表格中）
 const handleTestConnection = async (row: DataSourceConfig) => {
+  if (testingId.value !== null) return  // 已有测试进行中，防重复点击
+  testingId.value = row.id!
   try {
     // 先获取完整的数据源信息（包含加密的密码）
     const { getDataSourceById } = await import('@/api/datasource')
     const fullConfig = await getDataSourceById(row.id!)
-    
+
     // 响应拦截器已经解包，fullConfig 就是 DataSourceConfig 对象
     if (fullConfig) {
       // 使用完整配置测试连接
@@ -404,6 +408,8 @@ const handleTestConnection = async (row: DataSourceConfig) => {
   } catch (error) {
     console.error('连接测试失败:', error)
     ElMessage.error('连接测试失败')
+  } finally {
+    testingId.value = null
   }
 }
 

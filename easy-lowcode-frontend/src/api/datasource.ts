@@ -69,13 +69,14 @@ export function deleteDataSource(id: number): Promise<void> {
 }
 
 /**
- * 测试连接
+ * 测试连接（远程数据源握手可能较慢，单独放宽超时；后端 JDBC 侧亦有 10 秒登录超时兜底）
  */
 export function testConnection(data: Partial<DataSourceConfig>): Promise<boolean> {
   return request({
     url: '/collector/datasource/test-connection',
     method: 'post',
     data,
+    timeout: 60000,
   })
 }
 

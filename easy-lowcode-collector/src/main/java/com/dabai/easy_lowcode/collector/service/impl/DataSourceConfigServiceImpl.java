@@ -27,7 +27,12 @@ import java.util.regex.Pattern;
 @Service
 @RequiredArgsConstructor
 public class DataSourceConfigServiceImpl extends ServiceImpl<DataSourceConfigMapper, DataSourceConfig> implements DataSourceConfigService {
-    
+
+    static {
+        // JDBC 登录超时：目标不可达时快速失败（否则 TCP 黑洞会挂住 Tomcat 工作线程与前端请求数十秒）
+        DriverManager.setLoginTimeout(10);
+    }
+
     @Override
     public boolean testConnection(DataSourceConfig config) {
         try {
@@ -62,17 +67,19 @@ public class DataSourceConfigServiceImpl extends ServiceImpl<DataSourceConfigMap
             // 尝试连接
             log.debug("尝试连接数据库: URL={}, Username={}", config.getUrl(), config.getUsername());
             try (Connection conn = DriverManager.getConnection(config.getUrl(), config.getUsername(), password);
-                 Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery(getTestQuery(config.getDbType()))) {
-                log.debug("数据库连接成功");
-                
-                if (rs.next()) {
-                    log.info("数据源连接测试成功: {}", config.getName());
-                    return true;
+                 Statement stmt = conn.createStatement()) {
+                stmt.setQueryTimeout(10);  // 测试查询超时兜底（如 SELECT 1 被目标端挂起）
+                try (ResultSet rs = stmt.executeQuery(getTestQuery(config.getDbType()))) {
+                    log.debug("数据库连接成功");
+
+                    if (rs.next()) {
+                        log.info("数据源连接测试成功: {}", config.getName());
+                        return true;
+                    }
+
+                    log.warn("数据源连接测试失败: {} 未返回结果", getTestQuery(config.getDbType()));
+                    return false;
                 }
-                
-                log.warn("数据源连接测试失败: {} 未返回结果", getTestQuery(config.getDbType()));
-                return false;
             }
         } catch (ClassNotFoundException e) {
             log.error("数据源连接测试失败 - 驱动类未找到: {}, 驱动: {}", config.getName(), config.getDriverClassName(), e);
