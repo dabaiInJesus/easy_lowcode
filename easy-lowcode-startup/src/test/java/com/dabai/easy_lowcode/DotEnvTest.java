@@ -1,52 +1,64 @@
 package com.dabai.easy_lowcode;
 
 import io.github.cdimascio.dotenv.Dotenv;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * .env 文件加载测试
+ * <p>
+ * 说明：.env 是本地私有配置（在 .gitignore 中），不同机器的值各不相同，
+ * 因此这里只断言"文件存在且关键变量非空"，不做具体值的断言。
  */
 class DotEnvTest {
 
+    /**
+     * 定位项目根目录的 .env（Maven surefire 的工作目录是各模块目录）
+     */
+    private Dotenv loadRootEnv() {
+        String[] candidates = {"./", "../"};
+        for (String dir : candidates) {
+            if (Files.exists(Path.of(dir, ".env"))) {
+                return Dotenv.configure()
+                        .directory(dir)
+                        .ignoreIfMissing()
+                        .load();
+            }
+        }
+        return null;
+    }
+
     @Test
     void testLoadEnvFile() {
-        // 加载 .env 文件
-        Dotenv dotenv = Dotenv.configure()
-                .directory("./")
-                .ignoreIfMissing()
-                .load();
+        Dotenv dotenv = loadRootEnv();
+        Assumptions.assumeTrue(dotenv != null, "未找到 .env 文件（本地私有配置），跳过");
 
-        // 验证是否能读取到配置
-        assertNotNull(dotenv, "Dotenv 实例不应为空");
-        
-        // 测试读取数据库密码
         String dbPassword = dotenv.get("POSTGRES_PASSWORD");
-        System.out.println("POSTGRES_PASSWORD: " + dbPassword);
         assertNotNull(dbPassword, "POSTGRES_PASSWORD 不应为空");
-        assertEquals("thinker", dbPassword, "POSTGRES_PASSWORD 应该是 thinker");
+        assertFalse(dbPassword.isBlank(), "POSTGRES_PASSWORD 不应为空字符串");
 
-        // 测试读取 AI API Key
-        String minimaxKey = dotenv.get("MINIMAX_API_KEY");
-        System.out.println("MINIMAX_API_KEY: " + (minimaxKey != null ? "已配置" : "未配置"));
-        assertNotNull(minimaxKey, "MINIMAX_API_KEY 不应为空");
+        String jwtSecret = dotenv.get("JWT_SECRET");
+        if (jwtSecret != null) {
+            assertFalse(jwtSecret.startsWith("your-"), "JWT_SECRET 仍是占位符，请填入真实密钥");
+        }
 
-        // 测试读取 AI 提供商
-        String provider = dotenv.get("AI_DEFAULT_PROVIDER");
-        System.out.println("AI_DEFAULT_PROVIDER: " + provider);
-        assertEquals("minimax", provider, "AI_DEFAULT_PROVIDER 应该是 minimax");
+        String aesKey = dotenv.get("ENCRYPT_AES_KEY");
+        if (aesKey != null) {
+            assertFalse(aesKey.startsWith("your-"), "ENCRYPT_AES_KEY 仍是占位符，请填入真实密钥（16 位）");
+        }
     }
 
     @Test
     void testEnvVariablesToSystemProperties() {
-        // 模拟启动类中的逻辑
-        Dotenv dotenv = Dotenv.configure()
-                .directory("./")
-                .ignoreIfMissing()
-                .load();
+        Dotenv dotenv = loadRootEnv();
+        Assumptions.assumeTrue(dotenv != null, "未找到 .env 文件（本地私有配置），跳过");
 
-        // 将 .env 变量设置到系统属性
+        // 与启动类相同的逻辑：将 .env 变量设置到系统属性（已有属性不覆盖）
         dotenv.entries().forEach(entry -> {
             if (System.getProperty(entry.getKey()) == null) {
                 System.setProperty(entry.getKey(), entry.getValue());
@@ -54,11 +66,8 @@ class DotEnvTest {
         });
 
         // 验证系统属性是否设置成功
-        assertEquals("thinker", System.getProperty("POSTGRES_PASSWORD"), 
-                "系统属性 POSTGRES_PASSWORD 应该被设置");
-        assertEquals("minimax", System.getProperty("AI_DEFAULT_PROVIDER"), 
-                "系统属性 AI_DEFAULT_PROVIDER 应该被设置");
-        
-        System.out.println("✅ 所有环境变量已成功加载到系统属性");
+        assertEquals(dotenv.get("POSTGRES_PASSWORD"),
+                System.getProperty("POSTGRES_PASSWORD"),
+                "系统属性 POSTGRES_PASSWORD 应该与 .env 中一致");
     }
 }

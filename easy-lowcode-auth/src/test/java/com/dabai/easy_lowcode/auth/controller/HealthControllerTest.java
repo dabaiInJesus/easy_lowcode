@@ -84,13 +84,18 @@ class HealthControllerTest {
 
     @Test
     void check_noDataSource_returnsUnknown() throws Exception {
+        // 保存原值：controller 是上下文缓存的单例，测试后必须恢复，否则污染后续测试
+        Object originalDataSource = ReflectionTestUtils.getField(healthController, "dataSource");
         ReflectionTestUtils.setField(healthController, "dataSource", null);
+        try {
+            when(cacheUtil.get(anyString())).thenReturn("ok");
 
-        when(cacheUtil.get(anyString())).thenReturn("ok");
-
-        mockMvc.perform(get("/api/auth/health/check"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.components.database.status", is("UNKNOWN")));
+            mockMvc.perform(get("/api/auth/health/check"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.components.database.status", is("UNKNOWN")));
+        } finally {
+            ReflectionTestUtils.setField(healthController, "dataSource", originalDataSource);
+        }
     }
 
     @Test

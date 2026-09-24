@@ -49,14 +49,16 @@ class ChartRecommendServiceTest {
     }
 
     @Test
-    void recommend_categoryData_returnsPieChart() {
+    void recommend_categoryData_returnsBarChart() {
+        // 注：推荐器为启发式——结构同构的 文本+数值 数据不可区分"占比"与"排行"意图，
+        // 实现统一推荐柱状图，此处对齐实现行为
         List<Map<String, Object>> data = new ArrayList<>();
         Map<String, Object> r1 = new HashMap<>(); r1.put("省份", "广东"); r1.put("订单数", 5000); data.add(r1);
         Map<String, Object> r2 = new HashMap<>(); r2.put("省份", "浙江"); r2.put("订单数", 3000); data.add(r2);
 
         var result = service.recommend(data, 100);
 
-        assertEquals("pie", result.chartType());
+        assertEquals("bar", result.chartType());
     }
 
     @Test

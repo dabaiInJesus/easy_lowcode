@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.dabai.easy_lowcode.collector.entity.DataSourceConfig;
 import com.dabai.easy_lowcode.collector.mapper.DataSourceConfigMapper;
 import com.dabai.easy_lowcode.common.exception.BusinessException;
+import com.dabai.easy_lowcode.dashboard.engine.SqlEngineFactory;
 import com.dabai.easy_lowcode.dashboard.entity.ChartDataSource;
 import com.dabai.easy_lowcode.dashboard.entity.Dashboard;
 import com.dabai.easy_lowcode.dashboard.entity.DashboardChart;
@@ -44,6 +45,8 @@ class DashboardServiceImplTest {
     private DataSourceConfigMapper dataSourceConfigMapper;
     @Mock
     private ChartCacheService chartCacheService;
+    @Mock
+    private SqlEngineFactory sqlEngineFactory;
 
     private DashboardServiceImpl dashboardService;
 
@@ -53,7 +56,7 @@ class DashboardServiceImplTest {
     @BeforeEach
     void setUp() {
         // 手动创建 service 并注入 baseMapper（ServiceImpl 的核心依赖）
-        dashboardService = new DashboardServiceImpl(chartMapper, chartDataSourceMapper, dataSourceConfigMapper, chartCacheService);
+        dashboardService = new DashboardServiceImpl(chartMapper, chartDataSourceMapper, dataSourceConfigMapper, chartCacheService, sqlEngineFactory);
         ReflectionTestUtils.setField((ServiceImpl<?, Dashboard>) dashboardService, "baseMapper", dashboardMapper);
 
         dashboard = new Dashboard();

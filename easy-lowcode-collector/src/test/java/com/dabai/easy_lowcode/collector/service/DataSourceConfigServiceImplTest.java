@@ -1,14 +1,18 @@
 package com.dabai.easy_lowcode.collector.service;
 
+import com.baomidou.mybatisplus.core.MybatisConfiguration;
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.dabai.easy_lowcode.collector.entity.DataSourceConfig;
 import com.dabai.easy_lowcode.collector.mapper.DataSourceConfigMapper;
 import com.dabai.easy_lowcode.collector.service.impl.DataSourceConfigServiceImpl;
+import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,6 +34,13 @@ class DataSourceConfigServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        // MyBatis-Plus ServiceImpl 的 baseMapper 字段声明类型擦除为 BaseMapper，
+        // @InjectMocks 无法完成注入，需手动设置（同 SysUserServiceImplTest 的做法）
+        ReflectionTestUtils.setField(dataSourceConfigService, "baseMapper", dataSourceConfigMapper);
+        // removeById 等 default 方法依赖 TableInfo（逻辑删除元数据），需注册
+        TableInfoHelper.initTableInfo(new MapperBuilderAssistant(new MybatisConfiguration(), ""),
+                DataSourceConfig.class);
+
         config = new DataSourceConfig();
         config.setId(1L);
         config.setName("测试数据源");
@@ -70,10 +81,12 @@ class DataSourceConfigServiceImplTest {
 
     @Test
     void testDeleteById() {
-        when(dataSourceConfigMapper.deleteById(1L)).thenReturn(1);
+        // DataSourceConfig 逻辑删除（BaseEntity.deleted），MP removeById 走
+        // deleteById(T entity) 重载（MP 内部构造实体并注入 id），需按实体重载打桩
+        when(dataSourceConfigMapper.deleteById(any(DataSourceConfig.class))).thenReturn(1);
         boolean result = dataSourceConfigService.removeById(1L);
         assertTrue(result);
-        verify(dataSourceConfigMapper, times(1)).deleteById(1L);
+        verify(dataSourceConfigMapper, times(1)).deleteById(any(DataSourceConfig.class));
     }
 
     @Test
