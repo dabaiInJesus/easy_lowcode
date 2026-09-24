@@ -74,13 +74,14 @@ class ChartRecommendServiceTest {
     }
 
     @Test
-    void recommend_singleMetric_returnsGauge() {
+    void recommend_singleMetric_returnsNumberCard() {
         List<Map<String, Object>> data = new ArrayList<>();
         Map<String, Object> r = new HashMap<>(); r.put("总销售额", 99999.9); data.add(r);
 
         var result = service.recommend(data, 10);
 
-        assertEquals("gauge", result.chartType());
+        // 单值指标推荐为数字卡片展示（前端 chartType='number' 有专门的卡片渲染与布局适配）
+        assertEquals("number", result.chartType());
     }
 
     @Test

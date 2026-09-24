@@ -5,7 +5,9 @@ import type { UserInfo } from '@/api/auth'
 
 describe('userStore', () => {
   beforeEach(() => {
+    // user store 基于安全考虑使用 sessionStorage，测试需同时清理两种 storage 防止用例间串味
     localStorage.clear()
+    sessionStorage.clear()
     setActivePinia(createPinia())
   })
 
@@ -19,12 +21,12 @@ describe('userStore', () => {
     expect(store.avatar).toBe('')
   })
 
-  it('should set token and persist to localStorage', () => {
+  it('should set token and persist to sessionStorage', () => {
     const store = useUserStore()
     store.setToken('jwt-token-abc')
     expect(store.token).toBe('jwt-token-abc')
     expect(store.isLoggedIn).toBe(true)
-    expect(localStorage.getItem('token')).toBe('jwt-token-abc')
+    expect(sessionStorage.getItem('token')).toBe('jwt-token-abc')
   })
 
   it('should set user info and compute derived fields', () => {
@@ -48,7 +50,7 @@ describe('userStore', () => {
     expect(store.avatar).toBe('/avatars/admin.png')
   })
 
-  it('should clear all user data and remove token from localStorage on logout', () => {
+  it('should clear all user data and remove token from sessionStorage on logout', () => {
     const store = useUserStore()
     store.setToken('jwt-token-abc')
     store.setUserInfo({
@@ -69,20 +71,20 @@ describe('userStore', () => {
     expect(store.token).toBe('')
     expect(store.userInfo).toBeNull()
     expect(store.isLoggedIn).toBe(false)
-    expect(localStorage.getItem('token')).toBeNull()
+    expect(sessionStorage.getItem('token')).toBeNull()
   })
 
-  it('should restore token from localStorage at store creation', () => {
-    localStorage.setItem('token', 'pre-existing-token')
+  it('should restore token from sessionStorage at store creation', () => {
+    sessionStorage.setItem('token', 'pre-existing-token')
     const store = useUserStore()
     expect(store.token).toBe('pre-existing-token')
     expect(store.isLoggedIn).toBe(true)
   })
 
-  it('should persist token across store recreation via localStorage', () => {
+  it('should persist token across store recreation via sessionStorage', () => {
     const store = useUserStore()
     store.setToken('persistent-token')
-    expect(localStorage.getItem('token')).toBe('persistent-token')
+    expect(sessionStorage.getItem('token')).toBe('persistent-token')
 
     const newStore = useUserStore()
     expect(newStore.token).toBe('persistent-token')
@@ -92,7 +94,7 @@ describe('userStore', () => {
   it('should restore token on demand via restoreToken', () => {
     const store = useUserStore()
     expect(store.token).toBe('')
-    localStorage.setItem('token', 'restored-token')
+    sessionStorage.setItem('token', 'restored-token')
     store.restoreToken()
     expect(store.token).toBe('restored-token')
     expect(store.isLoggedIn).toBe(true)
@@ -117,7 +119,7 @@ describe('userStore', () => {
     store.clearUser()
     expect(store.token).toBe('')
     expect(store.userInfo).toBeNull()
-    expect(localStorage.getItem('token')).toBeNull()
+    expect(sessionStorage.getItem('token')).toBeNull()
   })
 
   it('should handle partial userInfo gracefully', () => {
