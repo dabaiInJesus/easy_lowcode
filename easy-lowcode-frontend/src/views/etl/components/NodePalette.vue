@@ -13,6 +13,7 @@
           :style="{ borderLeftColor: node.color }"
           draggable="true"
           @dragstart="onDragStart(node)"
+          @click="onDragStart(node)"
         >
           <span class="node-label">{{ node.label }}</span>
         </div>
@@ -30,6 +31,7 @@
           :style="{ borderLeftColor: node.color }"
           draggable="true"
           @dragstart="onDragStart(node)"
+          @click="onDragStart(node)"
         >
           <span class="node-label">{{ node.label }}</span>
         </div>
@@ -47,6 +49,7 @@
           :style="{ borderLeftColor: node.color }"
           draggable="true"
           @dragstart="onDragStart(node)"
+          @click="onDragStart(node)"
         >
           <span class="node-label">{{ node.label }}</span>
         </div>
@@ -67,8 +70,8 @@ const sourceNodes = getNodesByCategory('SOURCE')
 const transformNodes = getNodesByCategory('TRANSFORM')
 const targetNodes = getNodesByCategory('TARGET')
 
+// 拖拽开始（同时用于点击添加：click 与 dragstart 浏览器保证只触发其一，不会重复添加）
 function onDragStart(node: NodeTypeDefinition) {
-  // 点击添加（简化版，后续可实现拖拽）
   emit('add-node', node.type, node.category, node.label)
 }
 </script>

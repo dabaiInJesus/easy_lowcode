@@ -53,6 +53,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { VueFlow, type Node, type Edge, type Connection } from '@vue-flow/core'
+// vue-flow 样式：缺失时节点不按 absolute 定位渲染（块级撑满画布宽度）、连线/控件/小地图全部错乱
+import '@vue-flow/core/dist/style.css'
+import '@vue-flow/core/dist/theme-default.css'
+import '@vue-flow/controls/dist/style.css'
+import '@vue-flow/minimap/dist/style.css'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
@@ -68,7 +73,7 @@ import { getFlowDetail, updateFlow, executeFlow, stopFlow } from '@/api/flow'
 import type { FlowDefinition } from '@/types/flow'
 
 interface Props {
-  flowId?: number
+  flowId?: number | string  // 雪花 ID 需以字符串传递（超 JS Number 安全范围）
 }
 
 const props = defineProps<Props>()
