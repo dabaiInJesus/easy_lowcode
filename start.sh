@@ -110,7 +110,7 @@ fi
 case "${MODE}" in
     incremental|back)
         echo "[3/4] 增量构建（无 clean，只重编有变化的模块）..."
-        if ! mvn install -DskipTests -pl ${BACKEND_DIR} -am; then
+        if ! mvn install -DskipTests -Djacoco.skip=true -pl ${BACKEND_DIR} -am; then
             echo "❌ 错误: 项目编译失败"
             exit 1
         fi

@@ -13,7 +13,7 @@
         <el-input v-model="formData.username" @change="emitUpdate" />
       </el-form-item>
       <el-form-item label="密码">
-        <el-input v-model="formData.password" type="password" show-password @change="emitUpdate" />
+        <el-input v-model="formData.password" type="password" show-password placeholder="选择已有数据源后可留空，执行时自动使用该数据源的密码" @change="emitUpdate" />
       </el-form-item>
       <el-form-item label="表名">
         <el-input v-model="formData.table" placeholder="table_name" @change="emitUpdate" />
@@ -75,7 +75,7 @@
         <el-input v-model="formData.username" @change="emitUpdate" />
       </el-form-item>
       <el-form-item label="密码">
-        <el-input v-model="formData.password" type="password" show-password @change="emitUpdate" />
+        <el-input v-model="formData.password" type="password" show-password placeholder="选择已有数据源后可留空，执行时自动使用该数据源的密码" @change="emitUpdate" />
       </el-form-item>
       <el-form-item label="文件路径">
         <el-input v-model="formData.filePath" @change="emitUpdate" />
