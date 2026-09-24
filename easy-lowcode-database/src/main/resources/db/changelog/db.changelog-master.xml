@@ -40,5 +40,6 @@
     <include file="db/changelog/035-fix-collector-menus.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/036-create-ai-workflow-tables.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/037-extend-ai-agent.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/038-create-spring-batch-schema.xml" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

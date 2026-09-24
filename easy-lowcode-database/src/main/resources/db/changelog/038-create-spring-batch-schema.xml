@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="038-create-spring-batch-schema" author="dabai" dbms="postgresql">
+        <comment>创建 Spring Batch 元数据表（ETL 流程执行引擎依赖 JobRepository 元数据存储）</comment>
+        <sqlFile path="classpath:org/springframework/batch/core/schema-postgresql.sql"
+                 relativeToChangelogFile="false"
+                 splitStatements="true"
+                 stripComments="false"
+                 endDelimiter=";"/>
+    </changeSet>
+
+</databaseChangeLog>
