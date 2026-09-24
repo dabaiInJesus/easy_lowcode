@@ -202,39 +202,4 @@ public class AuthController {
         
         return Result.success(statistics);
     }
-    
-    @Operation(summary = "获取部门列表", description = "获取所有部门列表")
-    @ApiResponse(responseCode = "200", description = "获取成功")
-    @GetMapping("/dept/list")
-    public Result<List<com.dabai.easy_lowcode.auth.entity.SysDept>> getDeptList() {
-        List<com.dabai.easy_lowcode.auth.entity.SysDept> deptList = deptMapper.selectList(null);
-        return Result.success(deptList);
-    }
-    
-    @Operation(summary = "创建部门", description = "创建新部门")
-    @ApiResponse(responseCode = "200", description = "创建成功")
-    @PostMapping("/dept")
-    @PreAuthorize("hasRole('admin')")
-    public Result<Void> createDept(@RequestBody com.dabai.easy_lowcode.auth.entity.SysDept dept) {
-        deptMapper.insert(dept);
-        return Result.success("创建成功");
-    }
-    
-    @Operation(summary = "更新部门", description = "更新部门信息")
-    @ApiResponse(responseCode = "200", description = "更新成功")
-    @PutMapping("/dept")
-    @PreAuthorize("hasRole('admin')")
-    public Result<Void> updateDept(@RequestBody com.dabai.easy_lowcode.auth.entity.SysDept dept) {
-        deptMapper.updateById(dept);
-        return Result.success("更新成功");
-    }
-    
-    @Operation(summary = "删除部门", description = "根据ID删除部门")
-    @ApiResponse(responseCode = "200", description = "删除成功")
-    @DeleteMapping("/dept/{id}")
-    @PreAuthorize("hasRole('admin')")
-    public Result<Void> deleteDept(@Parameter(description = "部门ID") @PathVariable Long id) {
-        deptMapper.deleteById(id);
-        return Result.success("删除成功");
-    }
 }
