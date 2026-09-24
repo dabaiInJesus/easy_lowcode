@@ -20,11 +20,9 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.ollama.api.OllamaApi;
 import org.springframework.ai.ollama.api.OllamaChatOptions;
-import com.openai.client.OpenAIClient;
-import com.openai.client.OpenAIClientImpl;
-import com.openai.core.ClientOptions;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -341,32 +339,25 @@ public class AiController {
 
     private org.springframework.ai.chat.model.ChatModel createTestChatModel(
             AiProvider provider, String apiUrl, String apiKey, String model) {
-        String baseUrl = apiUrl != null ? apiUrl.trim() : "";
-        baseUrl = baseUrl.replaceAll("/+$", "");
-        
-        // 避免重复添加 /v1 后缀
-        String normalizedUrl = baseUrl;
-        if (normalizedUrl.endsWith("/v1") || normalizedUrl.endsWith("/v1/chat")) {
-            // baseUrl 已经包含 /v1，不需要再添加
-        } else if (!normalizedUrl.endsWith("/chat/completions")) {
-            // 如果不是以 /chat/completions 结尾，添加 /v1
-            normalizedUrl = normalizedUrl + "/v1";
+        String baseUrl = apiUrl != null ? apiUrl.trim().replaceAll("/+$", "") : "";
+        // OpenAiApi 默认 completionsPath 为 /v1/chat/completions，baseUrl 需剥掉末尾的 /v1 交给其拼接
+        if (baseUrl.endsWith("/v1")) {
+            baseUrl = baseUrl.substring(0, baseUrl.length() - 3);
         }
-        
+
         String modelName = model != null && !model.isEmpty() ? model.trim() : "default";
-        log.info("Creating chat model for provider: {}, baseUrl: {}, model: {}", provider, normalizedUrl, modelName);
+        log.info("Creating chat model for provider: {}, baseUrl: {}, model: {}", provider, baseUrl, modelName);
 
         return switch (provider) {
+            // OpenAI 协议兼容厂商统一走 OpenAiApi（OpenAI/DashScope/DeepSeek/Minimax 等）
             case OPENAI, DASHSCOPE, DEEPSEEK, MINIMAX, WENXIN, HUNYUAN, ZHIPU, MOONSHOT -> {
-                OpenAIClient client = new OpenAIClientImpl(
-                        ClientOptions.builder()
-                                .apiKey(apiKey != null ? apiKey : "")
-                                .baseUrl(normalizedUrl)
-                                .build()
-                );
+                OpenAiApi openAiApi = OpenAiApi.builder()
+                        .apiKey(apiKey != null ? apiKey : "")
+                        .baseUrl(baseUrl)
+                        .build();
                 yield OpenAiChatModel.builder()
-                        .openAiClient(client)
-                        .options(OpenAiChatOptions.builder().model(modelName).build())
+                        .openAiApi(openAiApi)
+                        .defaultOptions(OpenAiChatOptions.builder().model(modelName).build())
                         .build();
             }
             case OLLAMA -> {
@@ -377,7 +368,7 @@ public class AiController {
                         .build();
                 yield OllamaChatModel.builder()
                         .ollamaApi(ollamaApi)
-                        .options(OllamaChatOptions.builder().model(modelName).build())
+                        .defaultOptions(OllamaChatOptions.builder().model(modelName).build())
                         .build();
             }
         };

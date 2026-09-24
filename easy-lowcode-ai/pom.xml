@@ -52,22 +52,17 @@
             <artifactId>spring-ai-starter-model-ollama</artifactId>
         </dependency>
 
-        <!-- Spring AI Alibaba Agent Framework -->
-        <dependency>
-            <groupId>com.alibaba.cloud.ai</groupId>
-            <artifactId>spring-ai-alibaba-agent-framework</artifactId>
-        </dependency>
-
-        <!-- Spring AI Alibaba DashScope ChatModel 支持 -->
-        <dependency>
-            <groupId>com.alibaba.cloud.ai</groupId>
-            <artifactId>spring-ai-alibaba-starter-dashscope</artifactId>
-        </dependency>
-
         <!-- Hutool HTTP客户端（用于调用其他厂商API） -->
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-http</artifactId>
+        </dependency>
+
+        <!-- FastJSON（agent/工作流引擎 JSON 处理；2.0.x 为 fastjson2 内核且保留 v1 包名 API） -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>2.0.65</version>
         </dependency>
 
         <!-- Lombok -->

@@ -26,23 +26,26 @@ spring:
       enabled: true
       force: true
   
-  # Spring AI 配置
+  # Spring AI 配置（openAiChatModel 由 spring-ai-starter-model-openai 自动装配）
   ai:
     openai:
       api-key: ${OPENAI_API_KEY:}
-      base-url: https://api.openai.com/v1
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
       chat:
         options:
-          model: gpt-3.5-turbo
-    dashscope:
-      api-key: ${DASHSCOPE_API_KEY:}
+          model: ${OPENAI_MODEL:gpt-3.5-turbo}
   
   # 数据源配置
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://${DB_HOST:127.0.0.1}:${DB_PORT:5432}/easy_lowcode?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    # connectTimeout/socketTimeout: 远程数据库抖动时快速失败，避免无限挂起
+    url: jdbc:postgresql://${DB_HOST:127.0.0.1}:${DB_PORT:5432}/easy_lowcode?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&connectTimeout=10&socketTimeout=120
     username: ${DB_USER:postgres}
     password: ${DB_PASSWORD:postgres123}
+    hikari:
+      connection-timeout: 15000
+      # 启动时拿不到连接应快速失败，防止应用挂在初始化阶段
+      initialization-fail-timeout: 20000
   
   # Liquibase 数据库版本管理配置
   liquibase:
@@ -80,13 +83,6 @@ spring:
   #   database-schema-update: true
   #   check-process-definitions: false
   
-# DevTools 热重载配置
-    devtools:
-      restart:
-        enabled: true
-        additional-paths: src/main/java
-      livereload:
-        enabled: true
   # 自由标记模板缓存（开发时关闭）
   freemarker:
     cache: false
@@ -133,10 +129,11 @@ ai:
     base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
     model: ${OPENAI_MODEL:gpt-3.5-turbo}
 
-  # 通义千问配置
+  # 通义千问配置（走 DashScope 官方 OpenAI 兼容模式，见 AiModelConfig#dashScopeChatModel）
   dashscope:
     enabled: true
     api-key: ${DASHSCOPE_API_KEY:}
+    base-url: ${DASHSCOPE_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode}
     model: ${DASHSCOPE_MODEL:qwen-turbo}
 
   # 文心一言配置

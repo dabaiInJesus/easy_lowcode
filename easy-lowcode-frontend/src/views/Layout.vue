@@ -28,7 +28,7 @@
           <el-sub-menu v-if="menu.children && menu.children.length > 0" :index="String(menu.path || menu.id)">
             <template #title>
               <el-icon>
-                <component :is="menu.icon ? iconMap[menu.icon] : defaultIcon" />
+                <component :is="resolveIcon(menu.icon)" />
               </el-icon>
               <span>{{ menu.menuName }}</span>
             </template>
@@ -38,7 +38,7 @@
               :index="getFullPath(menu.path, child.path)"
             >
               <el-icon>
-                <component :is="child.icon ? iconMap[child.icon] : defaultIcon" />
+                <component :is="resolveIcon(child.icon)" />
               </el-icon>
               <template #title>{{ child.menuName }}</template>
             </el-menu-item>
@@ -47,7 +47,7 @@
           <!-- 无子菜单 -->
           <el-menu-item v-else :index="String(menu.path || menu.id)">
             <el-icon>
-              <component :is="menu.icon ? iconMap[menu.icon] : defaultIcon" />
+              <component :is="resolveIcon(menu.icon)" />
             </el-icon>
             <template #title>{{ menu.menuName }}</template>
           </el-menu-item>
@@ -136,6 +136,7 @@ import {
   HomeFilled,
   Menu,
 } from '@element-plus/icons-vue'
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
 const iconMap: Record<string, any> = {
   setting: Setting,
@@ -156,6 +157,12 @@ const iconMap: Record<string, any> = {
   ai: Odometer,
   config: Tools,
   chat: ChatDotRound,
+  // 以下别名对应 sys_menu 中历史使用过、此前未映射的 icon 值（修复菜单空白图标）
+  monitor: Monitor,
+  connection: Connection,
+  collection: DataAnalysis,
+  // Element Plus 图标库无 Collection 组件（031 数据采集菜单使用），映射到数据分析图标
+  Collection: DataAnalysis,
   Setting,
   User,
   List,
@@ -189,6 +196,21 @@ const iconMap: Record<string, any> = {
 }
 
 const defaultIcon = Menu  // fallback icon
+
+/**
+ * 菜单图标渲染三重兜底，任何 icon 值都不会渲染空白：
+ * 1) 别名映射（snake/小写 → 组件）
+ * 2) @element-plus/icons-vue 组件名直查（PascalCase，如 'Cpu'）
+ * 3) 默认图标
+ */
+function resolveIcon(name?: string) {
+  if (!name) return defaultIcon
+  const aliased = (iconMap as Record<string, any>)[name]
+  if (aliased) return aliased
+  const direct = (ElementPlusIconsVue as Record<string, any>)[name]
+  if (direct) return direct
+  return defaultIcon
+}
 
 // 构建子菜单的完整路径
 function getFullPath(parentPath: string | undefined, childPath: string | undefined): string {

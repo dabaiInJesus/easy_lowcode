@@ -15,6 +15,8 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 6173,
+      // 端口被占用时报错退出而不是漂移到 6174+；start.sh 已做端口预清理
+      strictPort: true,
       proxy: {
         '/api': {
           target: apiUrl,

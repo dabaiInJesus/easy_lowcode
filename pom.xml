@@ -39,8 +39,8 @@
         <mybatis-plus.version>3.5.5</mybatis-plus.version>
         <jjwt.version>0.12.5</jjwt.version>
         <flowable.version>7.0.1</flowable.version>
-        <spring-ai.version>2.0.0</spring-ai.version>
-        <spring-ai-alibaba.version>2.0.0-M1.1</spring-ai-alibaba.version>
+        <!-- Spring AI 1.1.x 为 Spring Boot 3.5.x 官方配套版本线；2.0.x 基于 Boot 4，会拖入 spring-boot 4.x 模块导致启动期类冲突 -->
+        <spring-ai.version>1.1.4</spring-ai.version>
         <postgresql.version>42.7.1</postgresql.version>
         <rocketmq.version>2.2.3</rocketmq.version>
         <hutool.version>5.8.25</hutool.version>
@@ -128,29 +128,6 @@
                 <version>${flowable.version}</version>
             </dependency>
 
-            <!-- Spring AI Alibaba BOM -->
-            <dependency>
-                <groupId>com.alibaba.cloud.ai</groupId>
-                <artifactId>spring-ai-alibaba-bom</artifactId>
-                <version>${spring-ai-alibaba.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            
-            <!-- Spring AI Alibaba Agent Framework -->
-            <dependency>
-                <groupId>com.alibaba.cloud.ai</groupId>
-                <artifactId>spring-ai-alibaba-agent-framework</artifactId>
-                <version>${spring-ai-alibaba.version}</version>
-            </dependency>
-            
-            <!-- Spring AI Alibaba DashScope Starter -->
-            <dependency>
-                <groupId>com.alibaba.cloud.ai</groupId>
-                <artifactId>spring-ai-alibaba-starter-dashscope</artifactId>
-                <version>${spring-ai-alibaba.version}</version>
-            </dependency>
-            
             <!-- Spring AI BOM -->
             <dependency>
                 <groupId>org.springframework.ai</groupId>
